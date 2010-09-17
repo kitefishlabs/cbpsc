@@ -195,17 +195,17 @@ CorpusDB : Dictionary {
 		};
 		(onset != nil).if
 		{
-			this[\sfutable][path][\units][relid] = (this[\sfutable][path][\units][relid][0..2] ++ onset ++
-				this[\sfutable][path][\units][relid][4..]).flatten;
-			this[\sfutable][path][\mfccs][relid] = (this[\sfutable][path][\mfccs][relid][0..2] ++ onset ++
-				this[\sfutable][path][\mfccs][relid][4..]).flatten;
+			this[\sfutable][path][\units][relid] = 
+				(this[\sfutable][path][\units][relid][0..2] ++ onset ++ this[\sfutable][path][\units][relid][4..]).flatten;
+			this[\sfutable][path][\mfccs][relid] = 
+				(this[\sfutable][path][\mfccs][relid][0..2] ++ onset ++ this[\sfutable][path][\mfccs][relid][4..]).flatten;
 		};
 		(dur != nil).if
 		{
-			this[\sfutable][path][\units][relid] = (this[\sfutable][path][\units][relid][0..3] ++ dur ++
-				this[\sfutable][path][\units][relid][4..]).flatten;
-			this[\sfutable][path][\mfccs][relid] = (this[\sfutable][path][\mfccs][relid][0..3] ++ dur ++
-				this[\sfutable][path][\mfccs][relid][4..]).flatten;
+			this[\sfutable][path][\units][relid] = 
+				(this[\sfutable][path][\units][relid][0..3] ++ dur ++ this[\sfutable][path][\units][relid][5..]).flatten;
+			this[\sfutable][path][\mfccs][relid] = 
+				(this[\sfutable][path][\mfccs][relid][0..3] ++ dur ++ this[\sfutable][path][\mfccs][relid][5..]).flatten;
 		};
 		(md != nil).if { this[\sfutable][path][\units][relid] = this[\sfutable][path][\units][relid][0..4] ++ md };
 		(mfccs != nil).if { this[\sfutable][path][\mfccs][relid] = this[\sfutable][path][\mfccs][relid][0..4] ++ mfccs };
