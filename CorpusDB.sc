@@ -186,29 +186,13 @@ CorpusDB : Dictionary {
 	}
 	
 	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil|
-		(cid != nil).if
-		{
-			this[\sfutable][path][\units][relid] = ([cid] ++
-				this[\sfutable][path][\units][relid] = this[\sfutable][path][\units][relid][1..]).flatten;
-			this[\sfutable][path][\mfccs][relid] = ([cid] ++
-				this[\sfutable][path][\mfccs][relid] = this[\sfutable][path][\mfccs][relid][1..]).flatten;
-		};
-		(onset != nil).if
-		{
-			this[\sfutable][path][\units][relid] = 
-				(this[\sfutable][path][\units][relid][0..2] ++ onset ++ this[\sfutable][path][\units][relid][4..]).flatten;
-			this[\sfutable][path][\mfccs][relid] = 
-				(this[\sfutable][path][\mfccs][relid][0..2] ++ onset ++ this[\sfutable][path][\mfccs][relid][4..]).flatten;
-		};
-		(dur != nil).if
-		{
-			this[\sfutable][path][\units][relid] = 
-				(this[\sfutable][path][\units][relid][0..3] ++ dur ++ this[\sfutable][path][\units][relid][5..]).flatten;
-			this[\sfutable][path][\mfccs][relid] = 
-				(this[\sfutable][path][\mfccs][relid][0..3] ++ dur ++ this[\sfutable][path][\mfccs][relid][5..]).flatten;
-		};
-		(md != nil).if { this[\sfutable][path][\units][relid] = this[\sfutable][path][\units][relid][0..4] ++ md };
-		(mfccs != nil).if { this[\sfutable][path][\mfccs][relid] = this[\sfutable][path][\mfccs][relid][0..4] ++ mfccs };
+		var old = this[\sfutable][path][\units][relid];
+		var temp = [cid ? old[0], old[1], old[2], onset ? old[3], dur ? old[4]];
+		var newmd = md ? old[5..];
+		var newmfccs = mfccs ? this[\sfutable][path][\units][relid][5..];
+		
+		this[\sfutable][path][\units][relid] = temp ++ newmd;
+		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
 	}
 
 	removeSoundFileUnit { |path, relid|
