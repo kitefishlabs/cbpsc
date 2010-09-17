@@ -1,7 +1,7 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf320
 {\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Monaco;}
 {\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue191;\red0\green115\blue0;
-\red96\green96\blue96;\red191\green0\blue0;}
+\red96\green96\blue96;\red191\green0\blue0;\red0\green115\blue0;}
 \deftab560
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 
@@ -63,6 +63,8 @@
 \
 ~updateSFViews = \{ \cf3 |cfpath, top, bot, currid|\cf2 \
 	\cf3 var\cf2  theunits = ~crps[\cf4 \\sfutable\cf2 ][cfpath][\cf4 \\units\cf2 ];\
+	theunits.postln;\
+	theunits[currid].postln;\
 	\cf6 // clear Views\cf2 \
 	(0..63).do(\{ \cf3 |i|\cf2  top.selectNone(i) \});\
 	bot.selectNone(0);\
@@ -72,7 +74,7 @@
 		theunits.do(\{ \cf3 |row, index|\cf2  top.setSelection(index, [row[3], row[4]] * 44.1) \});\
 		bot.setSelection(0, (theunits[currid][3..4] * 44.1));\
 		\cf6 //unselect\cf2 \
-		~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0);\
+		(~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]] != nil).if \{ \cf0 ~gui[\cf7 \\soundFileUnitRowViews\cf0 ][~gui[\cf7 \\cp\cf0 ]]\cf2 [0].value_(0)\};\
 		\cf6 //update\cf2 \
 		~gui[\cf4 \\cp\cf2 ] = currid;\
 		~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0);\
