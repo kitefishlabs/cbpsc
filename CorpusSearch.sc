@@ -1,5 +1,5 @@
 CorpusSearch : Dictionary {
-	var <>corpus, <>tree, <>normedTree;
+	var <>corpus, <>cArray, <>tree, <>stats, <>normedTree;
 	
 	*new { |crps|
 		^super.new.initCSearch(crps)
@@ -9,6 +9,17 @@ CorpusSearch : Dictionary {
 		this.corpus = crps;
 	}
 	
+	getStats {
+		this.cArray = this.corpus.mapSoundFileUnitsToCorpusUnits;
+		this.stats = this.cArray.keys.asArray.sort.collect({ |row| this.cArray[row] })
+			.flop.collect({ |col|
+				var stdev, mean = col.mean;
+				stdev = col.inject(0, { |sum, cell| sum + ((cell - mean) ** 2) });
+				[col.minItem, col.maxItem, col.maxItem - col.minItem, mean, (stdev / col.size).sqrt]
+			});
+		^this.stats
+	}
+
 	buildTree { |metadata = nil, descriptors, flag=true|
 		var map, reducedArray = Array[];
 		(descriptors == nil).if { ^nil };
@@ -59,7 +70,7 @@ CorpusSearch : Dictionary {
 	
 	findNNearest { |target, radius, number=1|
 		^this.normedTree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})[0..(number - 1)];
-	}			
+	}
 }
 
 
