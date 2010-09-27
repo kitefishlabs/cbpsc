@@ -19,26 +19,8 @@ CorpusSearch : Dictionary {
 			});
 		^this.stats
 	}
-
-	buildTree { |metadata = nil, descriptors, flag=true|
-		var map, reducedArray = Array[];
-		(descriptors == nil).if { ^nil };
-		(metadata == nil).if 
-		{
-			map = this.corpus.mapSoundFileUnitsToCorpusUnits;
-			map.keys.asArray.sort.do({ |cid|
-				var row = map[cid];
-				reducedArray = reducedArray.add(descriptors.collect({ |descr| row[descr] }));
-			});
-		} {
-			reducedArray = metadata;
-		};
-		reducedArray.postln;
-		this.tree = KDTree(reducedArray, lastIsLabel: flag);
-		^this.tree
-	}
 	
-	buildNormalizedTree { |metadata, descriptors, flag=true|
+	buildTree { |metadata, descriptors, normFlag=false, lastFlag=true|
 		var map, reducedArray = Array[];
 		(descriptors == nil).if { ^nil };
 		(metadata == nil).if 
@@ -51,25 +33,43 @@ CorpusSearch : Dictionary {
 		} {
 			reducedArray = metadata;
 		};
-		reducedArray.flop.postln;
-		reducedArray = reducedArray.flop.collect({ |row, index|
-			((flag == true) && (index != (descriptors.size - 1))).if
-			{
-				row.normalize;
-			} {
-				row
-			};
-		}).flop;
-		this.normedTree = KDTree(reducedArray, lastIsLabel: flag);
-		^this.normedTree
+		(normFlag == true).if
+		{
+			reducedArray.flop.postln;
+			reducedArray = reducedArray.flop.collect({ |col, index|
+				((lastFlag == true) && (index != (descriptors.size - 1))).if
+				{
+					col.normalize;
+				} {
+					col
+				};
+			}).flop;
+			"After: ".postln;
+			reducedArray.postln;
+			this.normedTree = KDTree(reducedArray, lastIsLabel: lastFlag);
+			^this.normedTree
+		};
+		this.tree = KDTree(reducedArray, lastIsLabel: lastFlag);
+		^this.tree
 	}
 	
 	findNearestInRadius { |target, radius|
 		^this.normedTree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})
 	}
 	
-	findNNearest { |target, radius, number=1|
-		^this.normedTree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})[0..(number - 1)];
+	findNNearest { |target, radius, normFlag = false, number=1|
+		var res;
+		(normFlag == true).if
+		{
+			res = this.normedTree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})[0..(number - 1)];
+			^res
+		} {
+			res = this.tree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})[0..(number - 1)];
+			res = res.flop;
+			res[1] = res[1].collect({ |list| (list != nil).if { list[0..(number - 1)] } });
+			res = res.flop;
+			^res
+		};
 	}
 }
 
