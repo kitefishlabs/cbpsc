@@ -286,12 +286,12 @@ CorpusDB : Dictionary {
 	}
 
 	importCorpusFromXML { |server, path|
-		var domdoc, tmpDict = Dictionary[], dDict = Dictionary[], mDict = Dictionary[]; //tmpMap = Dictionary[], 
+		var domdoc, tmpDict = Dictionary[], dDict = Dictionary[], mDict = Dictionary[];
 		
 		"Adding File Entry from XML:   ===============".postln;
 		path.postln;
 		
-		this.initCorpus;
+		this.initCorpus(path, server);
 		this.sfOffset = 0; this.cuOffset = 0;
 		
 		domdoc = DOMDocument.new(path);
@@ -303,7 +303,9 @@ CorpusDB : Dictionary {
 		domdoc.getDocumentElement.getElementsByTagName("sfile").do({ |tag, index|
 			var theID = tag.getElementsByTagName("id")[0].getText.asInteger;
 			var theName = tag.getAttribute("name").asString;
-			this.addSoundFile(theName, tag.getElementsByTagName("uniqueid")[0].getText.asFloat);
+			this.addSoundFile(theName,
+				tag.getElementsByTagName("numchannels")[0].getText.asInteger,
+				tag.getElementsByTagName("uniqueid")[0].getText.asFloat);
 			this.mapIDToSF(theName, theID);
 		});
 		
