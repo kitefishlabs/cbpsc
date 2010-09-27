@@ -1,0 +1,11 @@
+Drag the 4 .sc files to your Extensions folder (~/Library/Application Support/SuperCollider/Extensions or /Library/Application Support/SuperCollider/Extensions).
+
+Install (using Quarks.gui command) KDTree and TabbedView. 
+
+Don't forget to recompile the library (apple-K).
+
+See http://crprsnrs.corpora-sonorus.com/text/cbpsc/1-getting-started for detailed instructions.
+
+A growing amount of documentation can be found at http://crprsnrs.corpora-sonorus.com/text .
+
+Email me (Tom Stoll) with questions: tms@corpora-sonorus.com
