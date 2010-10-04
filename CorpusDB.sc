@@ -1,6 +1,6 @@
 CorpusDB : Dictionary {
 
-	var <>sfOffset, <>cuOffset, <>pFactor, <>soundFileUnitsMapped;
+	var <>sfOffset, <>cuOffset, <>sfgOffset, <>pFactor, <>soundFileUnitsMapped;
 
 	*new { |name, server|
 		^super.new.initCorpus(name, server)
@@ -14,12 +14,13 @@ CorpusDB : Dictionary {
 		// the dictionaries that store the data/metadata
 		this.put(\sftable, Dictionary[]);		// sfile and buffer info
 		this.put(\sfmap, Dictionary[]);			// map sfile indexes (as they appear in pu- and cutable) to sfile pathes (as in sftable)
+		this.put(\sfgmap, Dictionary[]);
 		this.put(\sfutable, Dictionary[]);		// provisional units metadata table
 		this.put(\cutable, Dictionary[]);		// corpus units metadata table
 		// keep track of the latest additions to the tables
-		this.sfOffset = 0;		this.cuOffset = 0;
+		this.sfOffset = 0;		this.cuOffset = 0;		this.sfgOffset = 0;
 		// dtable = descriptors table; must match to analysis synth
-		this.put(\dtable, Dictionary[0 -> \unitID, 1 -> \sfileID, 2 -> \sfRelID, 3 -> \onset, 4 -> \duration, 5 -> \tartiniFreq, 6 -> \tartiniHasFreq, 7 -> \power, 8 -> \flatness, 9 -> \centroid, 10 -> \zerox, 11 -> \flux, 12 -> \rolloff, 13 -> \slope, 14 -> \spread, 15 -> \crest]);
+		this.put(\dtable, Dictionary[0 -> \unitID, 1 -> \sfgrpID, 2 -> \sfileID, 3 -> \sfRelID, 4 -> \onset, 5 -> \duration, 6 -> \tartiniFreq, 7 -> \tartiniHasFreq, 8 -> \power, 9 -> \flatness, 10 -> \centroid, 11 -> \zerox, 12 -> \flux, 13 -> \rolloff, 14 -> \slope, 15 -> \spread, 16 -> \crest]);
 		// send the analysis synth to the server
 		this.perThreshold_(0.6);
 		this.buildAnalysisSynth(this.pFactor);
@@ -72,31 +73,32 @@ CorpusDB : Dictionary {
 		this[\ansynthdef].send(this[\server]);	// must kill old synthdef if nec. !!!!???
 	}
 	
-	addSoundFile { |path, numChannels=1, uniqueFlag=nil|     // TODO: Add filtering to ensure that just sound files are added!
+	addSoundFile { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil|     // TODO: Add filtering to ensure that just sound files are added?
 		var thepath = PathName.new(path.asString), flag;
 		Post << "Adding Entry:   ===============================  " << path.asString;
 		Post << " (" << numChannels << " channels)." << Char.nl;
 		(this[\sftable][thepath.fullPath] == nil).if   // don't add if the entry already exists
 		{
-			(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };  // allow a custom unique id to be passed in
+			// allow a custom unique id to be passed in
+			(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
 			// create the sftable entry
 			this[\sftable].add(thepath.fullPath -> 
-					Dictionary[\abfr -> nil, \uniqueid -> flag, \channels -> numChannels]); // the nils are dummy keys (reminders)
+					Dictionary[\abfr -> nil, \uniqueid -> flag, \channels -> numChannels, \sfilegroup -> (sfGrpID ? 0)]); // the nils are dummy keys (reminders)
 			// read the sound file into a buffer and store a reference to that buffer in the DB
 			this[\sfutable].add(thepath.fullPath -> Dictionary[\mfccs -> nil, \units -> nil]);
 			
 			(numChannels == 1).if
 			{
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr| 
+				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr|
 					this[\sftable][thepath.fullPath].add(\bfrL -> bfr);
 					// start the prov. unit table entry for this file
 				});
 			};
 			(numChannels == 2).if
 			{
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr| 
+				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr|
 					this[\sftable][thepath.fullPath].add(\bfrL -> bfr);				});
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [1], { |bfr| 
+				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [1], { |bfr|
 					this[\sftable][thepath.fullPath].add(\bfrR -> bfr);
 				});
 			};
@@ -122,7 +124,7 @@ CorpusDB : Dictionary {
 //		this[\sftable][thepath.fullPath].postln;
 	}
 	
-	analyzeSoundFile { |path, mapFlag=nil, invertFlag=false|
+	analyzeSoundFile { |path, mapFlag=nil, invertFlag=false, group=0|
 		var pbuf, abuf, thesynth, mapping;
 		// the 'play' buffer for the analysis:
 		(invertFlag == false).if { pbuf = this[\sftable][path][\bfrL] } { pbuf = this[\sftable][path][\bfrR] };
@@ -150,11 +152,11 @@ CorpusDB : Dictionary {
 			this[\sfutable][path].add(\rawdescrs -> Array[], \rawmels -> Array[]);
 			this[\analysisTrigger].set(1);
 		});	// the synth will release itself
-		this.mapIDToSF(path, mapFlag);					   // store the index -> sfile path mapping
+		this.mapIDToSF(path, group, mapFlag);					   // store the index -> sfile path mapping
 		^this[\sftable][path.asString][\abfr]
 	}
 	
-	mapIDToSF { |path, customMap=nil|
+	mapIDToSF { |path, sfgroup=0, customMap=nil|
 		var mapping;
 		(customMap == nil).if
 			{
@@ -162,34 +164,39 @@ CorpusDB : Dictionary {
 				this.sfOffset = this.sfOffset + 1;
 			} {
 				mapping = customMap;
-				this.sfOffset = mapping.max(this.sfOffset) + 1;
+				// custom caller responsible for sfOffset!!!
+				//this.sfOffset = mapping.max(this.sfOffset) + 1;
 			};
+		// no check for overwrite... should there be one?
+		(this[\sfgmap][sfgroup] == nil).if { this[\sfgmap].add(sfgroup -> Array[])};
+		this[\sfgmap][sfgroup] = (this[\sfgmap][sfgroup] ++ mapping).flatten;
 		this[\sfmap].add(mapping -> path);
 	}
 
-	addSoundFileUnit { |path, relid, bounds, cid=nil|
-		var trio;
+	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil|
+		var quad;
 		(bounds != nil).if
 		{
-			"Adding sound file unit (to sfutable)... ".post;
-			trio = [cid ? this.cuOffset, this[\sfmap].findKeyForValue(path.asString), relid ];
-			(cid == nil).if { this.cuOffset = this.cuOffset + 1 } {this.cuOffset = this.cuOffset.max(cid) + 1 };
-			Post << trio << " ... " << path << Char.nl;
+			Post << "Adding sound file unit (to sfutable)...mapping: "; // << this[\sfmap].findKeyForValue(path.asString);
+			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, this[\sfmap].findKeyForValue(path.asString), relid ];
+			// custom caller responsible!
+			(cid == nil).if { this.cuOffset = this.cuOffset + 1 }; // {this.cuOffset = this.cuOffset.max(cid) + 1 };
+			Post << quad << " ... " << path << Char.nl;
 			this[\sfutable][path][\units] = this[\sfutable][path][\units] ++ 
-				[trio ++ bounds].flatten.reject({|item| item == nil}).clump(5); // reject is probably unnecessary
+				[quad ++ bounds].flatten.reject({|item| item == nil}).clump(6); // reject is probably unnecessary
 			this[\sfutable][path][\mfccs] = this[\sfutable][path][\mfccs] ++ 
-				[trio ++ bounds].flatten.reject({|item| item == nil}).clump(5);
+				[quad ++ bounds].flatten.reject({|item| item == nil}).clump(6);
 			this.soundFileUnitsMapped = false;
 //			this[\sfutable][path][\units].size.postln;
 			^this[\sfutable][path][\units].size
 		};
 	}
-	
-	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil|
+
+	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil, sfg=nil|
 		var old = this[\sfutable][path][\units][relid];
-		var temp = [cid ? old[0], old[1], old[2], onset ? old[3], dur ? old[4]];
-		var newmd = md ? old[5..];
-		var newmfccs = mfccs ? this[\sfutable][path][\units][relid][5..];
+		var temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
+		var newmd = md ? old[6..];
+		var newmfccs = mfccs ? this[\sfutable][path][\units][relid][6..];
 		
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
@@ -214,21 +221,23 @@ CorpusDB : Dictionary {
 		};
 	}
 
+	// set the \units and \mfccs tables to nil (empty them) for the provided path
 	clearSoundFileUnits { |path|		
 		this[\sfutable][path].add(\units -> nil, \mfccs -> nil);
 		this.soundFileUnitsMapped = false;
 	}
-	
+
 	addRawMetadata { |path, descriptors=nil, mels=nil|
 		var descr = descriptors, last = this.pFactor;
 		(descr != nil).if
 		{
+			// if tartiniHasFreq == 0, sub in pFactor...the min. allowed periodicity (this skews the median values less, perhaps?)
 			(descr[1] == 0).if { descr[1] = last } { last = descr[1] };
 		};
 		this[\sfutable][path][\rawdescrs] = this[\sfutable][path][\rawdescrs].add(descriptors);
 		this[\sfutable][path][\rawmels] = this[\sfutable][path][\rawmels].add(mels);
 	}
-	
+
 	// raw analysis data -> segmented metadata (desriptors + mfccs)
 	segmentUnits { |path|
 		var descrs, mfccs;
@@ -237,32 +246,34 @@ CorpusDB : Dictionary {
 		mfccs = this[\sfutable][path][\rawmels].flop;
 		this[\sfutable][path][\units].do({ |cell, indx|
 			var low, high, len, ra = Array[], rba = Array[];
-			low = (cell[3] / 40).floor.asInteger;
-			len = (cell[4] / 40).ceil.asInteger;
+			low = (cell[4] / 40).floor.asInteger;
+			len = (cell[5] / 40).ceil.asInteger;
 			high = low + len;
 			descrs.do({ |row, ix| ra = ra.add(row[low..high].mean.asStringPrec(4).asFloat) });
 			mfccs.do({ |row, ix| rba = rba.add(row[low..high].mean.asStringPrec(6).asFloat) });
-			this[\sfutable][path][\units][indx] = this[\sfutable][path][\units][indx][0..4].add(ra).flatten;
-			this[\sfutable][path][\mfccs][indx] = this[\sfutable][path][\mfccs][indx][0..4].add(rba).flatten;
+			this[\sfutable][path][\units][indx] = this[\sfutable][path][\units][indx][0..5].add(ra).flatten;
+			this[\sfutable][path][\mfccs][indx] = this[\sfutable][path][\mfccs][indx][0..5].add(rba).flatten;
 		});
 	}
-	
+
+	// add a uid -> metadata mapping to the \cutable (should there be a check to see that uid == metadata[0]?
 	addCorpusUnit { |uid, metadata|
 		this[\cutable].add(uid -> metadata);
 		^this[\cutable][uid]
 	}
-	
+
+	// opposite of add; sets the mapped flag to false (why?)
 	removeCorpusUnit { |uid|
 		this[\cutable].removeAt(uid);
 		this.soundFileUnitsMapped = false;
 		^this[\cutable][uid]
 	}
-	
+
+	// dereference them all
 	clearCorpusUnits {
-		// dereference them all
 		this[\cutable].keysDo({ |cid| this[\cutable].add(cid -> nil) });
 	}
-	
+
 	getSoundFileUnitMetadata { |sfid, uid|
 		(this.soundFileUnitsMapped != true).if
 		{
@@ -271,13 +282,14 @@ CorpusDB : Dictionary {
 		^this[\cutable].detect({ |item, i| ((item[1] == sfid) && (item[2] == uid)) });
 	}	
 
+	// map
 	mapSoundFileUnitsToCorpusUnits {
 		(this.soundFileUnitsMapped == false).if
 		{
 			this.clearCorpusUnits;
 			this[\sfutable].do({ |path|
 				path[\units].do({ |pu, index|
-					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][5..]).flatten); 
+					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][6..]).flatten); 
 				});
 			});
 			this.soundFileUnitsMapped = true;
@@ -285,60 +297,104 @@ CorpusDB : Dictionary {
 		^this[\cutable]
 	}
 
+// import & export entire corpora
 	importCorpusFromXML { |server, path|
 		var domdoc, tmpDict = Dictionary[], dDict = Dictionary[], mDict = Dictionary[];
+		var sfgroupentries, sfentries, runningCUOffset = 0, runningSFOffset = 0, runningSFGOffset = 0;
 		
-		"Adding File Entry from XML:   ===============".postln;
+		"Adding File Entry from XML: ".post;
 		path.postln;
+		"=============".postln;
 		
-		this.initCorpus(path, server);
-		this.sfOffset = 0; this.cuOffset = 0;
+//		this.initCorpus(path, server);
+		Post << "Starting from sf offset: " << this.sfOffset << " + cu Offset: " << this.cuOffset << " + sfg Offset: " << this.sfgOffset << Char.nl;
 		
 		domdoc = DOMDocument.new(path);
 		domdoc.getDocumentElement.getElementsByTagName("descrid").do({ |tag, index|
 			tmpDict.add(tag.getText.asInteger -> tag.getAttribute("name").asSymbol);
 		});
-		(tmpDict != this[\dtable]).if { "You fucked up.".postln; };
+		(tmpDict != this[\dtable]).if { "Import descriptor list mismatch!".postln; };
 		
-		domdoc.getDocumentElement.getElementsByTagName("sfile").do({ |tag, index|
-			var theID = tag.getElementsByTagName("id")[0].getText.asInteger;
-			var theName = tag.getAttribute("name").asString;
-			this.addSoundFile(theName,
-				tag.getElementsByTagName("numchannels")[0].getText.asInteger,
-				tag.getElementsByTagName("uniqueid")[0].getText.asFloat);
-			this.mapIDToSF(theName, theID);
-		});
+		"sfgroups:".postln;
+		// get sorted array of sfile group index atributes to iterate on
+		sfgroupentries = domdoc.getDocumentElement.getElementsByTagName("sfilegroup");
+		sfgroupentries = sfgroupentries.asArray.sort({|a,b| a.getAttribute("index").asInteger < b.getAttribute("index").asInteger});
+		sfgroupentries.do({ |groupentry|
+			var sfg = groupentry.getAttribute("index").asInteger;
+			[sfg].postln;
+			"sfiles:".postln;
+			// get sorted array of sf entries for each group (sorted by id element) to iterate on
+			sfentries = groupentry.getElementsByTagName("sfile");
+			sfentries = sfentries.asArray.sort({|a,b| a.getElementsByTagName("id")[0].getText.asInteger < b.getElementsByTagName("id")[0].getText.asInteger});
+			sfentries.do({ |entry|
+				var theID = entry.getElementsByTagName("id")[0].getText.asInteger;
+				var theName = entry.getAttribute("name").asString;
+				["...",entry].postln;
+				this.addSoundFile(theName,
+					entry.getElementsByTagName("numchannels")[0].getText.asInteger,
+					entry.getElementsByTagName("uniqueid")[0].getText.asFloat,
+					(sfg + this.sfgOffset)
+				);
+				Post << "MAPPING!: " << theName << " + " << (sfg + this.sfgOffset) << " + " << theID << Char.nl;
+				this.mapIDToSF(theName, (sfg + this.sfgOffset), (theID + this.sfOffset)); // +++ include sfg here!!!!!!!!
+				runningSFOffset = runningSFOffset.max(theID);
+				Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+			});
+			runningSFGOffset = runningSFGOffset.max(sfg);
+			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
+		});		
 		
 //		"THE MAP:".postln;
 //		this[\sfmap].postln;
 		
 		domdoc.getDocumentElement.getElementsByTagName("punit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
-			postln("descr: " ++ tmpRow[0] ++ " -> " ++ tmpRow);
-			dDict.add(tmpRow[0] -> tmpRow);
+//			Post << "descr: " << tmpRow[0] << " -> " << tmpRow << Char.nl;
+			(dDict[tmpRow[1]] == nil).if
+			{
+				dDict.add(tmpRow[1] -> Dictionary[tmpRow[0] -> tmpRow]);
+			} {
+				dDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
+			};				
 		});
 		domdoc.getDocumentElement.getElementsByTagName("munit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
-			postln("mfcc: " ++ tmpRow[0] ++ " -> " ++ tmpRow);
-			mDict.add(tmpRow[0]-> tmpRow);
+//			Post << "mfcc: " << tmpRow[0] << " -> " << tmpRow << Char.nl;
+			(mDict[tmpRow[1]] == nil).if
+			{
+				mDict.add(tmpRow[1] -> Dictionary[tmpRow[0] -> tmpRow]);
+			} {
+				mDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
+			};			
 		});
 		
 //		dDict.keys.asArray.sort.postln;
 //		mDict.keys.asArray.sort.postln;
 //		
-//		"=================".postln;
-		
-		dDict.keys.asArray.sort.do({ |key|
-			var descr = dDict[key], mfcc = mDict[key], path = this[\sfmap][descr[1]].asString, last;
-//			Post << "Path: " << path << Char.nl;
-//			mfcc.postln;
-//			[path, descr[2], descr[3..4], descr[0]].postln;
-			last = this.addSoundFileUnit(path, descr[2], descr[3..4], descr[0]) - 1;
-//			Post << "Last \units row: " << this[\sfutable][path] << Char.nl;
-			this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ descr[5..]).flatten;
-			this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ mfcc[5..]).flatten;
+		"=================".postln;
+
+		dDict.keys.asArray.sort.do({ |sfg| // sfilegroup keys
+			var innerDict = dDict[sfg], path, tmp, last;
 			
+			innerDict.keys.asArray.sort.do({ |key|
+				tmp = innerDict[key];
+				path = this[\sfmap][tmp[2]].asString;
+//				Post << "path: " << path << Char.nl;
+				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfg + this.sfgOffset).asInteger) - 1;
+				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[key][6..]).flatten;
+				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ mDict[sfg][key][6..]).flatten;
+				
+				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
+				
+			});			
 		});
+		
+		// update cuOffset, sfOffset, sfgOffset;
+		this.cuOffset = this.cuOffset + runningCUOffset + 1;
+		this.sfOffset = this.sfOffset + runningSFOffset + 1;
+		this.sfgOffset = this.sfgOffset + runningSFGOffset + 1;
+		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
+
 		this.soundFileUnitsMapped = false;
 	}
 
