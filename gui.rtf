@@ -1,7 +1,7 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf320
 {\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Monaco;}
 {\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue191;\red0\green115\blue0;
-\red191\green0\blue0;\red96\green96\blue96;}
+\red191\green0\blue0;\red96\green96\blue96;\red191\green0\blue0;}
 \deftab560
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 
@@ -14,13 +14,16 @@
 			.mouseUpAction_(\{ \cf3 |bttn|\cf2 \
 				~updateSFViews.value(currfile, top, bot, pid);\
 				\cf3 Plotter\cf2 (parent: ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\highlighter\cf2 ])\
-					.value_(currSFU[\cf4 \\mfccs\cf2 ][pid][2..].ampdb)			\cf5 /// ???????\cf2 \
+					.value_(currSFU[\cf4 \\mfccs\cf2 ][pid][6..].ampdb)\
 \pard\pardeftab560\ql\qnatural
 \cf2 					.plotMode_(\cf4 \\plines\cf2 )\
 					.findSpecs_(\cf3 true\cf2 );\
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf0 				\cf5 //~foo = ~crps[\\sfutable].postcs["
+\f1\fs18 /Users/tms/dev/supercollider/drone.piece.0000/17435_Stomp_Ventilation_02_clip1.wav"]
+\f0\fs20 [\\mfccs];\
 \cf2 			\}),\
-		\cf3 SCButton\cf2 .new(parent, \cf3 Rect\cf2 (25, (pid * 25), 22, 22))\
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 		\cf3 SCButton\cf2 .new(parent, \cf3 Rect\cf2 (25, (pid * 25), 22, 22))\
 			.states_([[\cf6 "X"\cf2 , \cf3 Color\cf2 .white, \cf3 Color\cf2 .red]])\
 			.value_(0)\
 			.mouseUpAction_(\{ \cf3 |num|\cf2  \cf3 AppClock\cf2 .sched(0, \{\cf3 |now|\cf2  ~deleteSoundFileUnit.value(pid, top, bot); \cf3 nil\cf2 \}) \}),\
@@ -32,60 +35,60 @@
 \cf2 		\cf3 SCNumberBox\cf2 .new(parent, \cf3 Rect\cf2 (75, (pid * 25), 60, 20))\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 			.value_(currSFU[\cf4 \\units\cf2 ][pid][4])\
-			.action_(\{\cf3 |val|\cf2  \cf5 // "ONSET VAL: ".post; val.value.postln;\cf2 \
+			.action_(\{\cf3 |val|\cf2  \cf7 // "ONSET VAL: ".post; val.value.postln;\cf2 \
 				~crps.updateSoundFileUnit(currfile, pid, \cf3 nil\cf2 , val.value.floor);\
 				~crps.segmentUnits(currfile);\
 				~updateSFViews.value(currfile, top, bot, pid);\
-\cf5 //				~updateCurrentSoundFileUnit.value(pid,1);\cf2 \
+\cf7 //				~updateCurrentSoundFileUnit.value(pid,1);\cf2 \
 				~gui[\cf4 \\soundFileUnitRowViews\cf2 ][pid][5].value_(currSFU[\cf4 \\units\cf2 ][pid][0..16].asString);\
 			\}),\
 		\cf3 SCNumberBox\cf2 .new(parent, \cf3 Rect\cf2 (140, (pid * 25), 60, 20))\
 			.value_(currSFU[\cf4 \\units\cf2 ][pid][5])\
-			.action_(\{\cf3 |val|\cf2  \cf5 // "DUR VAL: ".post; val.value.postln;\cf2 \
+			.action_(\{\cf3 |val|\cf2  \cf7 // "DUR VAL: ".post; val.value.postln;\cf2 \
 				~crps.updateSoundFileUnit(currfile, pid, \cf3 nil\cf2 , \cf3 nil\cf2 , val.value.ceil);\
 				~crps.segmentUnits(currfile);\
 				~updateSFViews.value(currfile, top, bot, pid);\
-\cf5 //				~updateCurrentSoundFileUnit.value(pid,1);\cf2 \
+\cf7 //				~updateCurrentSoundFileUnit.value(pid,1);\cf2 \
 				~gui[\cf4 \\soundFileUnitRowViews\cf2 ][pid][5].value_(currSFU[\cf4 \\units\cf2 ][pid][0..16].asString);\
 			\}),\
 		\cf3 SCTextField\cf2 .new(parent, \cf3 Rect\cf2 (205, (pid * 25), 700, 20))\
-			.value_(currSFU[\cf4 \\units\cf2 ][pid][0..16].asString), \cf5 //((++ ~crps[\\sfutable][currfile][\\units][pid][5..15]).asString),\cf2 \
+			.value_(currSFU[\cf4 \\units\cf2 ][pid][0..16].asString), \cf7 //((++ ~crps[\\sfutable][currfile][\\units][pid][5..15]).asString),\cf2 \
 		pid.asInteger ];\
 \};\
 \
-~updateSoundFileUnitRow = \{ \cf3 |rid, bot|\
-	[rid, bot].postln;\cf2 \
-	~gui[\cf4 \\soundFileUnitRowViews\cf2 ][rid][3].value_(~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ][rid][4]); \cf5 ////!!!!!!!!!\cf2 \
+~updateSoundFileUnitRow = \{ \cf3 |rid, bot|\cf2 \
+	[rid, bot].postln;\
+	~gui[\cf4 \\soundFileUnitRowViews\cf2 ][rid][3].value_(~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ][rid][4]); \cf7 ////!!!!!!!!!\cf2 \
 	~gui[\cf4 \\soundFileUnitRowViews\cf2 ][rid][4].value_(~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ][rid][5]);\
 	bot.setSelection(rid, [0, 0]);\
 	bot.setSelection(rid, ~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ][rid][4..5] * 44.1);\
-	\cf5 //"Row ".post; rid.post; " updated.".postln;\cf2 \
+	\cf7 //"Row ".post; rid.post; " updated.".postln;\cf2 \
 \};\
 \
 ~updateSFViews = \{ \cf3 |cfpath, top, bot, currid|\cf2 \
 	\cf3 var\cf2  theunits = ~crps[\cf4 \\sfutable\cf2 ][cfpath][\cf4 \\units\cf2 ];\
 	theunits.postln;\
-	\cf5 // clear Views\cf2 \
+	\cf7 // clear Views\cf2 \
 	(0..63).do(\{ \cf3 |i|\cf2  top.selectNone(i) \});\
 	bot.selectNone(0);\
-	\cf5 // read out units into the two views if they exist\cf2 \
+	\cf7 // read out units into the two views if they exist\cf2 \
 	(theunits != \cf3 nil\cf2 ).if\
 	\{\
 		theunits.do(\{ \cf3 |row, index|\cf2  top.setSelection(index, [row[4], row[5]] * 44.1) \});\
 		bot.setSelection(0, (theunits[currid][4..5] * 44.1));\
-		\cf5 //unselect\cf2 \
+		\cf7 //unselect\cf2 \
 		(~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]] != \cf3 nil\cf2 ).if \{ ~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0)\};\
-		\cf5 //update\cf2 \
+		\cf7 //update\cf2 \
 		~gui[\cf4 \\cp\cf2 ] = currid;\
 		~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0);\
-		\cf5 //~updateCurrentSoundFileUnit.value(currid,1);\cf2 \
+		\cf7 //~updateCurrentSoundFileUnit.value(currid,1);\cf2 \
 	\};\
 \};\
 \
 ~updateCurrentSoundFileUnit = \{ \cf3 |cpuid|\cf2 \
-	\cf5 //unselect\cf2 \
+	\cf7 //unselect\cf2 \
 	~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0);\
-	\cf5 //update\cf2 \
+	\cf7 //update\cf2 \
 	~gui[\cf4 \\cp\cf2 ] = cpuid;\
 	~gui[\cf4 \\soundFileUnitRowViews\cf2 ][~gui[\cf4 \\cp\cf2 ]][0].value_(0);\
 \};\
@@ -100,13 +103,13 @@
 	~graphNeedsUpdate = \cf3 true\cf2 ;\
 	\
 	range = ~crps.removeSoundFileUnit(~gui[\cf4 \\cf\cf2 ], did);\
-\cf5 //	"Popping this provisional unit: ".post; num.postln;\cf2 \
-\cf5 //	"Range: ".post;	range.postln;\cf2 \
+\cf7 //	"Popping this provisional unit: ".post; num.postln;\cf2 \
+\cf7 //	"Range: ".post;	range.postln;\cf2 \
 	(range != \cf3 nil\cf2 ).if\
 	\{	\
 		range.do(\{ \cf3 |rv|\cf2 \
 			\cf3 var\cf2  waveformArea = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ];\
-			\cf3 var\cf2  tmp = ~newSoundFileUnitRow.value(~gui[\cf4 \\cf\cf2 ], rv, ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\segments\cf2 ][\cf4 \\view\cf2 ], waveformArea[\cf4 \\fullView\cf2 ], waveformArea[\cf4 \\closeView\cf2 ]); \cf5 // the data model has already been updated!!!!\cf2 \
+			\cf3 var\cf2  tmp = ~newSoundFileUnitRow.value(~gui[\cf4 \\cf\cf2 ], rv, ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\segments\cf2 ][\cf4 \\view\cf2 ], waveformArea[\cf4 \\fullView\cf2 ], waveformArea[\cf4 \\closeView\cf2 ]); \cf7 // the data model has already been updated!!!!\cf2 \
 			~gui[\cf4 \\soundFileUnitRowViews\cf2 ].add(rv -> tmp);\
 			~gui[\cf4 \\soundFileUnitRowViews\cf2 ][rv + 1].pop;\
 			~gui[\cf4 \\soundFileUnitRowViews\cf2 ][rv + 1].do(\{\cf3 |item|\cf2  item.remove; item.free \});\
@@ -141,12 +144,12 @@
 	\
 	graph.sync;\
 	graph.descriptors_(xx, yy, ss).fontColor_(fontcolor).dragTarget_(dragtarget).zoomFactor_(1@1).transFactor_(0@0);\
-	graph.clients_([	\cf5 // unitData Viewer, player, MFCC plotter\cf2 \
-		\{ \cf3 |chosen|\cf2  graphparams[\cf4 \\unitData\cf2 ].items_(~crps.getSoundFileUnitMetadata(chosen.state[0], chosen.state[1])[0..16].collect(\{\cf3 |elem|\cf2  elem.asString\})) \},	\cf5 // link scene to metadata view \cf2 \
-		\{ \cf3 |chosen|\cf2  ~playSegment.value(chosen.state) \},\
-		\{ \cf3 |chosen|\cf2 \
+	graph.clients_([	\cf7 // unitData Viewer, player, MFCC plotter\cf2 \
+		\{ \cf3 |chosen1|\cf2  graphparams[\cf4 \\unitData\cf2 ].items_(~crps.getSoundFileUnitMetadata(chosen1.state[0], chosen1.state[1])[0..16].collect(\{\cf3 |elem|\cf2  elem.asString\})) \},	\cf7 // link scene to metadata view \cf2 \
+		\{ \cf3 |chosen2|\cf2  ~playSegment.value(chosen2.state) \},\
+		\{ \cf3 |chosen3|\cf2 \
 			\cf3 Plotter\cf2 (parent: ~gui[\cf4 \\tabs\cf2 ][tabnum][\cf4 \\areas\cf2 ][\cf4 \\highlighter\cf2 ])\
-				.value_(~crps[\cf4 \\sfutable\cf2 ][ ~crps[\cf4 \\sfmap\cf2 ][chosen.state[0]] ][\cf4 \\mfccs\cf2 ][chosen.state[1]][2..].ampdb)  \cf5 // ?????? see above\cf2 \
+				.value_(~crps[\cf4 \\sfutable\cf2 ][ ~crps[\cf4 \\sfmap\cf2 ][chosen3.state[0]] ][\cf4 \\mfccs\cf2 ][chosen3.state[1]][6..].ampdb)\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 				.plotMode_(\cf4 \\plines\cf2 )\
 \pard\pardeftab560\ql\qnatural
@@ -155,12 +158,12 @@
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 	]);\
 	graph.highlight([0,0]);\
-	\cf5 // the 4 columns: names, mins, currently selected unit, maxes\cf2 \
+	\cf7 // the 4 columns: names, mins, currently selected unit, maxes\cf2 \
 	graphparams[\cf4 \\minList\cf2 ].remove;\
 	graphparams[\cf4 \\unitData\cf2 ].remove;\
 	graphparams[\cf4 \\maxList\cf2 ].remove;\
 	\
-\cf5 //	~gui[\\tabs][1][\\areas][\\graph].cArray.postln;\cf2 \
+\cf7 //	~gui[\\tabs][1][\\areas][\\graph].cArray.postln;\cf2 \
 	\
 	graphparams.add(\cf4 \\dList\cf2  -> \cf3 SCListView\cf2 (graphparams[\cf4 \\view\cf2 ], \cf3 Rect\cf2 (0, 25, 80, gpheight - 25))\
 			.stringColor_(\cf3 Color\cf2 .white).selectedStringColor_(\cf3 Color\cf2 .green)\
@@ -208,23 +211,23 @@
 \cf2 ~playSegment = \{ \cf3 |pair|\cf2 \
 	\cf3 var\cf2  cf, relid = pair[1];\
 	(pair[0].isNumber).if \{ cf = ~crps[\cf4 \\sfmap\cf2 ][pair[0]] \} \{ cf = pair[0] \};\
-	\cf5 //"Playing unit number: ".post; relid.post; ", from ".post; cf.postln;\cf2 \
+	\cf7 //"Playing unit number: ".post; relid.post; ", from ".post; cf.postln;\cf2 \
 	(~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrR\cf2 ] == \cf3 nil\cf2 ).if\
 	\{\
-		~audio[\cf4 \\monoPlayer\cf2 ].set(\cf4 \\bufNum\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrL\cf2 ].bufnum, \cf4 \\offset\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][4] * 0.001), \cf4 \\dur\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][5] * 0.001));	\cf5 // msecs -> secs\cf2 \
+		~audio[\cf4 \\monoPlayer\cf2 ].set(\cf4 \\bufNum\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrL\cf2 ].bufnum, \cf4 \\offset\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][4] * 0.001), \cf4 \\dur\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][5] * 0.001));	\cf7 // msecs -> secs\cf2 \
 		~audio[\cf4 \\mBus\cf2 ].set(1);\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 	\} \{\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf2 		~audio[\cf4 \\stereoPlayer\cf2 ].set(\cf4 \\bufNumL\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrL\cf2 ].bufnum, \cf4 \\bufNumR\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrR\cf2 ].bufnum, \cf4 \\offset\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][4] * 0.001), \cf4 \\dur\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][5] * 0.001));	\cf5 // msecs -> secs\cf2 \
+\cf2 		~audio[\cf4 \\stereoPlayer\cf2 ].set(\cf4 \\bufNumL\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrL\cf2 ].bufnum, \cf4 \\bufNumR\cf2 , ~crps[\cf4 \\sftable\cf2 ][ cf ][\cf4 \\bfrR\cf2 ].bufnum, \cf4 \\offset\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][4] * 0.001), \cf4 \\dur\cf2 , (~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\units\cf2 ][relid][5] * 0.001));	\cf7 // msecs -> secs\cf2 \
 		~audio[\cf4 \\sBus\cf2 ].set(1);\
 	\}\
 \};\
 )\
 \
-\cf5 ////***********************************************************************************************\cf2 \
+\cf7 ////***********************************************************************************************\cf2 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf5 ////		Load Audio Server + Send SynthDefs\cf2 \
+\cf7 ////		Load Audio Server + Send SynthDefs\cf2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 \
 \cf3 Server\cf2 .default = \cf3 Server\cf2 .internal;\
@@ -239,7 +242,7 @@
 	cPos = offset + (dur * 0.5);\
 	atk = attack;\
 	rls = release;\
-	\cf5 //env = EnvGen.kr(Env.linen(attack, durLength, release, inTrig), gate: inTrig, doneAction: da);\cf2 \
+	\cf7 //env = EnvGen.kr(Env.linen(attack, durLength, release, inTrig), gate: inTrig, doneAction: da);\cf2 \
 	chunk = \cf3 TGrains2\cf2 .ar(2, inTrig, bufNum, transp, cPos, dur, 0, inTrig, atk, rls, 4);\
 	\cf3 Out\cf2 .ar( out, chunk );\
 \}).send(~audio[\cf4 \\server\cf2 ]);\
@@ -250,18 +253,17 @@
 	cPos = offset + (dur * 0.5);\
 	atk = attack;\
 	rls = release;\
-	\cf5 //env = EnvGen.kr(Env.linen(attack, durLength, release, inTrig), gate: inTrig, doneAction: da);\cf2 \
+	\cf7 //env = EnvGen.kr(Env.linen(attack, durLength, release, inTrig), gate: inTrig, doneAction: da);\cf2 \
 	chunkL = \cf3 TGrains2\cf2 .ar(2, inTrig, bufNumL, transp, cPos, dur, -1, inTrig, atk, rls, 4);\
 	chunkR = \cf3 TGrains2\cf2 .ar(2, inTrig, bufNumR, transp, cPos, dur, 1, inTrig, atk, rls, 4);\
 	\cf3 Out\cf2 .ar( out, chunkL + chunkR );\
 \}).send(~audio[\cf4 \\server\cf2 ]);\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 )\
-\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf5 ////***********************************************************************************************\cf2 \
+\cf7 ////***********************************************************************************************\cf2 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf5 ////		Init Database + Build GUI...\cf2 \
+\cf7 ////		Init Database + Build GUI...\cf2 \
 \pard\pardeftab560\ql\qnatural
 \cf2 \
 (\
@@ -273,15 +275,15 @@
 ~audio.add(\cf4 \\stereoPlayer\cf2  -> \cf3 Synth\cf2 .new(\cf4 \\unitSamplerStereo\cf2 , [\cf4 \\busTrig\cf2 , ~audio[\cf4 \\sBus\cf2 ]]));\
 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf5 ////***********************************************************************************************\cf2 \
-\cf5 ////		Begin GUI code\cf2 \
-\cf5 ////\cf2 \
-\cf5 //// window + top level container (tabbedView) + top level container views and storage\cf2 \
+\cf7 ////***********************************************************************************************\cf2 \
+\cf7 ////		Begin GUI code\cf2 \
+\cf7 ////\cf2 \
+\cf7 //// window + top level container (tabbedView) + top level container views and storage\cf2 \
 \
 ~gui = \cf3 Dictionary\cf2 [];\
 ~gui.add(\cf4 \\topWindow\cf2  -> \cf3 SCWindow\cf2 (\cf6 "drones.xxxx db"\cf2 , \cf3 Rect\cf2 (305, 75, 1120, 840)).acceptsMouseOver_(\cf3 true\cf2 ));\
 ~gui.add(\cf4 \\tabs\cf2  -> \cf3 Dictionary\cf2 []);\
-~gui.add(\cf4 \\cf\cf2  -> 0)		\cf5 // 'helper' vars w/ more-or-less global scope\cf2 \
+~gui.add(\cf4 \\cf\cf2  -> 0)		\cf7 // 'helper' vars w/ more-or-less global scope\cf2 \
 	.add(\cf4 \\cp\cf2  -> 0)\
 	.add(\cf4 \\fileListDict\cf2  -> \cf3 Dictionary\cf2 [])\
 	.add(\cf4 \\soundFileUnitRowViews\cf2  -> \cf3 Dictionary\cf2 []);\
@@ -295,11 +297,11 @@
 	~gui[\cf4 \\tabs\cf2 ].add(ix -> \cf3 Dictionary\cf2 [\cf4 \\nameTag\cf2  -> [\cf4 \\importAnalyzeSegment\cf2 , \cf4 \\graph\cf2 , \cf4 \\scene\cf2 , \cf4 \\web\cf2 ][ix], \cf4 \\view\cf2  -> \cf3 SCScrollView\cf2 (~gui[\cf4 \\tabs\cf2 ][\cf4 \\view\cf2 ].views[ix], ~gui[\cf4 \\tabs\cf2 ][\cf4 \\view\cf2 ].views[ix].asView.bounds), \cf4 \\areas\cf2  -> \cf3 Dictionary\cf2 [], \cf4 \\needsUpdate\cf2  -> \cf3 true\cf2 ])\
 \});\
 \
-\cf5 //// some additional behaviors for the top level views\cf2 \
+\cf7 //// some additional behaviors for the top level views\cf2 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 ~gui[\cf4 \\topWindow\cf2 ].onClose_( \{\cf3 |ind|\cf2  [~audio[\cf4 \\mBus\cf2 ], ~audio[\cf4 \\sBus\cf2 ], ~audio[\cf4 \\monoPlayer\cf2 ], ~audio[\cf4 \\stereoPlayer\cf2 ], ~crps].do(\cf3 _\cf2 .free) \} );\
 \
-\cf5 //// containers/areas\cf2 \
+\cf7 //// containers/areas\cf2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ].add(\cf4 \\waveform\cf2  -> \cf3 Dictionary\cf2 [\cf4 \\view\cf2  -> \cf3 SCCompositeView\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (0, 0, 690, 160)).background_(\cf3 Color\cf2 .black)])\
 	.add(\cf4 \\analysis\cf2  -> \cf3 SCCompositeView\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (-5, 165, 700, 420)).background_(\cf3 Color\cf2 .black))\
@@ -313,7 +315,7 @@
 	.add(\cf4 \\unitPlayer\cf2  -> \cf3 Dictionary\cf2 [\cf4 \\view\cf2  -> \cf3 SCCompositeView\cf2 (~gui[\cf4 \\tabs\cf2 ][1][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (650, 650, 360, 160)).background_(\cf3 Color\cf2 .black)])\
 	.add(\cf4 \\highlighter\cf2  -> \cf3 SCCompositeView\cf2 (~gui[\cf4 \\tabs\cf2 ][1][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (650, 405, 360, 240)));\
 \
-\cf5 //// waveform area\cf2 \
+\cf7 //// waveform area\cf2 \
 ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ].add(\cf4 \\fullView\cf2  -> \cf3 SCSoundFileView\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (0, 0, 690, 60))\
 		.gridColor_(\cf3 Color\cf2 .gray)\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
@@ -322,7 +324,7 @@
 		.lo_(0.0).hi_(1.0)\
 		.mouseUpAction_(\{ \cf3 |slider|\cf2 \
 			\cf3 var\cf2  zaRangeLo, zaRangeHi, zoomArray, temp;\
-			\cf5 //"slider: ".post; slider.lo.post; slider.hi.postln;\cf2 \
+			\cf7 //"slider: ".post; slider.lo.post; slider.hi.postln;\cf2 \
 			\cf3 var\cf2  cview = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\closeView\cf2 ];\
 			cview.zoomToFrac(1);\
 			cview.scrollToStart;\
@@ -341,10 +343,10 @@
 				.superpose_(\cf3 false\cf2 )\
 				.findSpecs_(\cf3 true\cf2 )\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf5 //				.editFunc_(\{|pl, pli, idx, val|\cf2 \
-\cf5 //					pli.post; "...".post; idx.post; "....".post; val.postln;\cf2 \
-\cf5 //					~crps[\\sfutable][~gui[\\cf]][\\rawdescrs][pli][idx] = val;\cf2 \
-\cf5 //				\});\cf2 \
+\cf7 //				.editFunc_(\{|pl, pli, idx, val|\cf2 \
+\cf7 //					pli.post; "...".post; idx.post; "....".post; val.postln;\cf2 \
+\cf7 //					~crps[\\sfutable][~gui[\\cf]][\\rawdescrs][pli][idx] = val;\cf2 \
+\cf7 //				\});\cf2 \
 		\});\
 )\
 	.add(\cf4 \\closeView\cf2  -> \cf3 SCSoundFileView\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (0, 80, 690, 80))\
@@ -352,12 +354,12 @@
 \cf2 		.gridColor_(\cf3 Color\cf2 .gray)\
 \pard\pardeftab560\ql\qnatural
 \cf2 		.mouseUpAction_(\{ \cf3 |vw,x,y|\cf2 \
-			\cf5 // update the data model\cf2 \
+			\cf7 // update the data model\cf2 \
 			~crps.updateSoundFileUnit(~gui[\cf4 \\cf\cf2 ], ~gui[\cf4 \\cp\cf2 ], \cf3 nil\cf2 ,\
 				(~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\closeView\cf2 ].selectionStart(0) / 44.1).max(0).floor,\
 				(~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\closeView\cf2 ].selectionSize(0) / 44.1).ceil);\
 \
-			\cf5 // update number boxes + fullView\cf2 \
+			\cf7 // update number boxes + fullView\cf2 \
 			~updateSoundFileUnitRow.value(~gui[\cf4 \\cp\cf2 ], ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ][\cf4 \\fullView\cf2 ]);\
 			\
 			~crps.segmentUnits(~gui[\cf4 \\cf\cf2 ]);\
@@ -371,7 +373,7 @@
 	);\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 \
-\cf5 //// filesList area\cf2 \
+\cf7 //// filesList area\cf2 \
 ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ].add(\cf4 \\addFileButton\cf2  -> \cf3 SCButton\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (5, 5, 45, 20))\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 		.states_([[\cf6 "+file"\cf2 , \cf3 Color\cf2 .black, \cf3 Color\cf2 .white]])\
@@ -382,7 +384,7 @@
 					\cf3 var\cf2  sf, thepath;\
 					\cf3 var\cf2  fileListView = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ];\
 					sf = \cf3 SoundFile\cf2 .openRead(pth.asString);\
-					\cf5 //"SF: ".post; sf.post; " with ".post; sf.numChannels.post; " channels.".postln;\cf2 \
+					\cf7 //"SF: ".post; sf.post; " with ".post; sf.numChannels.post; " channels.".postln;\cf2 \
 					(sf != \cf3 nil\cf2 ).if\
 					\{\
 						thepath = \cf3 PathName\cf2 .new(sf.path.asString);\
@@ -427,7 +429,7 @@
 		.value_(0)\
 		.action_(\{ \cf3 |btn|\cf2 \
 			\cf3 var\cf2  findex = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ].value;\
-			\cf3 var\cf2  fname = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ].items[ findex ]; \cf5 // ~gui[\\fileListDict][ ];\cf2 \
+			\cf3 var\cf2  fname = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ].items[ findex ]; \cf7 // ~gui[\\fileListDict][ ];\cf2 \
 			\cf3 var\cf2  tmp = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ].items;\
 			tmp.removeAt(findex);\
 			~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ][\cf4 \\fileListView\cf2 ].items_(tmp);\
@@ -490,15 +492,15 @@
 		.items_([])\
 		.action_(\{ \cf3 |q|\cf2 \
 			\cf3 var\cf2  cf, sf, tmp, responder, responder2;\
-			\cf5 // declare abbreviations for areas of the gui to be accessed:\cf2 \
+			\cf7 // declare abbreviations for areas of the gui to be accessed:\cf2 \
 			\cf3 var\cf2  waveformArea = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ], analysisArea = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\analysis\cf2 ], fileListArea = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\filesList\cf2 ];\
-			\cf5 // empty ~soundFileUnits out\cf2 \
+			\cf7 // empty ~soundFileUnits out\cf2 \
 			~gui[\cf4 \\soundFileUnitRowViews\cf2 ].do(\{ \cf3 |line|\cf2  line.pop; line.do(\{ \cf3 |elem|\cf2  elem.remove; elem.free \}) \});\
 			~gui[\cf4 \\soundFileUnitRowViews\cf2 ] = \cf3 Dictionary\cf2 [];\
-			\cf5 // get the menu selection and set current file global\cf2 \
+			\cf7 // get the menu selection and set current file global\cf2 \
 			cf = ~gui[\cf4 \\fileListDict\cf2 ][ fileListArea[\cf4 \\fileListView\cf2 ].items[q.value] ];\
 			~gui[\cf4 \\cf\cf2 ] = cf;\
-			\cf5 // if non-nil, read out cached units into sfunitrows\cf2 \
+			\cf7 // if non-nil, read out cached units into sfunitrows\cf2 \
 			(~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ] != \cf3 nil\cf2 ).if\
 			\{\
 				~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ].do(\{ \cf3 |pu, ix|\cf2 \
@@ -512,11 +514,11 @@
 						);\
 					)\
 				\});\
-				\cf5 //~updateCurrentSoundFileUnit.value(0);\cf2 \
+				\cf7 //~updateCurrentSoundFileUnit.value(0);\cf2 \
 			\} \{\
 				\cf6 "...not cached... "\cf2 .postln;\
 			\};\
-			\cf5 // read sound file and stream or post analysis data\cf2 \
+			\cf7 // read sound file and stream or post analysis data\cf2 \
 			sf = \cf3 SoundFile\cf2 .new;\
 			(sf.openRead(cf) == \cf3 true\cf2 ).if\
 			\{\
@@ -529,9 +531,9 @@
 				~gui[\cf4 \\topWindow\cf2 ].refresh;\
 				\
 				(~crps[\cf4 \\sfutable\cf2 ][cf][\cf4 \\rawdescrs\cf2 ] == \cf3 nil\cf2 ).if\
-				\{	\cf5 // stream it\cf2 \
+				\{	\cf7 // stream it\cf2 \
 					~crps.analyzeSoundFile(cf.asString);\
-					\cf5 // schedule the updates\cf2 \
+					\cf7 // schedule the updates\cf2 \
 					responder2 = \cf3 OSCresponder\cf2 (~audio[\cf4 \\server\cf2 ].addr, \cf4 '/tr'\cf2 , \{ \cf3 |time,resp,msg|\cf2 \
 						\cf3 AppClock\cf2 .sched(0, \{ \cf3 |tm|\cf2 \
 							analysisArea.children.do(\cf3 _\cf2 .remove);\
@@ -551,7 +553,7 @@
 \pard\pardeftab560\ql\qnatural
 \cf2 					\}).add;\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf2 					\cf5 // schedule the last update			\cf2 \
+\cf2 					\cf7 // schedule the last update			\cf2 \
 					\cf3 AppClock\cf2 .sched(sf.duration + 0.001, \{ \cf3 |tm|\cf2 \
 						analysisArea.children.do(\cf3 _\cf2 .remove);\
 						\cf3 Plotter\cf2 (parent: analysisArea)\
@@ -568,7 +570,7 @@
 						fileListArea[\cf4 \\fileListView\cf2 ].enabled = \cf3 true\cf2 ;\
 						\cf3 nil\cf2 \
 					\});\
-				\} \{ \cf5 // post it if cached \cf2 \
+				\} \{ \cf7 // post it if cached \cf2 \
 					analysisArea.children.do(\cf3 _\cf2 .remove);\
 \pard\pardeftab560\ql\qnatural
 \cf2 					\cf3 Plotter\cf2 (parent: analysisArea)\
@@ -586,15 +588,15 @@
 					\cf3 AppClock\cf2 .sched(0, \{ \cf3 |tm|\cf2  fileListArea[\cf4 \\fileListView\cf2 ].enabled = \cf3 true\cf2  \});\
 				\};\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf2 				[responder, responder2].do(\cf3 _\cf2 .remove; \cf3 _\cf2 .free);	\cf5 // clean up!\cf2 \
+\cf2 				[responder, responder2].do(\cf3 _\cf2 .remove; \cf3 _\cf2 .free);	\cf7 // clean up!\cf2 \
 			\};\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf2 			\cf5 // update the sfviews (close and full) no matter what\cf2 \
+\cf2 			\cf7 // update the sfviews (close and full) no matter what\cf2 \
 			~updateSFViews.value(~gui[\cf4 \\cf\cf2 ], waveformArea[\cf4 \\fullView\cf2 ], waveformArea[\cf4 \\closeView\cf2 ], 0);\
 		\}));\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf5 //// segments area\cf2 \
+\cf7 //// segments area\cf2 \
 ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\segBtns\cf2 ].add(\cf4 \\plusButton\cf2  -> \cf3 SCButton\cf2 (~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\segBtns\cf2 ][\cf4 \\view\cf2 ], \cf3 Rect\cf2 (2, 5, 20, 20))\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 	.states_([[\cf6 "+"\cf2 ,\cf3 Color\cf2 .black,\cf3 Color\cf2 .white]])\
@@ -606,7 +608,7 @@
 		\{\
 			np = 0;\
 			~crps.addSoundFileUnit(~gui[\cf4 \\cf\cf2 ], np, [0, 500]);\
-		\} \{ \cf5 // else\cf2 \
+		\} \{ \cf7 // else\cf2 \
 			tmp = ~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ].collect(\{ \cf3 |unit|\cf2  unit[4..5] \}).sort(\{\cf3 |a,b|\cf2  a[0] > b[0]\});\
 			np = ~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ].size;\
 			~crps.addSoundFileUnit(~gui[\cf4 \\cf\cf2 ], np, [tmp[0][0] + tmp[0][1], 500]);\
@@ -614,11 +616,11 @@
 \
 		~crps.segmentUnits(~gui[\cf4 \\cf\cf2 ]);\
 		tmp = ~newSoundFileUnitRow.value(~gui[\cf4 \\cf\cf2 ], np, ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\segments\cf2 ][\cf4 \\view\cf2 ], waveformArea[\cf4 \\fullView\cf2 ], waveformArea[\cf4 \\closeView\cf2 ]);\
-\cf5 //		"Adding to Views Dictionary.".postln;\cf2 \
+\cf7 //		"Adding to Views Dictionary.".postln;\cf2 \
 		~gui[\cf4 \\soundFileUnitRowViews\cf2 ] = ~gui[\cf4 \\soundFileUnitRowViews\cf2 ].add(np -> tmp);\
-\cf5 //		~gui[\\soundFileUnitRowViews][~gui[\\cp]][0].value_(1);\cf2 \
+\cf7 //		~gui[\\soundFileUnitRowViews][~gui[\\cp]][0].value_(1);\cf2 \
 		waveformArea[\cf4 \\fullView\cf2 ].setSelection(np, ~crps[\cf4 \\sfutable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\units\cf2 ][np][4..5] * 44.1);\
-\cf5 //		(~gui[\\cp] == np).if \{ waveformArea[\\closeView].setSelection(np, ~crps[\\sfutable][~gui[\\cf]][\\units][np][3..4] * 44.1) \};\cf2 \
+\cf7 //		(~gui[\\cp] == np).if \{ waveformArea[\\closeView].setSelection(np, ~crps[\\sfutable][~gui[\\cf]][\\units][np][3..4] * 44.1) \};\cf2 \
 		~scheduleUpdates.value(1);\
 	\});\
 );\
@@ -630,9 +632,9 @@
 		\cf3 var\cf2  sfile = ~gui[\cf4 \\cf\cf2 ];\
 		\cf3 var\cf2  sfid = ~crps[\cf4 \\sfmap\cf2 ].findKeyForValue(~gui[\cf4 \\cf\cf2 ]);\
 		\cf3 var\cf2  waveformArea = ~gui[\cf4 \\tabs\cf2 ][0][\cf4 \\areas\cf2 ][\cf4 \\waveform\cf2 ];\
-		\cf5 // update the last one, filling to duration of sfile\cf2 \
+		\cf7 // update the last one, filling to duration of sfile\cf2 \
 		~crps.updateSoundFileUnit(sfile, last,\
-			dur: (~crps[\cf4 \\sftable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\bfrL\cf2 ].numFrames / 44.1) - ~crps.getSoundFileUnitMetadata(sfid , last)[4]);\
+			dur: (~crps[\cf4 \\sftable\cf2 ][~gui[\cf4 \\cf\cf2 ]][\cf4 \\bfrL\cf2 ].duration * 1000) - ~crps.getSoundFileUnitMetadata(sfid , last)[4]);\
 		(last > 0).if\
 		\{	\
 			((last - 1)..0).do(\{ \cf3 |pid|\cf2 \
@@ -640,7 +642,7 @@
 					dur: (~crps.getSoundFileUnitMetadata(sfid , pid + 1)[4] - ~crps.getSoundFileUnitMetadata(sfid , pid)[4]));\
 			\});\
 		\};\
-		\cf5 //~crps[\\sfutable][~gui[\\cf]][\\units].postcs;\cf2 \
+		\cf7 //~crps[\\sfutable][~gui[\\cf]][\\units].postcs;\cf2 \
 		~gui[\cf4 \\soundFileUnitRowViews\cf2 ].do(\{ \cf3 |line|\cf2  line.pop; line.do(\{ \cf3 |elem|\cf2  elem.remove; elem.free \}) \});\
 		~gui[\cf4 \\soundFileUnitRowViews\cf2 ] = \cf3 Dictionary\cf2 [];\
 		\
@@ -661,12 +663,13 @@
 		~updateSFViews.value(~gui[\cf4 \\cf\cf2 ], waveformArea[\cf4 \\fullView\cf2 ], waveformArea[\cf4 \\closeView\cf2 ], 0);\
 	\});\
 );\
-\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 \
-\cf5 ////====================================================================================\cf2 \
-\cf5 ////\cf2 \
-\cf5 ////		Graph View (tabs.views[1])\cf2 \
+\cf7 ////====================================================================================\cf2 \
+\cf7 ////\cf2 \
+\cf7 ////		Graph View (tabs.views[1])\cf2 \
 \
 ~gui[\cf4 \\tabs\cf2 ][\cf4 \\view\cf2 ].focusActions[1] = \{\
 	\cf6 "focussing!"\cf2 .postln;\
@@ -694,26 +697,28 @@
 \
 \pard\pardeftab560\ql\qnatural
 
-\f1\fs18 \cf5 // specify plot layout\cf2 \
+\f1\fs18 \cf7 // specify plot layout\cf2 \
 \cf3 GUI\cf2 .skin.plot.gridLinePattern = \cf3 FloatArray\cf2 [2, 1];\
 \cf3 GUI\cf2 .skin.plot.fontColor = \cf3 Color\cf2 .white;\
 \cf3 GUI\cf2 .skin.plot.gridColorX = \cf3 Color\cf2 .gray(0.75, 0.25);\
 \cf3 GUI\cf2 .skin.plot.gridColorY = \cf3 Color\cf2 .gray(0.75, 0.25);\
 \cf3 GUI\cf2 .skin.plot.background = \cf3 Color\cf2 .black;\
 \cf3 GUI\cf2 .skin.plot.plotColor = \cf3 Color\cf2 .blue;\
-\cf3 GUI\cf2 .skin.plot.labelX = \cf3 nil\cf2 ; \cf5 //"frames";\cf2 \
-\cf3 GUI\cf2 .skin.plot.labelY = \cf3 nil\cf2 ; \cf5 //"val";
+\cf3 GUI\cf2 .skin.plot.labelX = \cf3 nil\cf2 ; \cf7 //"frames";\cf2 \
+\cf3 GUI\cf2 .skin.plot.labelY = \cf3 nil\cf2 ; \cf7 //"val";
 \f0\fs20 \cf2 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 \
-\cf5 //// display the window + run "app"\cf2 \
+\cf7 //// display the window + run "app"\cf2 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 ~gui[\cf4 \\topWindow\cf2 ].front;\
 \
 \pard\pardeftab560\ql\qnatural
 \cf2 )\
-\
-\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+\cf2 \
+\pard\pardeftab560\ql\qnatural
+\cf2 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 ~gui[\cf4 \\tabs\cf2 ][1][\cf4 \\areas\cf2 ][\cf4 \\unitPlayer\cf2 ][\cf4 \\linkButton\cf2 ].release\

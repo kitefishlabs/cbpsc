@@ -86,17 +86,20 @@ CorpusUnitViewer : UnitSpace {
 		{
 			this.sync;
 //			"building normed array: ".post; this.cArray.postln;
-			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[1].flatten, this.cArray[2].flatten];
+			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,Z, sfid, relid
 	
 			this.groupedTable = Dictionary[];
 			normedArray.flop.do({ |val, ind|	// the grouping
-				//val[3].postln;
-				//this.groupedTable[val[3]].postln;
+				//val[4].postln;
+				//this.groupedTable[val[4]].postln;
 				(this.groupedTable[val[3]] == nil).if
 				{
-					this.groupedTable.add(val[3] -> Dictionary[ind -> normedArray.flop[ind][0..4]]);
+					val[3].postln;
+					normedArray.flop[ind][0..5].postln;
+					val.postln;
+					this.groupedTable.add(val[3] -> Dictionary[ind -> normedArray.flop[ind][0..5]]);
 				} {
-					this.groupedTable[val[3]].add(ind -> normedArray.flop[ind][0..4]);
+					this.groupedTable[val[3]].add(ind -> normedArray.flop[ind][0..5]);
 				};	// completly hashed
 			});
 			this.initSearchTree;
@@ -113,7 +116,7 @@ CorpusUnitViewer : UnitSpace {
 			temp.keys.asArray.sort.do({ |cid|
 				ca = ca.add(temp[cid]);
 			});
-//			"CA: ".post; ca.postln;
+			//"CA: ".post; ca.postln;
 			this.cArray = ca.flop;
 		};
 //		"SYNC: ".post; this.cArray.postln;

@@ -152,7 +152,8 @@ CorpusDB : Dictionary {
 			this[\sfutable][path].add(\rawdescrs -> Array[], \rawmels -> Array[]);
 			this[\analysisTrigger].set(1);
 		});	// the synth will release itself
-		this.mapIDToSF(path, group, mapFlag);					   // store the index -> sfile path mapping
+		this.mapIDToSF(path, group, mapFlag);
+		// store the index -> sfile path mapping
 		^this[\sftable][path.asString][\abfr]
 	}
 	
@@ -179,7 +180,7 @@ CorpusDB : Dictionary {
 		(bounds != nil).if
 		{
 			Post << "Adding sound file unit (to sfutable)...mapping: "; // << this[\sfmap].findKeyForValue(path.asString);
-			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, (this[\sfmap].findKeyForValue(path.asString) + this.sfOffset), relid ];
+			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, this[\sfmap].findKeyForValue(path.asString), relid ];
 			// custom caller responsible!
 			(cid == nil).if { this.cuOffset = this.cuOffset + 1 }; // {this.cuOffset = this.cuOffset.max(cid) + 1 };
 			Post << quad << " ... " << path << Char.nl;
@@ -197,10 +198,13 @@ CorpusDB : Dictionary {
 		var old = this[\sfutable][path][\units][relid];
 		var temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
 		var newmd = md ? old[6..];
-		var newmfccs = mfccs ? this[\sfutable][path][\units][relid][6..];
+		var newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
 		
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
+		
+		this[\sfutable][path][\units][relid].postln;
+		this[\sfutable][path][\mfccs][relid].postln;
 		
 		(sfg != nil).if { this[\sftable][path].add(\sfilegroup -> sfg) };
 	}
@@ -282,7 +286,7 @@ CorpusDB : Dictionary {
 		{
 			this.mapSoundFileUnitsToCorpusUnits;
 		};
-		^this[\cutable].detect({ |item, i| ((item[1] == sfid) && (item[2] == uid)) });
+		^this[\cutable].detect({ |item, i| ((item[2] == sfid) && (item[3] == uid)) });
 	}	
 
 	// map
@@ -292,6 +296,7 @@ CorpusDB : Dictionary {
 			this.clearCorpusUnits;
 			this[\sfutable].do({ |path|
 				path[\units].do({ |pu, index|
+					//[pu[0], (pu ++ path[\mfccs][index][6..]).flatten].postln;
 					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][6..]).flatten); 
 				});
 			});
@@ -415,7 +420,7 @@ CorpusDB : Dictionary {
 			this.mapSoundFileUnitsToCorpusUnits;
 			this[\cutable].keys.asArray.sort.do({ |cid|
 				var drow = this[\cutable][cid];
-				f.write("        <corpusunit sfid=\"" ++ drow[2].asString ++ "\" relid=\"" ++ drow[3].asString ++ "\">" ++ this[\cutable][cid].join($ ).asString ++ "\"</punit>\n");
+				f.write("        <corpusunit sfid=\"" ++ drow[2].asString ++ "\" relid=\"" ++ drow[3].asString ++ "\">" ++ this[\cutable][cid].join($ ).asString ++ "\"</corpusunit>\n");
 			});
 			f.write("    </heading>\n");
 			f.write("</corpusmap>\n");
