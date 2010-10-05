@@ -116,7 +116,7 @@ CorpusDB : Dictionary {
 			this[\sftable][thepath.fullPath][\bfrL].free;
 			(this[\sftable][thepath.fullPath][\bfrR] != nil).if { this[\sftable][thepath.fullPath][\bfrR].free };
 			this[\sftable][thepath.fullPath][\abfr].free;
-			this[\sftable][thepath.fullPath].add(\abfr -> nil, \bfrL -> nil, \bfrR -> nil, \uniqueid -> nil);
+			this[\sftable][thepath.fullPath].add(\abfr -> nil, \bfrL -> nil, \bfrR -> nil, \uniqueid -> nil, \sfilegroup -> nil);
 			this[\sftable].add(thepath.fullPath -> nil);
 		} {
 			"Something has gone horribly wrong; attempting to remove a non-existant path!".postln;
@@ -171,6 +171,7 @@ CorpusDB : Dictionary {
 		(this[\sfgmap][sfgroup] == nil).if { this[\sfgmap].add(sfgroup -> Array[])};
 		this[\sfgmap][sfgroup] = (this[\sfgmap][sfgroup] ++ mapping).flatten;
 		this[\sfmap].add(mapping -> path);
+		this[\sftable][path].add(\sfilegroup -> sfgroup);
 	}
 
 	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil|
@@ -178,7 +179,7 @@ CorpusDB : Dictionary {
 		(bounds != nil).if
 		{
 			Post << "Adding sound file unit (to sfutable)...mapping: "; // << this[\sfmap].findKeyForValue(path.asString);
-			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, this[\sfmap].findKeyForValue(path.asString), relid ];
+			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, (this[\sfmap].findKeyForValue(path.asString) + this.sfOffset), relid ];
 			// custom caller responsible!
 			(cid == nil).if { this.cuOffset = this.cuOffset + 1 }; // {this.cuOffset = this.cuOffset.max(cid) + 1 };
 			Post << quad << " ... " << path << Char.nl;
@@ -200,6 +201,8 @@ CorpusDB : Dictionary {
 		
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
+		
+		(sfg != nil).if { this[\sftable][path].add(\sfilegroup -> sfg) };
 	}
 
 	removeSoundFileUnit { |path, relid|
@@ -314,40 +317,31 @@ CorpusDB : Dictionary {
 			tmpDict.add(tag.getText.asInteger -> tag.getAttribute("name").asSymbol);
 		});
 		(tmpDict != this[\dtable]).if { "Import descriptor list mismatch!".postln; };
-		
-		"sfgroups:".postln;
-		// get sorted array of sfile group index atributes to iterate on
-		sfgroupentries = domdoc.getDocumentElement.getElementsByTagName("sfilegroup");
-		sfgroupentries = sfgroupentries.asArray.sort({|a,b| a.getAttribute("index").asInteger < b.getAttribute("index").asInteger});
-		sfgroupentries.do({ |groupentry|
-			var sfg = groupentry.getAttribute("index").asInteger;
-			[sfg].postln;
-			"sfiles:".postln;
-			// get sorted array of sf entries for each group (sorted by id element) to iterate on
-			sfentries = groupentry.getElementsByTagName("sfile");
-			sfentries = sfentries.asArray.sort({|a,b| a.getElementsByTagName("id")[0].getText.asInteger < b.getElementsByTagName("id")[0].getText.asInteger});
-			sfentries.do({ |entry|
-				var theID = entry.getElementsByTagName("id")[0].getText.asInteger;
-				var theName = entry.getAttribute("name").asString;
-				["...",entry].postln;
-				this.addSoundFile(theName,
-					entry.getElementsByTagName("numchannels")[0].getText.asInteger,
-					entry.getElementsByTagName("uniqueid")[0].getText.asFloat,
-					(sfg + this.sfgOffset)
-				);
-				Post << "MAPPING!: " << theName << " + " << (sfg + this.sfgOffset) << " + " << theID << Char.nl;
-				this.mapIDToSF(theName, (sfg + this.sfgOffset), (theID + this.sfOffset)); // +++ include sfg here!!!!!!!!
-				runningSFOffset = runningSFOffset.max(theID);
-				Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
-			});
-			runningSFGOffset = runningSFGOffset.max(sfg);
+
+		sfentries = domdoc.getDocumentElement.getElementsByTagName("sfile").do({ |entry|
+			var theName = entry.getAttribute("name").asString;
+			var theID = entry.getElementsByTagName("id")[0].getText.asInteger;
+			var theGroup = entry.getElementsByTagName("group")[0].getText.asInteger;
+			["...",entry].postln;
+			this.addSoundFile(theName,
+				entry.getElementsByTagName("numchannels")[0].getText.asInteger,
+				entry.getElementsByTagName("uniqueid")[0].getText.asFloat,
+				(theGroup + this.sfgOffset)
+			);
+			Post << "MAPPING!: " << theName << " + " << (theGroup + this.sfgOffset) << " + " << theID << Char.nl;
+			this.mapIDToSF(theName, (theGroup + this.sfgOffset), (theID + this.sfOffset));
+			runningSFOffset = runningSFOffset.max(theID);
+			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+			runningSFGOffset = runningSFGOffset.max(theGroup);
 			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
-		});		
+		});
+		
+//	});		
 		
 //		"THE MAP:".postln;
 //		this[\sfmap].postln;
 		
-		domdoc.getDocumentElement.getElementsByTagName("punit").do({ |tag, index|
+		domdoc.getDocumentElement.getElementsByTagName("corpusunit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
 //			Post << "descr: " << tmpRow[0] << " -> " << tmpRow << Char.nl;
 			(dDict[tmpRow[1]] == nil).if
@@ -357,21 +351,7 @@ CorpusDB : Dictionary {
 				dDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
 			};				
 		});
-		domdoc.getDocumentElement.getElementsByTagName("munit").do({ |tag, index|
-			var tmpRow = tag.getText.split($ ).asFloat;
-//			Post << "mfcc: " << tmpRow[0] << " -> " << tmpRow << Char.nl;
-			(mDict[tmpRow[1]] == nil).if
-			{
-				mDict.add(tmpRow[1] -> Dictionary[tmpRow[0] -> tmpRow]);
-			} {
-				mDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
-			};			
-		});
-		
-//		dDict.keys.asArray.sort.postln;
-//		mDict.keys.asArray.sort.postln;
-//		
-		"=================".postln;
+
 
 		dDict.keys.asArray.sort.do({ |sfg| // sfilegroup keys
 			var innerDict = dDict[sfg], path, tmp, last;
@@ -381,8 +361,8 @@ CorpusDB : Dictionary {
 				path = this[\sfmap][tmp[2]].asString;
 //				Post << "path: " << path << Char.nl;
 				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfg + this.sfgOffset).asInteger) - 1;
-				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[key][6..]).flatten;
-				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ mDict[sfg][key][6..]).flatten;
+				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[key][6..15]).flatten;
+				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ innerDict[key][16..]).flatten;
 				
 				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
 				
@@ -415,26 +395,28 @@ CorpusDB : Dictionary {
 				// entry[\bfrL].path.postln;
 					sfile.openRead(entry[\bfrL].path.asString);
 					f.write("        <sfile name=\"" ++ entry[\bfrL].path.asString ++ "\">\n");
+					f.write("            <group>" ++ entry[\sfilegroup].asString ++ "</group>\n");
 					f.write("            <id>" ++ this[\sfmap].findKeyForValue(entry[\bfrL].path.asString).asString ++ "</id>\n");
 					f.write("            <uniqueid>" ++ entry[\uniqueid].asString ++ "</uniqueid>\n");
 					f.write("            <duration>" ++ (entry[\bfrL].numFrames / entry[\bfrL].sampleRate) ++ "</duration>\n");
-					f.write("            <numchannels>" ++ entry[\bfrL].numChannels ++ "</numchannels>\n");
+					((entry[\bfrL] != nil) && (entry[\bfrR] != nil)).if
+					{
+						f.write("            <numchannels>" ++ 2 ++ "</numchannels>\n");
+					} {
+						f.write("            <numchannels>" ++ 1 ++ "</numchannels>\n");
+					};
 					f.write("            <sr>" ++ entry[\bfrL].sampleRate ++ "</sr>\n");
 					f.write("            <samptype>" ++ sfile.sampleFormat ++ "</samptype>\n");
-				
 					f.write("        </sfile>\n");
 				};
 			});
 			f.write("    </heading>\n");
 			f.write("    <heading name=\"UNITS\">\n");
-			this[\sfutable].do({|upath|
-				upath[\units].do({ |row, num|
-					f.write("        <punit sfid=\"" ++ row[1].asString ++ "\" relid=\"" ++ row[2].asString ++ "\">" ++ row.join($ ).asString ++ "</punit>\n");
-					f.write("        <munit sfid=\"" ++ row[1].asString ++ "\" relid=\"" ++ row[2].asString ++ "\">" ++ upath[\mfccs][num].join($ ).asString ++ "</munit>\n");
-				});
-
+			this.mapSoundFileUnitsToCorpusUnits;
+			this[\cutable].keys.asArray.sort.do({ |cid|
+				var drow = this[\cutable][cid];
+				f.write("        <corpusunit sfid=\"" ++ drow[2].asString ++ "\" relid=\"" ++ drow[3].asString ++ "\">" ++ this[\cutable][cid].join($ ).asString ++ "\"</punit>\n");
 			});
-			
 			f.write("    </heading>\n");
 			f.write("</corpusmap>\n");
 			
