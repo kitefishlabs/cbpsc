@@ -1,3 +1,14 @@
+//This file is part of cbpsc (version 0.1.1).
+//
+//cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+//
+//cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//
+//You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
+//
+// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+//
+
 CorpusDB : Dictionary {
 
 	var <>sfOffset, <>cuOffset, <>sfgOffset, <>pFactor, <>soundFileUnitsMapped;
@@ -257,7 +268,11 @@ CorpusDB : Dictionary {
 			len = (cell[5] / 40).ceil.asInteger;
 			high = low + len;
 			descrs.do({ |row, ix| ra = ra.add(row[low..high].mean.asStringPrec(4).asFloat) });
-			mfccs.do({ |row, ix| rba = rba.add(row[low..high].mean.asStringPrec(6).asFloat) });
+			mfccs.do({ |row, ix|
+				var dezeroed = row[low..high];
+				dezeroed = dezeroed.reject({|item| (item.isNumber != true) });
+				rba = rba.add(dezeroed.mean.asStringPrec(6).asFloat);
+			});
 			this[\sfutable][path][\units][indx] = this[\sfutable][path][\units][indx][0..5].add(ra).flatten;
 			this[\sfutable][path][\mfccs][indx] = this[\sfutable][path][\mfccs][indx][0..5].add(rba).flatten;
 		});
@@ -305,16 +320,44 @@ CorpusDB : Dictionary {
 		^this[\cutable]
 	}
 
+	mapBySFRelID { 
+		var fileMap = Dictionary[];
+		var metadata = this.mapSoundFileUnitsToCorpusUnits;
+		(metadata.class == Dictionary).if
+		{
+			metadata.keys.asArray.sort.postln;
+			metadata.keys.asArray.sort.do({ |uid| 
+				var filenum = metadata[uid][2];
+				(fileMap[filenum] == nil).if
+				{
+					fileMap.add(filenum -> Dictionary[metadata[uid][3] -> metadata[uid]]);
+				} {
+					fileMap[filenum].add(metadata[uid][3] -> metadata[uid]);
+				};
+			});
+		} {	
+			metadata.sort.do({ |unit| 
+				var filenum = unit[1];
+				(fileMap[filenum] == nil).if
+				{
+					fileMap.add(filenum -> Dictionary[unit[3] -> unit]);
+				} {
+					fileMap[filenum].add(unit[3] -> unit);
+				};
+			});
+		};
+		^fileMap
+	}
+
 // import & export entire corpora
 	importCorpusFromXML { |server, path|
-		var domdoc, tmpDict = Dictionary[], dDict = Dictionary[], mDict = Dictionary[];
-		var sfgroupentries, sfentries, runningCUOffset = 0, runningSFOffset = 0, runningSFGOffset = 0;
+		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
+		var runningCUOffset = 0, runningSFOffset = 0, runningSFGOffset = 0;
 		
 		"Adding File Entry from XML: ".post;
 		path.postln;
 		"=============".postln;
 		
-//		this.initCorpus(path, server);
 		Post << "Starting from sf offset: " << this.sfOffset << " + cu Offset: " << this.cuOffset << " + sfg Offset: " << this.sfgOffset << Char.nl;
 		
 		domdoc = DOMDocument.new(path);
@@ -323,63 +366,100 @@ CorpusDB : Dictionary {
 		});
 		(tmpDict != this[\dtable]).if { "Import descriptor list mismatch!".postln; };
 
-		sfentries = domdoc.getDocumentElement.getElementsByTagName("sfile").do({ |entry|
-			var theName = entry.getAttribute("name").asString;
+		// fill 2 dicts with sfgroups ---> sfiles ---> ... mapping pathes and sf metadata for the first and unit metadata for the latter
+		domdoc.getDocumentElement.getElementsByTagName("sfile").do({ |entry|
 			var theID = entry.getElementsByTagName("id")[0].getText.asInteger;
 			var theGroup = entry.getElementsByTagName("group")[0].getText.asInteger;
-			["...",entry].postln;
-			this.addSoundFile(theName,
-				entry.getElementsByTagName("numchannels")[0].getText.asInteger,
-				entry.getElementsByTagName("uniqueid")[0].getText.asFloat,
-				(theGroup + this.sfgOffset)
-			);
-			Post << "MAPPING!: " << theName << " + " << (theGroup + this.sfgOffset) << " + " << theID << Char.nl;
-			this.mapIDToSF(theName, (theGroup + this.sfgOffset), (theID + this.sfOffset));
-			runningSFOffset = runningSFOffset.max(theID);
-			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
-			runningSFGOffset = runningSFGOffset.max(theGroup);
-			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
+			["...",theID,theGroup,entry].postln;
+			(sfDict[theGroup] == nil).if
+			{
+				sfDict.add(theGroup -> Dictionary[theID -> entry]);
+			} {
+				sfDict[theGroup].add(theID -> entry);
+			};
 		});
-		
-//	});		
-		
-//		"THE MAP:".postln;
-//		this[\sfmap].postln;
 		
 		domdoc.getDocumentElement.getElementsByTagName("corpusunit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
 //			Post << "descr: " << tmpRow[0] << " -> " << tmpRow << Char.nl;
-			(dDict[tmpRow[1]] == nil).if
+			(metadataDict[tmpRow[1]] == nil).if
 			{
-				dDict.add(tmpRow[1] -> Dictionary[tmpRow[0] -> tmpRow]);
+				metadataDict.add(tmpRow[1] -> Dictionary[tmpRow[0] -> tmpRow]);
 			} {
-				dDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
+				metadataDict[tmpRow[1]].add(tmpRow[0] -> tmpRow);
 			};				
 		});
 
+		// iterate the sorted keys (2 levels) and perform the actual addititon of data and metadata to the database
+		sfDict.keys.asArray.sort.do({ |sfgrp|
+			var sfEntries = sfDict[sfgrp];
+			var descriptorRows = metadataDict[sfgrp], path, tmp, last;
+			["sfgroup",sfgrp].postln;
 
-		dDict.keys.asArray.sort.do({ |sfg| // sfilegroup keys
-			var innerDict = dDict[sfg], path, tmp, last;
+			sfDict[sfgrp].keys.asArray.sort.do({ |sfid|
+				["sfid",sfid].postln;
+
+				this.addSoundFile(
+					sfEntries[sfid].getAttribute("name").asString,
+					sfEntries[sfid].getElementsByTagName("numchannels")[0].getText.asInteger,
+					sfEntries[sfid].getElementsByTagName("uniqueid")[0].getText.asFloat,
+					(sfgrp + this.sfgOffset)
+				);
+				Post << "MAPPING!: " << sfEntries[sfid] << " + " << (sfgrp + this.sfgOffset) << " + " << sfid << Char.nl;
+				this.mapIDToSF(sfEntries[sfid].getAttribute("name").asString, (sfgrp + this.sfgOffset), (sfid + this.sfOffset));
+				runningSFOffset = runningSFOffset.max(sfid);
+				Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+				runningSFGOffset = runningSFGOffset.max(sfgrp);
+				Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
+			});
 			
-			innerDict.keys.asArray.sort.do({ |key|
-				tmp = innerDict[key];
-				path = this[\sfmap][tmp[2]].asString;
+			descriptorRows.keys.asArray.sort.do({ |sfid|
+				tmp = descriptorRows[sfid];
+				path = this[\sfmap][(tmp[2] + this.sfOffset)].asString;
 //				Post << "path: " << path << Char.nl;
-				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfg + this.sfgOffset).asInteger) - 1;
-				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[key][6..15]).flatten;
-				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ innerDict[key][16..]).flatten;
-				
+
+				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfgrp + this.sfgOffset).asInteger) - 1;
+				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ descriptorRows[sfid][6..15]).flatten;
+				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ descriptorRows[sfid][16..]).flatten;
 				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
-				
-			});			
+			});
+			this.sfOffset = this.sfOffset + runningSFOffset + 1;
 		});
-		
-		// update cuOffset, sfOffset, sfgOffset;
-		this.cuOffset = this.cuOffset + runningCUOffset + 1;
-		this.sfOffset = this.sfOffset + runningSFOffset + 1;
+
 		this.sfgOffset = this.sfgOffset + runningSFGOffset + 1;
+		this.cuOffset = this.cuOffset + runningCUOffset + 1;
 		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
 
+		
+//		"THE MAP:".postln;
+//		this[\sfmap].postln;
+
+
+//		dDict.keys.asArray.sort.do({ |sfg| // sfilegroup keys
+//			var innerDict = dDict[sfg], path, tmp, last;
+//			
+//			innerDict.keys.asArray.sort.do({ |sfid|
+//				tmp = innerDict[sfid];
+//				path = this[\sfmap][tmp[2]].asString;
+////				Post << "path: " << path << Char.nl;
+//				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfg + this.sfgOffset).asInteger) - 1;
+//				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[sfid][6..15]).flatten;
+//				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ innerDict[sfid][16..]).flatten;
+//				
+//				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
+//				
+//			});			
+//		});
+		
+		// update cuOffset, sfOffset, sfgOffset;
+//		this.cuOffset = this.cuOffset + runningCUOffset + 1;
+//		this.sfOffset = this.sfOffset + runningSFOffset + 1;
+//		this.sfgOffset = this.sfgOffset + runningSFGOffset + 1;
+//		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
+
+		// clean up
+		sfDict.free; metadataDict.free;
+		
 		this.soundFileUnitsMapped = false;
 	}
 
