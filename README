@@ -8,4 +8,12 @@ See http://crprsnrs.corpora-sonorus.com/text/cbpsc/1-getting-started for detaile
 
 A growing amount of documentation can be found at http://crprsnrs.corpora-sonorus.com/text .
 
+KNOWN ISSUES (as of 10.15.10)
+
+These are a few things you might encounter. They will all hopefully be fixed as soon as possible.
+
+1. Watch the Server GUI when importing large amounts of audio data. It may turn itself 'inactive' at times when under a heavy computational load. You must wait a few seconds until the Server is active to continue using the GUI without errors.
+
+2. Import/export is still buggy. This will be polished in version 0.1.2.
+
 Email me (Tom Stoll) with questions: tms@corpora-sonorus.com

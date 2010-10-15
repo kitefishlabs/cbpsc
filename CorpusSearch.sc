@@ -8,6 +8,8 @@
 //
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
+// CorpusSearch.sc
+// Copyright 2010, Thomas Stoll
 
 CorpusSearch : Dictionary {
 	var <>corpus, <>cArray, <>tree, <>stats, <>normedTree;

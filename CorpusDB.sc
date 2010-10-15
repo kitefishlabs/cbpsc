@@ -8,6 +8,8 @@
 //
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
+// CorpusDB.sc
+// (c) 2010, Thomas Stoll
 
 CorpusDB : Dictionary {
 

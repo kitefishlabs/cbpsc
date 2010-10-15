@@ -6,10 +6,10 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// used in cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
 // UnitSpace.sc
-// (c) 2010, Thomas Stoll - www.corpora-sonorus.com
+// Copyright 2010, Thomas Stoll
 // based on ParaSpace:
 // (c) 2006, Thor Magnusson - www.ixi-software.net
 // GNU licence - google it.

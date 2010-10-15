@@ -8,6 +8,8 @@
 //
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
+// CorpusUnitViewer.sc
+// (c) 2010, Thomas Stoll
 
 CorpusUnitViewer : UnitSpace {
 	var <>parent, <>clients;
@@ -97,7 +99,7 @@ CorpusUnitViewer : UnitSpace {
 		{
 			this.sync;
 //			"building normed array: ".post; this.cArray.postln;
-			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,Z, sfid, relid
+			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,S, sfid, relid
 	
 			this.groupedTable = Dictionary[];
 			normedArray.flop.do({ |val, ind|	// the grouping
