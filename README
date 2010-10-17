@@ -1,12 +1,24 @@
-Drag the 4 .sc files to your Extensions folder (~/Library/Application Support/SuperCollider/Extensions or /Library/Application Support/SuperCollider/Extensions).
+cbpsc is beta software. Some might consider it alpha, but I (Tom Stoll) have been testing it and fixing bugs for several weeks, so I consider it to work well enough to merit a beta designation. That said, you may encounter bugs and/or undocumented features.
 
-Install (using Quarks.gui command) KDTree and TabbedView. 
+cbpsc has been tested for SC 3.4 "with-extras" on a MacBook Pro (first generation Core Duo), and should work on any recent Mac. It uses two classes that are not in the included classes, "KDTree" and "TabbeView".
 
-Don't forget to recompile the library (apple-K).
+To install:
 
-See http://crprsnrs.corpora-sonorus.com/text/cbpsc/1-getting-started for detailed instructions.
+  1. Unzip the archive or clone the Git repo.
+  2. Drag the 4 .sc files to your Extensions folder (~/Library/Application Support/SuperCollider/Extensions or /Library/Application Support/SuperCollider/Extensions).
+  3. Recompile sclang (apple-K).
+
+To Install KDTree and TabbedView:
+
+  1. Evaluate "Quarks.gui".
+  2. When the window appears, select "KDTree" and "TabbedView". Their buttons should turn blue and change from "-" to "+".
+  3. Click the "Save" button at the top right.
+  4. Don't forget to recompile the library (apple-K).
+
+To Run the GUI: open "gui.rtf" and follow the directions in the numbered comments. See http://crprsnrs.corpora-sonorus.com/text/cbpsc/1-getting-started for more detailed instructions. Read below for some known issues.
 
 A growing amount of documentation can be found at http://crprsnrs.corpora-sonorus.com/text .
+
 
 KNOWN ISSUES (as of 10.15.10)
 
@@ -15,5 +27,7 @@ These are a few things you might encounter. They will all hopefully be fixed as 
 1. Watch the Server GUI when importing large amounts of audio data. It may turn itself 'inactive' at times when under a heavy computational load. You must wait a few seconds until the Server is active to continue using the GUI without errors.
 
 2. Import/export is still buggy. This will be polished in version 0.1.2.
+
+
 
 Email me (Tom Stoll) with questions: tms@corpora-sonorus.com
