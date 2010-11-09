@@ -1,6 +1,6 @@
 cbpsc is beta software. Some might consider it alpha, but I (Tom Stoll) have been testing it and fixing bugs for several weeks, so I consider it to work well enough to merit a beta designation. That said, you may encounter bugs and/or undocumented features.
 
-cbpsc has been tested for SC 3.4 "with-extras" on a MacBook Pro (first generation Core Duo), and should work on any recent Mac. It uses two classes that are not in the included classes, "KDTree" and "TabbeView".
+cbpsc has been tested for SC 3.4 "with-extras" on a MacBook Pro (first generation Core Duo), and should work on any recent Mac. It uses two classes that are not in the included classes, "KDTree" and "TabbedView".
 
 To install:
 
