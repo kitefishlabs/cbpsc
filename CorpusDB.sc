@@ -48,13 +48,12 @@ CorpusDB : Dictionary {
 		^this
 	}
 
-	buildAnalysisSynth { |pfact=0.6, res=25, reportInterval=10|
+	buildAnalysisSynth { |pfact=0.6|
 		this.put( \ansynthdef,
-			SynthDef(\analyzer, { |srcbufNum, start, dur, savebufNum, inTrig|
-				var trig, env, in, chain, freq, hasFreq, power, flatness, centroid, zerox, flux, rolloff, slope, spread, crest, mfcc, line, driver, driver2;
-				trig = InTrig.kr(inTrig);
-				env = EnvGen.kr(Env.linen(0.01, (dur - 0.02), 0.01, 1), gate: trig, doneAction: 2);
-				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum), startPos: start, trigger: trig) * env;
+			SynthDef(\analyzerNRT, { |srcbufNum=0, start=0, dur=1, savebufNum=1, srate, hop = 1024|
+				var env, in, chain, freq, hasFreq, power, flatness, centroid, zerox, flux, rolloff, slope, spread, crest, mfcc, driver;
+				env = EnvGen.kr(Env.linen(0.01, (dur - 0.02), 0.01, 1), gate: 1, doneAction: 2);
+				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum), startPos: start) * env;
 				chain = FFT(LocalBuf(2048,1), in);
 			
 				# freq, hasFreq = 	Tartini.kr(in, pfact);       // Seems to be better than pitch.kr
@@ -64,29 +63,24 @@ CorpusDB : Dictionary {
 				zerox =			ZeroCrossing.ar(in);
 				flux =			FFTFlux.kr(chain, 0.9);      //spectral flux...averaged over a segment or subsegment?
 				rolloff = 		SpecPcile.kr(chain, 0.9);    // rolloff @ 90%
-				//rumble = 		FFTRumble.kr(chain);         // have to measure f0 first!
 				slope = 			FFTSlope.kr(chain);
-				spread =			FFTSpread.kr(chain);
-				crest =			FFTCrest.kr(chain);
-				
+				spread =			FFTSpread.kr(chain,centroid);
+				crest =			FFTCrest.kr(chain, 100, 2000);
 				mfcc =			MFCC.kr(chain);
-
-				// gather all the metadata for each analysis window into a list
-				line = [freq, hasFreq, power.ampdb.max(-120), (10 * flatness.log).max(-120), centroid, (zerox / 2048), (flux * 100), rolloff, (slope * 10000), (spread * 0.000001), crest, mfcc].flatten;
 				// log the metadata into a buffer and signal sclang to read from the buffer
-				driver = Impulse.kr( 44100 / 1024 );
-				Logger.kr( line, driver, savebufNum );
-				SendReply.kr( driver, \frame, line, 25 );
-				// signal sclang to redraw the analysis data at regular intervals
-				driver2 = reportInterval / BufDur.kr(srcbufNum);
-				SendTrig.kr( Impulse.kr(driver2), reportInterval, savebufNum ); 
-				// play the sound that is being analyzed
-				Out.ar(0, in);
-			}));
-		this[\ansynthdef].send(this[\server]);	// must kill old synthdef if nec. !!!!???
+				driver = Impulse.kr( srate / hop );
+				Logger.kr(
+					[(freq * 0.0001), hasFreq, power, flatness, (centroid * 0.0001), (zerox / 16384), (flux * 10), (rolloff * 0.000001), (slope * 1000), (spread * 0.00000001), (crest * 0.01), mfcc].flatten,
+					driver,
+					savebufNum
+				);
+				//Out.ar(0, in);
+			})
+		);
+		this[\ansynthdef].writeDefFile;
 	}
 	
-	addSoundFile { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil|     // TODO: Add filtering to ensure that just sound files are added?
+	addSoundFile { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, importFlag=nil|     // TODO: Add filtering to ensure that just sound files are added?
 		var thepath = PathName.new(path.asString), flag;
 		Post << "Adding Entry:   ===============================  " << path.asString;
 		Post << " (" << numChannels << " channels)." << Char.nl;
@@ -99,23 +93,22 @@ CorpusDB : Dictionary {
 					Dictionary[\abfr -> nil, \uniqueid -> flag, \channels -> numChannels, \sfilegroup -> (sfGrpID ? 0)]); // the nils are dummy keys (reminders)
 			// read the sound file into a buffer and store a reference to that buffer in the DB
 			this[\sfutable].add(thepath.fullPath -> Dictionary[\mfccs -> nil, \units -> nil]);
-			
-			(numChannels == 1).if
-			{
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr|
-					this[\sftable][thepath.fullPath].add(\bfrL -> bfr);
-					// start the prov. unit table entry for this file
-				});
-			};
-			(numChannels == 2).if
-			{
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [0], { |bfr|
-					this[\sftable][thepath.fullPath].add(\bfrL -> bfr);				});
-				Buffer.readChannel(this[\server], thepath.fullPath, 0, -1, [1], { |bfr|
-					this[\sftable][thepath.fullPath].add(\bfrR -> bfr);
-				});
-			};
+			(importFlag != nil).if { this.importSoundFileToBuffer(thepath.fullPath) };
 			^thepath.fullPath		// returns the path
+		};
+		^nil
+	}
+	
+	importSoundFileToBuffer { |path|
+		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
+				this[\sftable][path].add(\bfrL -> bfrL);
+			});
+		(this[\sftable][path][\channels] == 2).if
+		{
+			"Adding Right Channel!".postln;
+			Buffer.readChannel(this[\server], path, 0, -1, [1], { |bfrR|
+				this[\sftable][path].add(\bfrR -> bfrR);
+			});
 		};
 		^nil
 	}
@@ -134,40 +127,70 @@ CorpusDB : Dictionary {
 		} {
 			"Something has gone horribly wrong; attempting to remove a non-existant path!".postln;
 		};
-//		this[\sftable][thepath.fullPath].postln;
 	}
+
+	analyzeSoundFile { |path, mapFlag=nil, group=0|
+		var fullpath, dir, file, ext, pBuf, aBuf, sFile, oscList;
+		var timeout = 9999, res = 0, thebuffer, ary;
+
+		fullpath = PathName.new(path.asString);
+		dir = fullpath.pathOnly;
+		file = fullpath.fileNameWithoutExtension;
+		ext = fullpath.extension;
+		fullpath = fullpath.fullPath.asString;
+
+		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
+		"Dur: ".post; sFile.duration.postln;
+		
+		pBuf = this[\server].bufferAllocator.alloc(1);
+		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 11);
+		aBuf.postln;
+		
+		TempoClock.default.tempo = 1;
+		oscList = [
+			[0.0,					[\b_allocRead, pBuf, fullpath],
+									[\b_alloc, aBuf, (sFile.numFrames / 1024).ceil, 35] ],
+			[0.01,					[\s_new, \analyzerNRT, -1, 0, 0, \srcbufNum, pBuf, \start, 0, \dur, sFile.duration, \savebufNum, aBuf, \srate, sFile.sampleRate]],
+			[(sFile.duration + 0.02),	[\b_write, aBuf, (dir ++ file ++ ".md.aiff"), "aiff", "int32"]],
+			// don't free any buffers (yet)
+			[(sFile.duration + 0.03),	[\c_set, 0, 0]]
+		];
+		Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
 	
-	analyzeSoundFile { |path, mapFlag=nil, invertFlag=false, group=0|
-		var pbuf, abuf, thesynth, mapping;
-		// the 'play' buffer for the analysis:
-		(invertFlag == false).if { pbuf = this[\sftable][path][\bfrL] } { pbuf = this[\sftable][path][\bfrR] };
-		"Analyzing: ".post; pbuf.bufnum.post; " with duration: ".post; pbuf.duration.postln;
-
-		(this[\responder] != nil).if { this[\responder].remove };
-		this.add(\responder -> OSCresponder(this[\server].addr,'/frame', { |time,resp,msg|
-			//msg.postln;
-			this.addRawMetadata(path, msg[3..13].asArray, msg[14..].asArray);
-		}));
-		//this[\responder].postln;
-		this[\responder].add;
-		this.add(\analysisTrigger -> Bus.control(this[\server], 1));
-
-		// allocate a buffer for the analysis metadata, and fire off the analysis synth
-		abuf = Buffer.alloc(this[\server], (pbuf.duration * (( 44100 / 1024 ) * 1.01)).ceil, 11, //25.25
-		{ |an|
-			//an.bufnum.postln;
-			Synth(this[\ansynthdef].name.asSymbol, 
-				[\srcbufNum, pbuf.bufnum,
-				\start, 0, \dur, (pbuf.duration * 1.01),
-				\savebufNum, an.bufnum,
-				\inTrig, this[\analysisTrigger]]);
-			this[\sftable][path.asString][\abfr] = an;   // store a reference to the synth [is this necessary?]
-			this[\sfutable][path].add(\rawdescrs -> Array[], \rawmels -> Array[]);
-			this[\analysisTrigger].set(1);
-		});	// the synth will release itself
-		this.mapIDToSF(path, group, mapFlag);
-		// store the index -> sfile path mapping
-		^this[\sftable][path.asString][\abfr]
+		0.01.wait;
+		while({
+			res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
+			//((limit % 10) == 0).if { res.postln };
+			(res == 0) and: {(timeout = timeout - 1) > 0}
+		},{
+			0.1.wait;
+		});
+	
+		0.01.wait;
+		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
+		thebuffer = Buffer.read(this[\server], (dir ++ file ++ ".md.aiff"), action: { |bfr|
+			bfr.loadToFloatArray(action: { |array|
+				var mults = [10000, 1, 1, 1, 10000, 8, 1, 1000000, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1];
+				//(freq * 0.0001), hasFreq, power, flatness, (centroid * 0.0001), (zerox / 16384), (flux * 10), (rolloff * 0.000001), (slope * 1000), (spread * 0.000000001), (crest * 0.01), mfcc
+				//Post << "ARRAY: " << array.asArray << Char.nl;
+				ary = array.clump(35).flop;
+				ary = ary.collect({|row, index| row * mults[index]});
+				this.addRawMetadata(
+					path,
+					ary[0..10].flop,
+					ary[11..].flop
+				);
+				// why waste the memory?
+				this[\sftable][fullpath][\abfr] = bfr;
+			});
+			// check for stereo/mono here
+			// and import 2/1 Buffers and add them to \sftable
+			this.importSoundFileToBuffer(fullpath);
+			this.mapIDToSF(fullpath, group, mapFlag);
+			"DONE".postln;
+			sFile.free;
+		});
+		
 	}
 	
 	mapIDToSF { |path, sfgroup=0, customMap=nil|
@@ -253,9 +276,12 @@ CorpusDB : Dictionary {
 		{
 			// if tartiniHasFreq == 0, sub in pFactor...the min. allowed periodicity (this skews the median values less, perhaps?)
 			(descr[1] == 0).if { descr[1] = last } { last = descr[1] };
+			this[\sfutable][path][\rawdescrs] = this[\sfutable][path][\rawdescrs].add(descriptors).unbubble;
 		};
-		this[\sfutable][path][\rawdescrs] = this[\sfutable][path][\rawdescrs].add(descriptors);
-		this[\sfutable][path][\rawmels] = this[\sfutable][path][\rawmels].add(mels);
+		(mels != nil).if
+		{
+			this[\sfutable][path][\rawmels] = this[\sfutable][path][\rawmels].add(mels).unbubble;
+		}
 	}
 
 	// raw analysis data -> segmented metadata (desriptors + mfccs)
