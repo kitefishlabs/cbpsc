@@ -1,66 +1,66 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf320
 {\fonttbl\f0\fnil\fcharset0 Monaco;\f1\fnil\fcharset0 Menlo-Regular;}
-{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue0;\red0\green0\blue191;
-\red96\green96\blue96;}
+{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue191;\red96\green96\blue96;
+}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
 
-\f0\fs18 \cf2 //This file is part of cbpsc (version 0.1.1).\cf3 \
-\cf2 //\cf3 \
-\cf2 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\cf3 \
-\cf2 //\cf3 \
-\cf2 //cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\cf3 \
-\cf2 //\cf3 \
-\cf2 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.\cf3 \
-\cf2 //\cf3 \
-\cf2 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com\cf3 \
-\cf2 //\cf3 \
-\cf2 // CoorpusUnitViewer+UnitSpace.help.rtf\cf3 \
-\cf2 // Copyright 2010, Thomas Stoll\cf3 \
+\f0\fs18 \cf2 //This file is part of cbpsc (version 0.1.2).\cf0 \
+\cf2 //\cf0 \
+\cf2 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\cf0 \
+\cf2 //\cf0 \
+\cf2 //cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\cf0 \
+\cf2 //\cf0 \
+\cf2 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.\cf0 \
+\cf2 //\cf0 \
+\cf2 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com\cf0 \
+\cf2 //\cf0 \
+\cf2 // CoorpusUnitViewer+UnitSpace.help.rtf\cf0 \
+\cf2 // Copyright 2010, Thomas Stoll\cf0 \
 \
-\cf2 // This is a documentation file for the UnitSpace class and the CorpusUnitViewer class.\cf3 \
-\cf2 // For the moment this document is very bare-bones, highlighting a few of the most important functions. This class is used within cbpsc as the View componenent within a Model-View-Controller-like paradigm. For the puposes of that software, the CorpusUnitViewer class inherits from UnitSpace and provides most of the Controller functionality. Like its antecedent ParaSpace, UnitSpace can be used in any of a number of ways to display sets of data.\cf3 \
+\cf2 // This is a documentation file for the UnitSpace class and the CorpusUnitViewer class.\cf0 \
+\cf2 // For the moment this document is very bare-bones, highlighting a few of the most important functions. This class is used within cbpsc as the View componenent within a Model-View-Controller-like paradigm. For the puposes of that software, the CorpusUnitViewer class inherits from UnitSpace and provides most of the Controller functionality. Like its antecedent ParaSpace, UnitSpace can be used in any of a number of ways to display sets of data.\cf0 \
 \
-\cf2 // ****Disclaimer: this is much easier to understand if you know OOP principles...\cf3 \
+\cf2 // ****Disclaimer: this is much easier to understand if you know OOP principles...\cf0 \
 \
-\cf2 // Creating an instance of UnitSpace. This instance must be contained within a ScrollView, so that mouse clicks and keystrokes are registered.\cf3 \
+\cf2 // Creating an instance of UnitSpace. This instance must be contained within a ScrollView, so that mouse clicks and keystrokes are registered.\cf0 \
 (\
-w = \cf4 Window\cf3 (\cf5 "UnitSpace Demo"\cf3 , \cf4 Rect\cf3 (100, 400, 400, 300));\
-v = \cf4 ScrollView\cf3 (w, \cf4 Rect\cf3 (0, 0, 400, 300));\
+w = \cf3 Window\cf0 (\cf4 "UnitSpace Demo"\cf0 , \cf3 Rect\cf0 (100, 400, 400, 300));\
+v = \cf3 ScrollView\cf0 (w, \cf3 Rect\cf0 (0, 0, 400, 300));\
 \
-c = \cf4 CorpusDB\cf3 .new...\
+c = \cf3 CorpusDB\cf0 .new...\
 u = 
-\f1 \cf4 CorpusUnitViewer\cf3 (v, \cf4 Rect\cf3 (0,0, 380, 280), c, 5, 6, 7)\
+\f1 \cf3 CorpusUnitViewer\cf0 (v, \cf3 Rect\cf0 (0,0, 380, 280), c, 5, 6, 7)\
 ...
 \f0 \
 w.front;\
 )\
-\cf2 // If the corpus were populated, the above would display the corpus' units where "5, 6, 7" refer to columns corresponding to descriptors in the database. If you look through CorpusUnitViewer or UnitSpace, there is a lot of functionality. A few important metods:\cf3 \
+\cf2 // If the corpus were populated, the above would display the corpus' units where "5, 6, 7" refer to columns corresponding to descriptors in the database. If you look through CorpusUnitViewer or UnitSpace, there is a lot of functionality. A few important metods:\cf0 \
 \
-\cf2 // 1. create/deleteNode\cf3 \
-\cf2 // CorpusUnitViewer, the subclass of UnitSpace, handles converting musical metadata values to values suitable for displaying on a 2-dimensional graph, and these are the functions that create and destroy nodes.\cf3 \
+\cf2 // 1. create/deleteNode\cf0 \
+\cf2 // CorpusUnitViewer, the subclass of UnitSpace, handles converting musical metadata values to values suitable for displaying on a 2-dimensional graph, and these are the functions that create and destroy nodes.\cf0 \
 u.createNode(x-coordinate, y-coordinate, color);\
 u.deleteNode(node-number, optional refresh flag);\
 \
-\cf2 // The createNode method actually calls other methods to create the node...\cf3 \
+\cf2 // The createNode method actually calls other methods to create the node...\cf0 \
 \
-\cf2 // 2. node.(outlinecolor|width|height|setLoc_|setSize_|setState)\cf3 \
-\cf2 // These are all methods that manipulate the state of appearance of an individual node. A node is actually a separate class called UnitNode, accessible through UnitSpace and its subclasses. You can find examples of these calls in both classes.\cf3 \
-\cf2 // Within a CorpusUnitViewer or UnitSpace itself, assuming an existant UnitNode 'node':\cf3 \
-node.outlinecolor = \cf4 Color\cf3 .red;\
+\cf2 // 2. node.(outlinecolor|width|height|setLoc_|setSize_|setState)\cf0 \
+\cf2 // These are all methods that manipulate the state of appearance of an individual node. A node is actually a separate class called UnitNode, accessible through UnitSpace and its subclasses. You can find examples of these calls in both classes.\cf0 \
+\cf2 // Within a CorpusUnitViewer or UnitSpace itself, assuming an existant UnitNode 'node':\cf0 \
+node.outlinecolor = \cf3 Color\cf0 .red;\
 node.setNodeSize_(index, 25, 50);\
-node.setNodeState_(index, \cf5 "foo000"\cf3 );\
+node.setNodeState_(index, \cf4 "foo000"\cf0 );\
 \
-\cf2 // These methods are used both to create and change the inernal states of the nodes. setLoc_ is only accessible to methods that convert metadata to drawing coordinates. setLoc_ can be used to move a node if the appropriate code is added to a mouse/nodeDownAction.\cf3 \
+\cf2 // These methods are used both to create and change the inernal states of the nodes. setLoc_ is only accessible to methods that convert metadata to drawing coordinates. setLoc_ can be used to move a node if the appropriate code is added to a mouse/nodeDownAction.\cf0 \
 \
-\cf2 // 3. Grid\cf3 \
+\cf2 // 3. Grid\cf0 \
 \
-\cf2 // A grid is imposed on every UnitSpace. It defaults to a 1-by-1, but can be set larger. The number of divisions along the x-axis and the y-axis are set in the initialization of UnitSpace. CorpusUnitViewer's 'new' method (contructor method) does not provide grid divisions, so the 1@1 default is used.\cf3 \
+\cf2 // A grid is imposed on every UnitSpace. It defaults to a 1-by-1, but can be set larger. The number of divisions along the x-axis and the y-axis are set in the initialization of UnitSpace. CorpusUnitViewer's 'new' method (contructor method) does not provide grid divisions, so the 1@1 default is used.\cf0 \
 \
-\cf2 // 4. descriptors_\cf3 \
+\cf2 // 4. descriptors_\cf0 \
 \
-\cf2 // The method that defines the data to be displayed is 'descriptors_'. CorpusUnitViewer's copy of the corpus metadata is organized to be displayed, along with a search tree and a call to a render function. A 'sync' function ensures that the proper data is available within the local corpus array. (Look inside CorpusUnitViewer).\cf3 \
+\cf2 // The method that defines the data to be displayed is 'descriptors_'. CorpusUnitViewer's copy of the corpus metadata is organized to be displayed, along with a search tree and a call to a render function. A 'sync' function ensures that the proper data is available within the local corpus array. (Look inside CorpusUnitViewer).\cf0 \
 \
-\cf2 // 5. drawFunc\cf3 \
+\cf2 // 5. drawFunc\cf0 \
 \
 \cf2 // Look inside UnitSpace for the draw function. It is attached to the mouseTracker, a UserView that handles mouse events. In the draw function, the data provided by 'descriptors_' is drawn. There is code for zooming on this displayed data, but no controller code has been integrated. For now, all zooming is fixed at 100% (scaled by 1).\
 \
