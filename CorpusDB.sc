@@ -84,8 +84,8 @@ CorpusDB : Dictionary {
 		var thepath = PathName.new(path.asString), flag;
 		Post << "Adding Entry:   ===============================  " << path.asString;
 		Post << " (" << numChannels << " channels)." << Char.nl;
-		(this[\sftable][thepath.fullPath] == nil).if   // don't add if the entry already exists
-		{
+//		(this[\sftable][thepath.fullPath] == nil).if   // don't add if the entry already exists
+//		{
 			// allow a custom unique id to be passed in
 			(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
 			// create the sftable entry
@@ -93,9 +93,9 @@ CorpusDB : Dictionary {
 					Dictionary[\abfr -> nil, \uniqueid -> flag, \channels -> numChannels, \sfilegroup -> (sfGrpID ? 0)]); // the nils are dummy keys (reminders)
 			// read the sound file into a buffer and store a reference to that buffer in the DB
 			this[\sfutable].add(thepath.fullPath -> Dictionary[\mfccs -> nil, \units -> nil]);
-			(importFlag != nil).if { this.importSoundFileToBuffer(thepath.fullPath) };
+			(importFlag != nil).if { "bam".postln; this.importSoundFileToBuffer(thepath.fullPath) };
 			^thepath.fullPath		// returns the path
-		};
+//		};
 		^nil
 	}
 	
@@ -431,7 +431,8 @@ CorpusDB : Dictionary {
 					sfEntries[sfid].getAttribute("name").asString,
 					sfEntries[sfid].getElementsByTagName("numchannels")[0].getText.asInteger,
 					sfEntries[sfid].getElementsByTagName("uniqueid")[0].getText.asFloat,
-					(sfgrp + this.sfgOffset)
+					(sfgrp + this.sfgOffset),
+					importFlag: true
 				);
 				Post << "MAPPING!: " << sfEntries[sfid] << " + " << (sfgrp + this.sfgOffset) << " + " << sfid << Char.nl;
 				this.mapIDToSF(sfEntries[sfid].getAttribute("name").asString, (sfgrp + this.sfgOffset), (sfid + this.sfOffset));
