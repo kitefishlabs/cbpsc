@@ -84,8 +84,8 @@ CorpusDB : Dictionary {
 		var thepath = PathName.new(path.asString), flag;
 		Post << "Adding Entry:   ===============================  " << path.asString;
 		Post << " (" << numChannels << " channels)." << Char.nl;
-//		(this[\sftable][thepath.fullPath] == nil).if   // don't add if the entry already exists
-//		{
+		(this[\sftable][thepath.fullPath] == nil).if   // don't add if the entry already exists
+		{
 			// allow a custom unique id to be passed in
 			(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
 			// create the sftable entry
@@ -95,7 +95,7 @@ CorpusDB : Dictionary {
 			this[\sfutable].add(thepath.fullPath -> Dictionary[\mfccs -> nil, \units -> nil]);
 			(importFlag != nil).if { "bam".postln; this.importSoundFileToBuffer(thepath.fullPath) };
 			^thepath.fullPath		// returns the path
-//		};
+		};
 		^nil
 	}
 	
@@ -234,11 +234,13 @@ CorpusDB : Dictionary {
 	}
 
 	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil, sfg=nil|
-		var old = this[\sfutable][path][\units][relid];
-		var temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
-		var newmd = md ? old[6..];
-		var newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
-		
+		var old = this[\sfutable][path][\units][relid], temp, newmd, newmfccs;
+		temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
+		Post << "temp: " << temp << Char.nl;
+		newmd = md ? old[6..];
+		Post << "newmd: " << newmd << Char.nl;
+		newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
+		Post << "newmfccs: " << newmfccs << Char.nl;
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
 		
@@ -356,7 +358,7 @@ CorpusDB : Dictionary {
 		var metadata = this.mapSoundFileUnitsToCorpusUnits;
 		(metadata.class == Dictionary).if
 		{
-			metadata.keys.asArray.sort.postln;
+//			metadata.keys.asArray.sort.postln;
 			metadata.keys.asArray.sort.do({ |uid| 
 				var filenum = metadata[uid][2];
 				(fileMap[filenum] == nil).if
