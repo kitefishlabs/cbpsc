@@ -130,7 +130,7 @@ CorpusDB : Dictionary {
 	}
 
 	analyzeSoundFile { |path, mapFlag=nil, group=0|
-		var fullpath, dir, file, ext, pBuf, aBuf, sFile, oscList;
+		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
 		var timeout = 9999, res = 0, thebuffer, ary;
 
 		fullpath = PathName.new(path.asString);
@@ -139,6 +139,9 @@ CorpusDB : Dictionary {
 		ext = fullpath.extension;
 		fullpath = fullpath.fullPath.asString;
 
+		Pipe.new("cd " ++ this[\anchor].asString ++ "snd; mkdir md", "w").close;
+		rmddir = this[\anchor].asString ++ "/snd/";
+		Post << "RMDDIR: " << rmddir << "\n";
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
 		"Dur: ".post; sFile.duration.postln;
 		
@@ -151,7 +154,7 @@ CorpusDB : Dictionary {
 			[0.0,					[\b_allocRead, pBuf, fullpath],
 									[\b_alloc, aBuf, (sFile.numFrames / 1024).ceil, 35] ],
 			[0.01,					[\s_new, \analyzerNRT, -1, 0, 0, \srcbufNum, pBuf, \start, 0, \dur, sFile.duration, \savebufNum, aBuf, \srate, sFile.sampleRate]],
-			[(sFile.duration + 0.02),	[\b_write, aBuf, (dir ++ file ++ ".md.aiff"), "aiff", "int32"]],
+			[(sFile.duration + 0.02),	[\b_write, aBuf, (rmddir ++ file ++ ".md.aiff"), "aiff", "int32"]],
 			// don't free any buffers (yet)
 			[(sFile.duration + 0.03),	[\c_set, 0, 0]]
 		];
@@ -168,7 +171,7 @@ CorpusDB : Dictionary {
 	
 		0.01.wait;
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
-		thebuffer = Buffer.read(this[\server], (dir ++ file ++ ".md.aiff"), action: { |bfr|
+		thebuffer = Buffer.read(this[\server], (rmddir ++ file ++ ".md.aiff"), action: { |bfr|
 			bfr.loadToFloatArray(action: { |array|
 				var mults = [10000, 1, 1, 1, 10000, 8, 1, 1000000, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1];
 				//(freq * 0.0001), hasFreq, power, flatness, (centroid * 0.0001), (zerox / 16384), (flux * 10), (rolloff * 0.000001), (slope * 1000), (spread * 0.000000001), (crest * 0.01), mfcc
