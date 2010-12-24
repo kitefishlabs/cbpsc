@@ -1,5 +1,5 @@
 {\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
-{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;\f1\fnil\fcharset0 Monaco;}
 {\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue0;\red0\green0\blue191;
 \red0\green115\blue0;\red96\green96\blue96;}
 \deftab720
@@ -288,7 +288,9 @@
 \cf3 \
 \cf2 // 6. evaluate the following to launch the GUI\cf3 \
 (\
-~crps = \cf4 CorpusDB\cf3 .new(\cf6 "manifold"\cf3 , s);\
+~crps = \cf4 CorpusDB\cf3 .new(\cf6 "
+\f1 \cf6 /Users/tms/dev/supercollider/2.manifold
+\f0 \cf6 "\cf3 , s);\
 \
 ~audio.add(\cf5 \\mBus\cf3  -> \cf4 Bus\cf3 .control(s, 1));\
 ~audio.add(\cf5 \\monoPlayer\cf3  -> \cf4 Synth\cf3 .new(\cf5 \\unitSamplerMono\cf3 , [\cf5 \\busTrig\cf3 , ~audio[\cf5 \\mBus\cf3 ]]));\
@@ -439,7 +441,8 @@
 								(counter > 0).if\
 								\{\
 									candidatePath = thefiles[counter - 1].fullPath;\
-									mdFlag = candidatePath.asString.matchRegexp(\cf6 ".md."\cf3 );\
+									mdFlag = \cf6 ".md."\cf3 .matchRegexp(candidatePath.asString);\
+									\cf4 Post\cf3  << \cf6 "PATH: "\cf3  << candidatePath << \cf6 "... MDFLAG: "\cf3  << mdFlag << \cf6 "\\n"\cf3 ;\
 									(mdFlag == \cf4 false\cf3 ).if\
 									\{\
 										~crps.addSoundFile(candidatePath, sf.numChannels);\
@@ -457,6 +460,9 @@
 				\cf6 "cancelled"\cf3 .postln;\
 			\}, \cf4 false\cf3 );\
 		\}))\
+		\cf2 //"
+\f1 \cf2 /Users/tms/dev/supercollider/2.manifold/snd/chanting.speaking/73356_voice_prayer_speaking_reverberant.md.aiff".
+\f0 \cf2 matchRegexp("md")\cf3 \
 	.add(\cf5 \\removeFileButton\cf3  -> \cf4 SCButton\cf3 (~gui[\cf5 \\tabs\cf3 ][0][\cf5 \\areas\cf3 ][\cf5 \\filesList\cf3 ][\cf5 \\view\cf3 ], \cf4 Rect\cf3 (105, 5, 45, 20))\
 		.states_([[\cf6 "-file"\cf3 , \cf4 Color\cf3 .red, \cf4 Color\cf3 .white]])\
 		.value_(0)\
@@ -525,18 +531,21 @@
 		.selectedStringColor_(\cf4 Color\cf3 .green)\
 		.items_([])\
 		.action_(\{ \cf4 |q|\cf3 \
-			\cf4 var\cf3  cf, sf, tmp, responder, responder2;\
+			\cf4 var\cf3  cf, path, file, ext, mdpath, sf;\
 			\cf2 // declare abbreviations for areas of the gui to be accessed:\cf3 \
 			\cf4 var\cf3  waveformArea = ~gui[\cf5 \\tabs\cf3 ][0][\cf5 \\areas\cf3 ][\cf5 \\waveform\cf3 ], analysisArea = ~gui[\cf5 \\tabs\cf3 ][0][\cf5 \\areas\cf3 ][\cf5 \\analysis\cf3 ], fileListArea = ~gui[\cf5 \\tabs\cf3 ][0][\cf5 \\areas\cf3 ][\cf5 \\filesList\cf3 ];\
 			\cf2 // empty ~soundFileUnits out\cf3 \
+			\
 			~gui[\cf5 \\soundFileUnitRowViews\cf3 ].do(\{ \cf4 |line|\cf3  line.pop; line.do(\{ \cf4 |elem|\cf3  elem.remove; elem.free \}) \});\
 			~gui[\cf5 \\soundFileUnitRowViews\cf3 ] = \cf4 Dictionary\cf3 [];\
 			\cf2 // get the menu selection and set current file gui-level var\cf3 \
 			cf = ~gui[\cf5 \\fileListDict\cf3 ][ fileListArea[\cf5 \\fileListView\cf3 ].items[q.value] ];\
 			~gui[\cf5 \\cf\cf3 ] = cf;\
 			\cf2 // if non-nil, read out cached units into sfunitrows\cf3 \
+			\cf6 "units... "\cf3 .postln;\
 			(~crps[\cf5 \\sfutable\cf3 ][~gui[\cf5 \\cf\cf3 ]][\cf5 \\units\cf3 ] != \cf4 nil\cf3 ).if\
 			\{\
+				\cf6 " from cache..."\cf3 .postln;\
 				~crps[\cf5 \\sfutable\cf3 ][~gui[\cf5 \\cf\cf3 ]][\cf5 \\units\cf3 ].do(\{ \cf4 |pu, ix|\cf3 \
 					~gui[\cf5 \\soundFileUnitRowViews\cf3 ] = ~gui[\cf5 \\soundFileUnitRowViews\cf3 ].add(ix -> \
 						~newSoundFileUnitRow.value(\
@@ -549,15 +558,23 @@
 					)\
 				\});\
 			\} \{\
-				\cf6 "...not cached... "\cf3 .postln;\
+				\cf6 "...units not cached... "\cf3 .postln;\
 			\};\
+			\
+\cf2 //			//check whether \\rawdescrs exists in '... .md. ... " form in same dir as sfile\cf3 \
+\cf2 //			"f: ".post; cf.postln;\cf3 \
+\cf2 //			path = PathName.new(cf).pathOnly.asString;\cf3 \
+\cf2 //			file = PathName.new(cf).fileNameWithoutExtension.asString;\cf3 \
+\cf2 //			mdpath = ~crps[\\anchor].asString ++ "/snd/" ++ file ++ ".md.aiff";\cf3 \
+\cf2 //			Post << "MDPATH: " << mdpath << "\\n";\cf3 									\
+			\
 			\cf2 // read sound file and stream or post analysis data\cf3 \
 			sf = \cf4 SoundFile\cf3 .new;\
 			(sf.openRead(cf) == \cf4 true\cf3 ).if\
 			\{\
 				fileListArea[\cf5 \\fileListView\cf3 ].enabled = \cf4 false\cf3 ;\
 				waveformArea[\cf5 \\fullView\cf3 ].soundfile = sf;\
-				waveformArea[\cf5 \\fullView\cf3 ].read(0, sf.numFrames);\
+					waveformArea[\cf5 \\fullView\cf3 ].read(0, sf.numFrames);\
 				waveformArea[\cf5 \\closeView\cf3 ].soundfile = sf;\
 				waveformArea[\cf5 \\closeView\cf3 ].read(0, sf.numFrames);\
 				\cf6 "window should refresh now!"\cf3 .postln;\
@@ -566,7 +583,7 @@
 				(~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ] == \cf4 nil\cf3 ).if\
 				\{	\cf2 // stream it\cf3 \
 					\{~crps.analyzeSoundFile(cf)\}.fork(\cf4 SystemClock\cf3 );\
-\cf2 //					// schedule the updates\cf3 \
+					\cf2 // schedule the updates\cf3 \
 					\{\
 						while(\{\
 							(~crps[\cf5 \\sftable\cf3 ][cf][\cf5 \\bfrL\cf3 ] == \cf4 nil\cf3 );\
@@ -576,46 +593,140 @@
 						\});\
 						0.01.wait;\
 						analysisArea.children.do(\cf4 _\cf3 .remove);\
-\pard\pardeftab560\ql\qnatural
-\cf3 						\cf4 Plotter\cf3 (parent: analysisArea)\
+						\cf4 Plotter\cf3 (parent: analysisArea)\
 							.value_(~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ].flop)  \cf2 //[0]\cf3 \
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf3 							.plotMode_(\cf5 \\plines\cf3 )\
+							.plotMode_(\cf5 \\plines\cf3 )\
 \pard\pardeftab560\ql\qnatural
 \cf3 							.superpose_(\cf4 false\cf3 )\
 							.findSpecs_(\cf4 true\cf3 )\
-							.editFunc_(\{\cf4 |pl, pli, idx, val|\cf3 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf3 							.editFunc_(\{\cf4 |pl, pli, idx, val|\cf3 \
+\pard\pardeftab560\ql\qnatural
 \cf3 								pli.post; \cf6 "..."\cf3 .post; idx.post; \cf6 "...."\cf3 .post; val.postln;\
 								~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ][pli][idx] = val;\
 							\});\
-						fileListArea[\cf5 \\fileListView\cf3 ].enabled = \cf4 true\cf3 ;\
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf3 						fileListArea[\cf5 \\fileListView\cf3 ].enabled = \cf4 true\cf3 ;\
 					\}.fork(\cf4 AppClock\cf3 );\
-\
+		\
 				\} \{ \cf2 // post it if cached \cf3 \
 					analysisArea.children.do(\cf4 _\cf3 .remove);\
+					\cf4 Plotter\cf3 (parent: analysisArea)\
+						.value_(~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ].flop)  \cf2 //[0]\cf3 \
+						.plotMode_(\cf5 \\plines\cf3 )\
 \pard\pardeftab560\ql\qnatural
-\cf3 					\cf4 Plotter\cf3 (parent: analysisArea)\
+\cf3 						.superpose_(\cf4 false\cf3 )\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf3 						.value_(~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ].flop)  \cf2 //[0]\cf3 \
+\cf3 						.findSpecs_(\cf4 true\cf3 )\
 \pard\pardeftab560\ql\qnatural
-\cf3 						.plotMode_(\cf5 \\plines\cf3 )\
-						.superpose_(\cf4 false\cf3 )\
-						.findSpecs_(\cf4 true\cf3 )\
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf3 						.editFunc_(\{\cf4 |pl, pli, idx, val|\cf3 \
 							pli.post; \cf6 "..."\cf3 .post; idx.post; \cf6 "...."\cf3 .post; val.postln;\
 							~crps[\cf5 \\sfutable\cf3 ][cf][\cf5 \\rawdescrs\cf3 ][pli][idx] = val;\
-						\});\
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf3 						\});\
 					\cf4 AppClock\cf3 .sched(0, \{ \cf4 |tm|\cf3  fileListArea[\cf5 \\fileListView\cf3 ].enabled = \cf4 true\cf3  \});\
 				\};\
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf3 				[responder, responder2].do(\cf4 _\cf3 .remove; \cf4 _\cf3 .free);	\cf2 // clean up!\cf3 \
-			\};\
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+			\};\cf0 \
 \cf3 			\cf2 // update the sfviews (close and full) no matter what\cf3 \
 			~updateSFViews.value(~gui[\cf5 \\cf\cf3 ], waveformArea[\cf5 \\fullView\cf3 ], waveformArea[\cf5 \\closeView\cf3 ], 0);\
 		\}));\
+		\
+\cf2 //\\fileListView -> SCListView(~gui[\\tabs][0][\\areas][\\filesList][\\view], Rect(5, 30, 400, 400))\cf3 \
+\cf2 //.stringColor_(Color.white)\cf3 \
+\cf2 //.selectedStringColor_(Color.green)\cf3 \
+\cf2 //.items_([])\cf3 \
+\cf2 //.action_(\{ |q|\cf3 \
+\cf2 //	var cf, sf, tmp, responder, responder2;\cf3 \
+\cf2 //	// declare abbreviations for areas of the gui to be accessed:\cf3 \
+\cf2 //	var waveformArea = ~gui[\\tabs][0][\\areas][\\waveform], analysisArea = ~gui[\\tabs][0][\\areas][\\analysis], fileListArea = ~gui[\\tabs][0][\\areas][\\filesList];\cf3 \
+\cf2 //	// empty ~soundFileUnits out\cf3 \
+\cf2 //	~gui[\\soundFileUnitRowViews].do(\{ |line| line.pop; line.do(\{ |elem| elem.remove; elem.free \}) \});\cf3 \
+\cf2 //	~gui[\\soundFileUnitRowViews] = Dictionary[];\cf3 \
+\cf2 //	// get the menu selection and set current file global\cf3 \
+\cf2 //	cf = ~gui[\\fileListDict][ fileListArea[\\fileListView].items[q.value] ];\cf3 \
+\cf2 //	~gui[\\cf] = cf;\cf3 \
+\cf2 //	// if non-nil, read out cached units into sfunitrows\cf3 \
+\cf2 //	(~crps[\\sfutable][~gui[\\cf]][\\units] != nil).if\cf3 \
+\cf2 //	\{\cf3 \
+\cf2 //		~crps[\\sfutable][~gui[\\cf]][\\units].do(\{ |pu, ix|\cf3 \
+\cf2 //			~gui[\\soundFileUnitRowViews] = ~gui[\\soundFileUnitRowViews].add(ix -> \cf3 \
+\cf2 //				~newSoundFileUnitRow.value(\cf3 \
+\cf2 //					~gui[\\cf],\cf3 \
+\cf2 //					ix,\cf3 \
+\cf2 //					~gui[\\tabs][0][\\areas][\\segments][\\view],\cf3 \
+\cf2 //					waveformArea[\\fullView],\cf3 \
+\cf2 //					waveformArea[\\closeView]\cf3 \
+\cf2 //				);\cf3 \
+\cf2 //			)\cf3 \
+\cf2 //		\});\cf3 \
+\cf2 //	\} \{\cf3 \
+\cf2 //		"...not cached... ".postln;\cf3 \
+\cf2 //	\};\cf3 \
+\cf2 //	// read sound file and stream or post analysis data\cf3 \
+\cf2 //	sf = SoundFile.new;\cf3 \
+\cf2 //	(sf.openRead(cf) == true).if\cf3 \
+\cf2 //	\{\cf3 \
+\cf2 //		fileListArea[\\fileListView].enabled = false;\cf3 \
+\cf2 //		waveformArea[\\fullView].soundfile = sf;\cf3 \
+\cf2 //			waveformArea[\\fullView].read(0, sf.numFrames);\cf3 \
+\cf2 //		waveformArea[\\closeView].soundfile = sf;\cf3 \
+\cf2 //		waveformArea[\\closeView].read(0, sf.numFrames);\cf3 \
+\cf2 //		"window should refresh now!".postln;\cf3 \
+\cf2 //		~gui[\\topWindow].refresh;\cf3 \
+\cf2 //		\cf3 \
+\cf2 //		(~crps[\\sfutable][cf][\\rawdescrs] == nil).if\cf3 \
+\cf2 //		\{	// stream it\cf3 \
+\cf2 //			\{~crps.analyzeSoundFile(cf)\}.fork(SystemClock);\cf3 \
+\cf2 //			// schedule the updates\cf3 \
+\cf2 //			\{\cf3 \
+\cf2 //				while(\{\cf3 \
+\cf2 //					(~crps[\\sftable][cf][\\bfrL] == nil);\cf3 \
+\cf2 //				\},\{\cf3 \
+\cf2 //					~crps[\\sftable][cf][\\bfrL].postln;\cf3 \
+\cf2 //					0.1.wait;\cf3 \
+\cf2 //				\});\cf3 \
+\cf2 //				0.01.wait;\cf3 \
+\cf2 //				analysisArea.children.do(_.remove);\cf3 \
+\cf2 //				Plotter(parent: analysisArea)\cf3 \
+\pard\pardeftab560\ql\qnatural
+\cf2 //					.value_(~crps[\\sfutable][cf][\\rawdescrs].flop)  //[0]\cf3 \
+\cf2 //					.plotMode_(\\plines)\cf3 \
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 //					.superpose_(false)\cf3 \
+\pard\pardeftab560\ql\qnatural
+\cf2 //					.findSpecs_(true)\cf3 \
+\cf2 //					.editFunc_(\{|pl, pli, idx, val|\cf3 \
+\cf2 //						pli.post; "...".post; idx.post; "....".post; val.postln;\cf3 \
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 //						~crps[\\sfutable][cf][\\rawdescrs][pli][idx] = val;\cf3 \
+\cf2 //					\});\cf3 \
+\cf2 //				fileListArea[\\fileListView].enabled = true;\cf3 \
+\cf2 //			\}.fork(AppClock);\cf3 \
+\cf2 //\cf3 \
+\cf2 //		\} \{ // post it if cached \cf3 \
+\cf2 //			analysisArea.children.do(_.remove);\cf3 \
+\cf2 //			Plotter(parent: analysisArea)\cf3 \
+\pard\pardeftab560\ql\qnatural
+\cf2 //				.value_(~crps[\\sfutable][cf][\\rawdescrs].flop)  //[0]\cf3 \
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 //				.plotMode_(\\plines)\cf3 \
+\pard\pardeftab560\ql\qnatural
+\cf2 //				.superpose_(false)\cf3 \
+\cf2 //				.findSpecs_(true)\cf3 \
+\cf2 //				.editFunc_(\{|pl, pli, idx, val|\cf3 \
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 //					pli.post; "...".post; idx.post; "....".post; val.postln;\cf3 \
+\cf2 //					~crps[\\sfutable][cf][\\rawdescrs][pli][idx] = val;\cf3 \
+\cf2 //				\});\cf3 \
+\cf2 //			AppClock.sched(0, \{ |tm| fileListArea[\\fileListView].enabled = true \});\cf3 \
+\cf2 //		\};\cf3 \
+\cf2 //		[responder, responder2].do(_.remove; _.free);	// clean up!\cf3 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
+\cf2 //	\};\cf3 \
+\cf2 //	// update the sfviews (close and full) no matter what\cf3 \
+\pard\pardeftab560\li1140\fi-1140\ql\qnatural
+\cf2 //	~updateSFViews.value(~gui[\\cf], waveformArea[\\fullView], waveformArea[\\closeView], 0);\cf3 \
+\cf2 //\})\cf3 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
 \cf2 //// segments area\cf3 \
