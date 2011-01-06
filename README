@@ -20,14 +20,16 @@ To Run the GUI: open "gui.rtf" and follow the directions in the numbered comment
 A growing amount of documentation can be found at http://crprsnrs.corpora-sonorus.com/text .
 
 
-KNOWN ISSUES (as of version 0.1.2 -- November 9, 2010)
+KNOWN ISSUES (as of version 0.1.3 -- January 5, 2011)
 
 These are a few things you might encounter. They will all hopefully be fixed as soon as possible.
 
 1. Watch the Server GUI when importing large amounts of audio data. It may turn itself 'inactive' at times when under a heavy computational load. You must wait a few seconds until the Server is active to continue using the GUI without errors.
 
-2. Import/export is still buggy. This will be polished in version 0.1.3.
+TEST SOUND SET
 
+Download and use the following sound files to test the GUI: http://www.freesound.org/packsViewSingle.php?id=2680
+Or, alternatively, find them in the GIT repo as a zip file.
 
 
 Email me (Tom Stoll) with questions: tms@corpora-sonorus.com
