@@ -1,4 +1,4 @@
-//This file is part of cbpsc (version 0.1.2).
+//This file is part of cbpsc (last revision @ version 0.1.3).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -113,17 +113,24 @@ CorpusDB : Dictionary {
 		^nil
 	}
 	
-	removeSoundFile { |path| // TODO: AND ASSOCIATED METADATA!!!!!
+	removeSoundFile { |path|
 		var thepath = PathName.new(path.asString);
 		"Deleting Entry:   ===============================".postln;
 		thepath.postln;
+		thepath = thepath.fullPath;
 		(this[\sftable][thepath.fullPath] != nil).if
 		{
-			this[\sftable][thepath.fullPath][\bfrL].free;
-			(this[\sftable][thepath.fullPath][\bfrR] != nil).if { this[\sftable][thepath.fullPath][\bfrR].free };
-			this[\sftable][thepath.fullPath][\abfr].free;
-			this[\sftable][thepath.fullPath].add(\abfr -> nil, \bfrL -> nil, \bfrR -> nil, \uniqueid -> nil, \sfilegroup -> nil);
-			this[\sftable].add(thepath.fullPath -> nil);
+			this[\sftable][thepath][\bfrL].free;
+			(this[\sftable][thepath][\bfrR] != nil).if { this[\sftable][thepath.fullPath][\bfrR].free };
+			this[\sftable][thepath][\abfr].free;
+			this[\sftable][thepath].add(\abfr -> nil, \bfrL -> nil, \bfrR -> nil, \uniqueid -> nil, \sfilegroup -> nil);
+			this[\sftable][thepath].add(\units -> nil);
+			this[\sftable][thepath].add(\mfccs -> nil);
+			this[\sftable][thepath].add(\rawdescrs -> nil);
+			this[\sftable][thepath].add(\rawmels -> nil);
+			this[\sftable][thepath].add(\sfilegroup -> nil);
+			this[\sftable].add(thepath -> nil);
+			this[\sfgmap].add(thepath -> nil);
 		} {
 			"Something has gone horribly wrong; attempting to remove a non-existant path!".postln;
 		};
@@ -236,11 +243,11 @@ CorpusDB : Dictionary {
 	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil, sfg=nil|
 		var old = this[\sfutable][path][\units][relid], temp, newmd, newmfccs;
 		temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
-		Post << "temp: " << temp << Char.nl;
+		//Post << "temp: " << temp << Char.nl;
 		newmd = md ? old[6..];
-		Post << "newmd: " << newmd << Char.nl;
+		//Post << "newmd: " << newmd << Char.nl;
 		newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
-		Post << "newmfccs: " << newmfccs << Char.nl;
+		//Post << "newmfccs: " << newmfccs << Char.nl;
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
 		
