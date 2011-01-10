@@ -245,7 +245,7 @@ CorpusDB : Dictionary {
 		//Post << "newmd: " << newmd << Char.nl;
 		newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
 		//Post << "newmfccs: " << newmfccs << Char.nl;
-		newkey = key ? this[\sfutable][path][\keys][relid];
+		newkey = key ? this[\sfutable][path][\keys][relid][6];
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
 		this[\sfutable][path][\keys][relid] = temp ++ newkey;
@@ -347,13 +347,14 @@ CorpusDB : Dictionary {
 	}	
 
 	// map
-	mapSoundFileUnitsToCorpusUnits {
-		(this.soundFileUnitsMapped == false).if
+	mapSoundFileUnitsToCorpusUnits { |override=false|
+		((this.soundFileUnitsMapped == false) || (override == true)).if
 		{
 			this.clearCorpusUnits;
 			this[\sfutable].do({ |path|
 				path[\units].do({ |pu, index|
 					//[pu[0], (pu ++ path[\mfccs][index][6..]).flatten].postln;
+					Post << "mapping index (should be 0!): " << index << "\n";
 					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][6..] ++ path[\keys][index][6]).flatten); 
 				});
 			});
@@ -401,8 +402,8 @@ CorpusDB : Dictionary {
 		"=============".postln;
 		
 		Post << "Starting from sf offset: " << this.sfOffset << " + cu Offset: " << this.cuOffset << " + sfg Offset: " << this.sfgOffset << Char.nl;
-		
-		domdoc = DOMDocument.new(path);
+		(File.exists(path.asString) == false).if { ^nil };
+		domdoc = DOMDocument.new(path.asString);
 		domdoc.getDocumentElement.getElementsByTagName("descrid").do({ |tag, index|
 			tmpDict.add(tag.getText.asInteger -> tag.getAttribute("name").asSymbol);
 		});
@@ -459,17 +460,27 @@ CorpusDB : Dictionary {
 			descriptorRows.keys.asArray.sort.do({ |sfid|
 				tmp = descriptorRows[sfid];
 				path = this[\sfmap][(tmp[2] + this.sfOffset)].asString;
-//				Post << "path: " << path << Char.nl;
 
+				//Post << "addSoundFileUnit args: " << [path, tmp[3].asInteger, tmp[4..5], (tmp[0].asInteger + this.cuOffset), (sfgrp + this.sfgOffset).asInteger] << "\n";
 				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfgrp + this.sfgOffset).asInteger) - 1;
-				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ descriptorRows[sfid][6..15]).flatten;
+				
+				//Post << "general updateSoundFileUnit args: " << [path, tmp[3].asInteger] << "\n";
+				
 				(keyflag == true).if
 				{
-					this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ descriptorRows[sfid][16..(descriptorRows[sfid].size - 2)]).flatten;
-					this[\sfutable][path][\keys][last] = (this[\sfutable][path][\keys][last] ++ descriptorRows[sfid].last).flatten;
+					this.updateSoundFileUnit(
+						path,
+						tmp[3].asInteger,
+						md: tmp[6..15],
+						mfccs: tmp[16..(descriptorRows[sfid].size - 2)],
+						key: tmp.last);
 				} {
-					this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ descriptorRows[sfid][16..]).flatten;
-					this[\sfutable][path][\keys][last] = (this[\sfutable][path][\keys][last] ++ -1).flatten;
+					this.updateSoundFileUnit(
+						path,
+						tmp[3].asInteger,
+						md: tmp[6..15],
+						mfccs: tmp[16..],
+						key: -1);
 				};
 				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
 			});
@@ -547,7 +558,7 @@ CorpusDB : Dictionary {
 			});
 			f.write("    </heading>\n");
 			f.write("    <heading name=\"UNITS\">\n");
-			this.mapSoundFileUnitsToCorpusUnits;
+			this.mapSoundFileUnitsToCorpusUnits(true);
 			this[\cutable].keys.asArray.sort.do({ |cid|
 				var drow = this[\cutable][cid];
 				f.write("        <corpusunit sfid=\"" ++ drow[2].asString ++ "\" relid=\"" ++ drow[3].asString ++ "\">" ++ this[\cutable][cid].join($ ).asString ++ "\"</corpusunit>\n");
