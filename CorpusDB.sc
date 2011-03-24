@@ -389,6 +389,7 @@ CorpusDB : Dictionary {
 				};
 			});
 		};
+		this.add(\sfumap -> fileMap);
 		^fileMap
 	}
 
