@@ -20,6 +20,7 @@ CorpusSearch : Dictionary {
 	
 	initCSearch { |crps|
 		this.corpus = crps;
+		^this
 	}
 	
 	getStats {
