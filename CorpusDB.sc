@@ -66,7 +66,7 @@ CorpusDB : Dictionary {
 				slope = 			FFTSlope.kr(chain);
 				spread =			FFTSpread.kr(chain,centroid);
 				crest =			FFTCrest.kr(chain, 100, 2000);
-				mfcc =			MFCC.kr(chain);
+				mfcc =			MFCC.kr(chain,24);
 				// log the metadata into a buffer and signal sclang to read from the buffer
 				driver = Impulse.kr( srate / hop );
 				Logger.kr(
@@ -133,7 +133,7 @@ CorpusDB : Dictionary {
 
 	analyzeSoundFile { |path, mapFlag=nil, group=0|
 		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
-		var timeout = 9999, res = 0, thebuffer, ary;
+		var timeout = 999, res = 0, thebuffer, ary;
 
 		fullpath = PathName.new(path.asString);
 		dir = fullpath.pathOnly;
@@ -142,26 +142,24 @@ CorpusDB : Dictionary {
 		fullpath = fullpath.fullPath.asString;
 
 		Pipe.new("cd " ++ this[\anchor].asString +/+ "snd; mkdir md", "w").close;
-		rmddir = this[\anchor].asString +/+ "snd/md";
+		rmddir = this[\anchor].asString +/+ "snd/md" +/+ file ++ ".md.aiff";
 		Post << "RMDDIR: " << rmddir << "\n";
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
 		"Dur: ".post; sFile.duration.postln;
-		
 		pBuf = this[\server].bufferAllocator.alloc(1);
-		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 11);
-		aBuf.postln;
+		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 35);
+		"pairs: ".post; [pBuf, aBuf].postln;
 		
 		TempoClock.default.tempo = 1;
 		oscList = [
-			[0.0,					[\b_allocRead, pBuf, fullpath],
-									[\b_alloc, aBuf, (sFile.numFrames / 1024).ceil, 35] ],
-			[0.01,					[\s_new, \analyzerNRT, -1, 0, 0, \srcbufNum, pBuf, \start, 0, \dur, sFile.duration, \savebufNum, aBuf, \srate, sFile.sampleRate]],
-			[(sFile.duration + 0.02),	[\b_write, aBuf, (rmddir +/+ file ++ ".md.aiff"), "aiff", "int32"]],
+			[0.0,					[\b_allocRead, pBuf, fullpath] ],
+			[0.01,					[\b_alloc, aBuf, (sFile.numFrames / 1024).ceil, 35] ],
+			[0.02,					[\s_new, \analyzerNRT, -1, 0, 0, \srcbufNum, pBuf, \start, 0, \dur, sFile.duration, \savebufNum, aBuf, \srate, sFile.sampleRate]],
+			[(sFile.duration + 0.03),	[\b_write, aBuf, rmddir, "aiff", "int32"]],
 			// don't free any buffers (yet)
-			[(sFile.duration + 0.03),	[\c_set, 0, 0]]
-		];
+			[(sFile.duration + 0.04),	[\c_set, 0, 0]]
+		];		
 		Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
-	
 		0.01.wait;
 		while({
 			res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
@@ -172,12 +170,12 @@ CorpusDB : Dictionary {
 		});
 		0.01.wait;
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
-		
-		thebuffer = Buffer.read(this[\server], (rmddir +/+ file ++ ".md.aiff"), action: { |bfr|
+
+		thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
 			bfr.loadToFloatArray(action: { |array|
 				var mults = [10000, 1, 1, 1, 10000, 8, 1, 1000000, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1];
 				//(freq * 0.0001), hasFreq, power, flatness, (centroid * 0.0001), (zerox / 16384), (flux * 10), (rolloff * 0.000001), (slope * 1000), (spread * 0.000000001), (crest * 0.01), mfcc
-				//Post << "ARRAY: " << array.asArray << Char.nl;
+				Post << "ARRAY: " << array.asArray[0..34] << Char.nl;
 				ary = array.clump(35).flop;
 				ary = ary.collect({|row, index| row * mults[index]});
 				this.addRawMetadata(
@@ -491,33 +489,6 @@ CorpusDB : Dictionary {
 		this.sfgOffset = this.sfgOffset + runningSFGOffset + 1;
 		this.cuOffset = this.cuOffset + runningCUOffset + 1;
 		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
-
-		
-//		"THE MAP:".postln;
-//		this[\sfmap].postln;
-
-
-//		dDict.keys.asArray.sort.do({ |sfg| // sfilegroup keys
-//			var innerDict = dDict[sfg], path, tmp, last;
-//			
-//			innerDict.keys.asArray.sort.do({ |sfid|
-//				tmp = innerDict[sfid];
-//				path = this[\sfmap][tmp[2]].asString;
-////				Post << "path: " << path << Char.nl;
-//				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfg + this.sfgOffset).asInteger) - 1;
-//				this[\sfutable][path][\units][last] = (this[\sfutable][path][\units][last] ++ innerDict[sfid][6..15]).flatten;
-//				this[\sfutable][path][\mfccs][last] = (this[\sfutable][path][\mfccs][last] ++ innerDict[sfid][16..]).flatten;
-//				
-//				runningCUOffset = runningCUOffset.max(tmp[0].asInteger);
-//				
-//			});			
-//		});
-		
-		// update cuOffset, sfOffset, sfgOffset;
-//		this.cuOffset = this.cuOffset + runningCUOffset + 1;
-//		this.sfOffset = this.sfOffset + runningSFOffset + 1;
-//		this.sfgOffset = this.sfgOffset + runningSFGOffset + 1;
-//		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
 
 		// clean up
 		sfDict.free; metadataDict.free;
