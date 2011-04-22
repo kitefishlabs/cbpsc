@@ -1,4 +1,4 @@
-//This file is part of cbpsc (version 0.1.2).
+//This file is part of cbpsc (last revision @ version 0.4).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -6,10 +6,9 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
-// CorpusSearch.sc
-// Copyright 2010, Thomas Stoll
+// Copyright 2010-11, Thomas Stoll
 
 CorpusSearch : Dictionary {
 	var <>corpus, <>cArray, <>tree, <>stats, <>normedTree;
