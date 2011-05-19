@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.4).
+//This file is part of cbpsc (last revision @ version 0.1.3).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -33,7 +33,11 @@ CorpusDB : Dictionary {
 		// keep track of the latest additions to the tables
 		this.sfOffset = 0;		this.cuOffset = 0;		this.sfgOffset = 0;
 		// dtable = descriptors table; must match to analysis synth
-		this.add(\dtable -> Dictionary[0 -> \unitID, 1 -> \sfgrpID, 2 -> \sfileID, 3 -> \sfRelID, 4 -> \onset, 5 -> \duration, 6 -> \tartiniFreq, 7 -> \tartiniHasFreq, 8 -> \power, 9 -> \flatness, 10 -> \centroid, 11 -> \zerox, 12 -> \flux, 13 -> \rolloff, 14 -> \slope, 15 -> \spread, 16 -> \crest, 17 -> \key]);
+		this.add(\dtable -> Dictionary[0 -> \unitID, 1 -> \sfgrpID, 2 -> \sfileID, 3 -> \sfRelID,
+			4 -> \onset, 5 -> \duration, 6 -> \tartiniFreq, 7 -> \tartiniHasFreq, 8 -> \power,
+			9 -> \flatness, 10 -> \centroid, 11 -> \zerox, 12 -> \flux, 13 -> \rolloff,
+			14 -> \slope, 15 -> \spread, 16 -> \crest, 17 -> \key
+		]);
 		// send the analysis synth to the server
 		this.perThreshold_(0.6);
 		this.buildAnalysisSynth(this.pFactor);
@@ -50,8 +54,8 @@ CorpusDB : Dictionary {
 
 	buildAnalysisSynth { |pfact=0.6|
 		this.put( \ansynthdef,
-			SynthDef(\analyzerNRT, { |srcbufNum=0, start=0, dur=1, savebufNum=1, srate, hop = 1024|
-				var env, in, chain, freq, hasFreq, power, flatness, centroid, zerox, flux, rolloff, slope, spread, crest, mfcc, driver;
+			SynthDef(\analyzerNRT, { |srcbufNum, start=0, dur=1, savebufNum, srate, hop = 1024|
+				var env, in, chain, freq, hasFreq, power, flatness, centroid, zerox, flux, rolloff, slope, spread, crest, mfcc, driver, array;
 				env = EnvGen.kr(Env.linen(0.01, (dur - 0.02), 0.01, 1), gate: 1, doneAction: 2);
 				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum), startPos: start) * env;
 				chain = FFT(LocalBuf(2048,1), in);
@@ -74,6 +78,7 @@ CorpusDB : Dictionary {
 					driver,
 					savebufNum
 				);
+				//Poll.kr(driver, power.ampdb, ":::");
 				//Out.ar(0, in);
 			})
 		);
@@ -132,18 +137,24 @@ CorpusDB : Dictionary {
 	}
 
 	analyzeSoundFile { |path, mapFlag=nil, group=0|
-		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
+		var fullpath, dir, rmddir, file, pBuf, aBuf, sFile, oscList;
 		var timeout = 999, res = 0, thebuffer, ary;
 
+		// pathname as a Pathname object
 		fullpath = PathName.new(path.asString);
+		// extract dir, file, and full path as Strings
 		dir = fullpath.pathOnly;
 		file = fullpath.fileNameWithoutExtension;
-		ext = fullpath.extension;
 		fullpath = fullpath.fullPath.asString;
 
-		Pipe.new("cd " ++ this[\anchor].asString +/+ "snd; mkdir md", "w").close;
-		rmddir = this[\anchor].asString +/+ "snd/md" +/+ file ++ ".md.aiff";
+		// execute a command in the terminal
+		Pipe.new("cd " ++ dir.asString ++ "; mkdir md", "w").close;
+		//Pipe.new("cd " ++ this[\anchor].asString +/+ "snd; mkdir md", "w").close;
+		
+		rmddir = dir.asString +/+ "md" +/+ file ++ ".md.aiff";
+		//rmddir = this[\anchor].asString +/+ "snd/md" +/+ file ++ ".md.aiff";
 		Post << "RMDDIR: " << rmddir << "\n";
+		
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
 		"Dur: ".post; sFile.duration.postln;
 		pBuf = this[\server].bufferAllocator.alloc(1);
@@ -216,10 +227,10 @@ CorpusDB : Dictionary {
 
 	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil|
 		var quad;
+		bounds.postln;
 		(bounds != nil).if
 		{
-			Post << "Adding sound file unit (to sfutable)...mapping: "; // << this[\sfmap].findKeyForValue(path.asString);
-			//Post << "(PATH: " << path.asString << ") ";
+			Post << "Adding sound file unit (to sfutable)...mapping: " << this[\sfmap].findKeyForValue(path.asString);
 			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, this[\sfmap].findKeyForValue(path.asString), relid ];
 			// custom caller responsible!
 			(cid == nil).if { this.cuOffset = this.cuOffset + 1 }; // {this.cuOffset = this.cuOffset.max(cid) + 1 };
@@ -237,12 +248,13 @@ CorpusDB : Dictionary {
 
 	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, md=nil, mfccs=nil, sfg=nil, key=nil|
 		var old = this[\sfutable][path][\units][relid], temp, newmd, newmfccs, newkey;
+		Post << "\n" << old << "\n";
 		temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5]];
-		//Post << "temp: " << temp << Char.nl;
+		Post << "\n" << "temp: " << temp << Char.nl;
 		newmd = md ? old[6..];
-		//Post << "newmd: " << newmd << Char.nl;
+		Post << "newmd: " << newmd << Char.nl;
 		newmfccs = mfccs ? this[\sfutable][path][\mfccs][relid][6..];
-		//Post << "newmfccs: " << newmfccs << Char.nl;
+		Post << "newmfccs: " << newmfccs << Char.nl;
 		newkey = key ? this[\sfutable][path][\keys][relid][6];
 		this[\sfutable][path][\units][relid] = temp ++ newmd;
 		this[\sfutable][path][\mfccs][relid] = temp ++ newmfccs;
@@ -298,11 +310,12 @@ CorpusDB : Dictionary {
 	// raw analysis data -> segmented metadata (desriptors + mfccs)
 	segmentUnits { |path|
 		var descrs, mfccs;
-		Post << "Analyze units for path:" << path << "\n" << this[\sfutable][path][\rawdescrs] << "\n";
+		Post << "Analyze units for path:" << path << "\n";// << this[\sfutable][path][\rawdescrs] << "\n";
 		descrs = this[\sfutable][path][\rawdescrs].flop[0..10];
 		mfccs = this[\sfutable][path][\rawmels].flop;
 		this[\sfutable][path][\units].do({ |cell, indx|
 			var low, high, len, rda = Array[], rma = Array[];
+			[cell, indx].postln;
 			low = (cell[4] / 40).floor.asInteger;
 			len = (cell[5] / 40).ceil.asInteger;
 			high = low + len;
@@ -364,9 +377,12 @@ CorpusDB : Dictionary {
 	mapBySFRelID { 
 		var fileMap = Dictionary[];
 		var metadata = this.mapSoundFileUnitsToCorpusUnits;
+		
+//		Post << "metadata: " << metadata << "\n";
+		
 		(metadata.class == Dictionary).if
 		{
-//			metadata.keys.asArray.sort.postln;
+			metadata.keys.asArray.sort.postln;
 			metadata.keys.asArray.sort.do({ |uid| 
 				var filenum = metadata[uid][2];
 				(fileMap[filenum] == nil).if
@@ -387,6 +403,8 @@ CorpusDB : Dictionary {
 				};
 			});
 		};
+		
+//		Post << "fileMap: " << fileMap << "\n";
 		this.add(\sfumap -> fileMap);
 		^fileMap
 	}
@@ -435,7 +453,7 @@ CorpusDB : Dictionary {
 		// iterate the sorted keys (2 levels) and perform the actual addititon of data and metadata to the database
 		sfDict.keys.asArray.sort.do({ |sfgrp|
 			var sfEntries = sfDict[sfgrp];
-			var descriptorRows = metadataDict[sfgrp], path, tmp, last;
+			var path, tmp, last, descriptorRows = metadataDict[sfgrp];
 			["sfgroup",sfgrp].postln;
 
 			sfDict[sfgrp].keys.asArray.sort.do({ |sfid|
@@ -456,15 +474,17 @@ CorpusDB : Dictionary {
 				Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
 			});
 			
+			Post << "\n *Descriptor Rows' keys: " << descriptorRows.keys.asArray.sort << "\n\n";
+			
 			descriptorRows.keys.asArray.sort.do({ |sfid|
 				tmp = descriptorRows[sfid];
 				path = this[\sfmap][(tmp[2] + this.sfOffset)].asString;
 
-				//Post << "addSoundFileUnit args: " << [path, tmp[3].asInteger, tmp[4..5], (tmp[0].asInteger + this.cuOffset), (sfgrp + this.sfgOffset).asInteger] << "\n";
+				Post << "addSoundFileUnit args: " << [path, tmp[3].asInteger, tmp[4..5], (tmp[0].asInteger + this.cuOffset), (sfgrp + this.sfgOffset).asInteger] << "\n";
 				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: (tmp[0].asInteger + this.cuOffset), sfg: (sfgrp + this.sfgOffset).asInteger) - 1;
 				
-				//Post << "general updateSoundFileUnit args: " << [path, tmp[3].asInteger] << "\n";
-				
+				Post << "general updateSoundFileUnit args: " << [path, tmp[3].asInteger] << "\n";
+				Post << "Keyflag: " << keyflag << "tmp dot last: " << tmp.last << " ++ " << tmp[16..] << "\n";
 				(keyflag == true).if
 				{
 					this.updateSoundFileUnit(
