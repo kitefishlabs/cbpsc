@@ -315,11 +315,38 @@
 \cf2 ////***********************************************************************************************\cf3 \
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
 \cf2 ////		Init Database + Build GUI...\cf3 \
+\
+\cf2 // * 1. THIS IS HOW I (TMS) CREATE A FOLDER STRUCTURE FOR A COPRUS*\cf3 \
 \pard\pardeftab560\ql\qnatural
-\cf3 \
+\cf2 // /../../myCorpusName/			CREATE THIS FOLDER\cf3 \
+\cf2 // /../../myCorpusName/cbpsc.gui.rtf		MOVE THIS FILE THERE\cf3 \
+\cf2 //								SAVE ANY OTHER RTF FILES THERE\cf3 \
+\cf2 // /../../myCorpusName/snd/			CREATE THIS FOLDER (+ OPTIONALLY CREATE SUBFOLDERS IN HERE)\cf3 \
+\cf2 //								MOVE/COPY SOUND FILES THERE\cf3 \
+\cf2 // /../../myCorpusName/xml/			CREATE THIS FOLDER\cf3 \
+\cf2 //								SAVE XML FILES THERE\cf3 \
+\
+\cf2 // * 2. THIS IS WHAT MY DIRECTORY STRUCTURE LOOKS LIKE AFTER ADDING SOME SOUND FILES AND XML FILES*\cf3 \
+\cf2 // /../../myCorpusName/\cf3 \
+\cf2 // /../../myCorpusName/cbpsc.gui.rtf\cf3 \
+\cf2 // ...\cf3 \
+\cf2 // /../../myCorpusName/snd/\cf3 \
+\cf2 // /../../myCorpusName/snd/soundfile_dir/soundfile1\cf3 \
+\cf2 // /../../myCorpusName/snd/soundfile_dir/soundfile2\cf3 \
+\cf2 // ...\cf3 \
+\cf2 // /../../myCorpusName/snd/another_soundfile_dir/soundfileA\cf3 \
+\cf2 // /../../myCorpusName/snd/another_soundfile_dir/soundfileB\cf3 \
+\cf2 // ...\cf3 \
+\cf2 // /../../myCorpusName/xml/\cf3 \
+\cf2 // /../../myCorpusName/xml/my_subcorpus.xml\cf3 \
+\cf2 // ...\cf3 \
+\
+\cf2 // *THIS IS JUST A SUGGESTION FOR STRUCTURING YOUR CORPORA, YOU ARE FREE TO STRUCTURE THEM AS YOU WISH\cf3 \
+ \
 \cf2 // 6. evaluate the following to launch the GUI\cf3 \
 (\
-~crps = \cf4 CorpusDB\cf3 .new(\cf6 "/Users/tms/dev/supercollider/4.BIPED"\cf3 , s);\
+\cf2 // 7. CHANGE THE FIRST ARGUMENT TO ANY STRING YOU LIKE\cf3 \
+~crps = \cf4 CorpusDB\cf3 .new(\cf6 "CORPUS.GUI"\cf3 , s);\
 \
 ~audio.add(\cf5 \\mBus\cf3  -> \cf4 Bus\cf3 .control(s, 1));\
 ~audio.add(\cf5 \\monoPlayer\cf3  -> \cf4 Synth\cf3 .new(\cf5 \\unitSamplerMono\cf3 , [\cf5 \\busTrig\cf3 , ~audio[\cf5 \\mBus\cf3 ]]));\
@@ -519,7 +546,7 @@
 					\
 					fileListView.items_((fileListView.items ++ tmp).asSet.asArray.sort);\
 					\
-					~graphNeedsUpdate = \cf4 true\cf3 ;\
+					~graphNeedsUpdate = \cf4 true\cf3 ; \cf2 // ???\cf3 \
 \pard\pardeftab560\ql\qnatural
 \cf3 				\});\
 \pard\pardeftab560\li1140\fi-1140\ql\qnatural
