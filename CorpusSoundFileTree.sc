@@ -1,0 +1,149 @@
+CorpusSoundFileTree {
+	
+	var <>corpus, <>anchorPath, <>tree, <>trackbacks, <>indexPool;
+	
+	*new { |corpus|
+		^super.new.initCorpusSoundFileTree(corpus)
+	}
+	
+	initCorpusSoundFileTree { |crps|
+		this.corpus = crps;
+		^this
+	}
+	
+	setAnchorTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0|
+		var flag, sfID;
+		
+		this.anchorPath = PathName.new(path.asString).fullPath;
+
+		// set and correct (if nec.) the new sfID
+		(srcFileID == nil).if
+		{ 
+			sfID = this.corpus.sfOffset;
+			this.corpus.sfOffset = this.corpus.sfOffset + 1;
+		} {
+			sfID = this.corpus.sfOffset.max(srcFileID);
+			this.corpus.sfOffset = sfID + 1;
+		};
+
+		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
+
+		this.tree = Dictionary[
+			sfID ->
+				Dictionary[
+					\abfr -> nil,
+					\bfrL -> nil,
+					\bfrR -> nil,
+					\uniqueID -> flag,
+					\channels -> numChannels,
+					\sfileGroup -> (sfGrpID ? 0),
+
+					\sfileID -> sfID,
+					\parentFileID -> sfID,
+					\synthdefs -> synthdefs,
+					\params -> params,
+					\tratio -> tratio,
+					
+					\children -> Dictionary[]
+				]
+		];
+		this.corpus.mapIDToSF(anchorPath, customMap: sfID, sfgroup:sfg);
+		Post << "Creating trackback for: " << sfID << "\n";
+		this.trackbacks = Dictionary[(sfID -> [anchorPath, synthdefs, params, tratio])];
+		^sfID
+	}
+	
+	
+	addAnchorTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0|
+		var flag, sfID;
+		Post << "Add an anchor tree...\n";
+		this.anchorPath = PathName.new(path.asString).fullPath;
+
+		// set and correct (if nec.) the new sfID
+		(srcFileID == nil).if
+		{ 
+			sfID = this.corpus.sfOffset;
+			this.corpus.sfOffset = this.corpus.sfOffset + 1;
+		} {
+			sfID = this.corpus.sfOffset.max(srcFileID);
+			this.corpus.sfOffset = sfID + 1;
+		};
+
+		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
+
+		this.tree.add(
+			sfID ->
+				Dictionary[
+					\abfr -> nil,
+					\bfrL -> nil,
+					\bfrR -> nil,
+					\uniqueID -> flag,
+					\channels -> numChannels,
+					\sfileGroup -> (sfGrpID ? 0),
+
+					\sfileID -> sfID,
+					\parentFileID -> sfID,
+					\synthdefs -> synthdefs,
+					\params -> params,
+					\tratio -> tratio,
+					
+					\children -> Dictionary[]
+				]
+		);
+		this.corpus.mapIDToSF(anchorPath, customMap:sfID, sfgroup:sfg);
+		Post << "Creating trackback for added anchor: " << sfID << "\n";
+		this.trackbacks.add(sfID -> [anchorPath, synthdefs, params, tratio]);
+		^sfID
+	}
+	
+	
+	
+	addChildSoundFileTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0|
+		var travTree, travAccum = [], sfID, srcFileID;
+		var parentSynthdefs, parentParams, psdPlusInsert, ppPlusInsert;
+		Post << "src file id: " << sourceFileID << "\n";
+		// set and correct (if nec.) the new sfID
+		(sourceFileID == nil).if
+		{
+			srcFileID = this.trackbacks.keys.asArray.minItem; // assume that we are appending to root node
+			sfID = this.corpus.sfOffset;
+			this.corpus.sfOffset = this.corpus.sfOffset + 1;
+		} {
+			srcFileID = sourceFileID;
+			Post << this.corpus.sfOffset << "\n";
+			sfID = this.corpus.sfOffset.max(srcFileID);
+			this.corpus.sfOffset = sfID + 1;
+		};
+			
+		(this.trackbacks.keys.includes(srcFileID)).if  // be sure that the src file ID is valid!
+		{
+			
+			parentSynthdefs = this.trackbacks[srcFileID][1].deepCopy; 
+			parentParams = this.trackbacks[srcFileID][2].deepCopy;
+			psdPlusInsert = parentSynthdefs.insert(1, synthdef).flatten;
+			ppPlusInsert = parentParams.insert(1, params);
+						
+			this.tree[srcFileID][\children].add(
+				sfID ->
+					Dictionary[
+						\abfr -> nil,
+						
+						\sfileID -> sfID,
+						\parentFileID -> srcFileID,
+						\synthdefs -> psdPlusInsert,
+						\params -> ppPlusInsert,
+						\tratio -> tratio,
+
+						\children -> Dictionary[]
+					]
+			);
+			
+			this.trackbacks = this.trackbacks.add(sfID -> [anchorPath, psdPlusInsert, ppPlusInsert, tratio]);
+			this.corpus.mapIDToSF(this.trackbacks[sfID][0], customMap: sfID, sfgroup:sfg);
+//			Post << "updated trackbacks list:\n";
+//			Post << this.trackbacks << "\n";
+			^sfID
+		};
+		^nil
+	}
+}
