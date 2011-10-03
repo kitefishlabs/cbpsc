@@ -1,4 +1,4 @@
-//This file is part of cbpsc (version 0.1.1).
+//This file is part of cbpsc (last revision @ version 0.5).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -9,7 +9,7 @@
 // used in cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
 // UnitSpace.sc
-// Copyright 2010, Thomas Stoll
+// Copyright 2010-11, Thomas Stoll
 // based on ParaSpace:
 // (c) 2006, Thor Magnusson - www.ixi-software.net
 // GNU licence - google it.

@@ -11,7 +11,7 @@
 // MetaCorpusDB.sc
 // (c) 2011, Thomas Stoll
 
-MetaCorpusDB3 : Dictionary {
+MetaCorpusDB : Dictionary {
 
 	var <>sfOffset, <>cuOffset, <>sfgOffset, <>soundFileUnitsMapped;
 

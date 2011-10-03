@@ -1,4 +1,4 @@
-//This file is part of cbpsc (version 0.1.1).
+//This file is part of cbpsc (new/forked @ version 0.5).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -8,8 +8,8 @@
 //
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
-// CorpusUnitViewer.sc
-// (c) 2010, Thomas Stoll
+// MetaCorpusUnitViewer.sc
+// (c) 2011, Thomas Stoll
 
 MetaCorpusUnitViewer : UnitSpace {
 	var <>parent, <>clients;
