@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.2).
+//This file is part of cbpsc (version 0.1.1).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -99,7 +99,7 @@ CorpusUnitViewer : UnitSpace {
 		{
 			this.sync;
 //			"building normed array: ".post; this.cArray.postln;
-			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,S, sfid, relid
+			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,Z, sfid, relid
 	
 			this.groupedTable = Dictionary[];
 			normedArray.flop.do({ |val, ind|	// the grouping
