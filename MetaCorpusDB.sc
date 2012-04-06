@@ -1,4 +1,4 @@
-//This file is part of cbpsc (new @ version 0.5).
+//This file is part of cbpsc (last revision @ version 0.6).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -9,7 +9,7 @@
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
 // MetaCorpusDB.sc
-// (c) 2011, Thomas Stoll
+// Copyright (C) 2011-2012, Thomas Stoll
 
 MetaCorpusDB : Dictionary {
 
@@ -140,32 +140,48 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addSoundFile { |path, numChannels=1, siblingFlag=nil, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1| }
-	addSoundFile { |path, numChannels=1, siblingFlag=nil, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1|
-		var thepath = PathName.new(path.asString), flag, res;
-		Post << "Adding Entry:   ===============================  " << path.asString;
-		Post << " (" << numChannels << " channels)." << Char.nl;
-		
-		(this[\sftrees][thepath.fullPath] == nil).if { //no tree for this path/file
-			
-			this[\sftrees].add(thepath.fullPath -> CorpusSoundFileTree.new(this));
-			res = this[\sftrees][thepath.fullPath].setAnchorTree(thepath.fullPath, numChannels, nil, sfGrpID, srcFileID, synthdefs, params, tratio);
+// path             path ====> key for sftrees Dictionary
+// numChannels=1    2 for stereo
+// siblingFlag=nil  XXXXX
+// sfGrpID=0        optional sfile group
+// importFlag=nil   set to import the soundfile (instead of just the metadata) *** this should be inverted!
+// srcFileID=nil    for parent/child relationships
+// synthdefs=nil    synthdef object names (as a list)
+// params=nil       there parameters (as a list - ['param', val, 'param', val, etc...])
+// tratio=1         the all important transposition ratio
 
-			this[\sfutable].add(thepath.fullPath -> Dictionary[sfOffset -> Dictionary[\mfccs -> nil, \keys -> nil]]);
-			
-			((importFlag != nil) && (res != nil)).if { "impoRT!".postln; this.importSoundFileToBuffer(thepath.fullPath, res) };
+	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
+		var thepath, flag, res;
+		
+		(path != nil).if {
+			thepath = PathName.new(path.asString);
 		} {
-			(siblingFlag == true).if
-			{
-				Post << "add Anchor\n\n";
-				res = this[\sftrees][thepath.fullPath].addAnchorTree(thepath.fullPath, numChannels, nil, sfGrpID, srcFileID, synthdefs, params, tratio);
-			} {
-				Post << "add child\n";
-				res = this[\sftrees][thepath.fullPath].addChildSoundFileTree(srcFileID, synthdefs, params, tratio, sfg:sfGrpID);
-			};
+			^nil;
 		};
 		
+		(verbose != nil).if {
+			Post << "Adding Entry:   ===============================  " << path.asString;
+			Post << " (" << numChannels << " channels)." << Char.nl;
+		}
+		
+		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
+			
+			this[\sftrees].add(thepath.fullPath -> CorpusSoundFileTree.new(this));
+			
+			(verbose != nil).if { Post << "add Anchor\n\n"; };
+			res = this[\sftrees][thepath.fullPath].addAnchorSFTree(thepath.fullPath, numChannels, sfGrpID, srcFileID, synthdefs, params, tratio);
+			// add an sfile unit to the sfile unit table
+			this[\sfutable].add(thepath.fullPath -> Dictionary[sfOffset -> Dictionary[\mfccs -> nil, \keys -> nil]]);
+			
+		} {
+			(verbose != nil).if { Post << "add child\n"; };
+			res = this[\sftrees][thepath.fullPath].addChildSFTree(srcFileID, synthdefs, params, tratio, sfg:sfGrpID);
+		};
+
+		((importFlag != nil) && (res != nil)).if { "impoRT!".postln; this.importSoundFileToBuffer(thepath.fullPath, res) };
 //		(res != nil).if { this.mapIDToSF(thepath.fullPath, (sfGrpID ? 0)) }; // why does calling mapIDToSF here f*** things up?
 		
+		// res is the sfile ID, which has been returned from one of the add_____Tree functions
 		^res
 	}
 	
