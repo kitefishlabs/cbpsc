@@ -16,14 +16,20 @@ MetaCorpusDB : Dictionary {
 	var <>sfOffset, <>cuOffset, <>sfgOffset, <>soundFileUnitsMapped;
 
 //*	*new { |name, server| }
-	*new { |name, server|
+// name
+// server
+
+	*new { |name, server, verbose=nil|
 		^super.new.initCorpus(name, server)
 	}
 
-//-	initCorpus { |cid, srvr| }
-	initCorpus { |cid, srvr|
+//-	initCorpus { |corpusAnchor, srvr| }
+// corpusAnchor
+// srvr
+
+	initCorpus { |corpusAnchor, srvr, verbose=nil|
 		// anchor is an identifier for a corpus (a name, a path, whatever)
-		this.add(\anchor -> cid.asSymbol);
+		this.add(\anchor -> corpusAnchor.asSymbol);
 		this.add(\server -> srvr);
 		// the dictionaries that store the data/metadata
 		this.add(\sftable -> Dictionary[]);
@@ -51,19 +57,20 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	buildSynths { }
+
 	buildSynths {
 		this[\synthdefs].put( \mfccBufferAnalyzerNRT,
 			SynthDef(\mfccBufferAnalyzerNRT, { |srcbufNum, start=0, dur=1, savebufNum, srate, transp=1, hop=1024|
 				var env, in, chain, power, mfcc, driver, array;
-				env = EnvGen.kr(Env.linen(0.01, ((dur / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 2);
-				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: start) * env;
-				chain = FFT(LocalBuf(2048,1), in);
+				env = 	EnvGen.kr(Env.linen(0.01, ((dur / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 2);
+				in = 	PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: start) * env;
+				chain = 	FFT(LocalBuf(2048,1), in);
 			
-				power =			FFTPower.kr(chain);          // empirical multiplier
-				mfcc =			MFCC.kr(chain,24);
+				power =	FFTPower.kr(chain);          // empirical multiplier
+				mfcc =	MFCC.kr(chain,24);
 				
 				// log the metadata into a buffer and signal sclang to read from the buffer
-				driver = Impulse.kr( srate / hop );
+				driver = 	Impulse.kr( srate / hop );
 				Logger.kr(
 					[(power * 0.1), mfcc].flatten,
 					driver,
@@ -134,7 +141,7 @@ MetaCorpusDB : Dictionary {
 	}
 	
 //-	addSynthDef { |symbol, synthdef| }
-	addSynthDef { |symbol, synthdef|
+	addSynthDef { |symbol, synthdef, verbose=nil|
 		this[\synthdefs].put( symbol, synthdef);
 		this[\synthdefs][symbol].writeDefFile;
 	}
@@ -227,12 +234,12 @@ MetaCorpusDB : Dictionary {
 // index
 // identifier
 
-	addTransformation { |index, identifier|
+	addTransformation { |index, identifier, verbose=nil|
 		this[\transformations].add(index -> identifier);
 		this[\transformations].add(identifier -> index);	}
 
 //-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, transpratio| }
-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, transpratio|
+	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, transpratio, verbose=nil|
 		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0, tratio = transpratio;
 		//( ? this[\sftrees][path].trackbacks[sfid][3]);
@@ -336,7 +343,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	mapIDToSF { |path, sfgroup=0, customMap=nil| }
-	mapIDToSF { |path, sfgroup=0, customMap=nil|
+	mapIDToSF { |path, sfgroup=0, customMap=nil, verbose=nil|
 		var mapping;
 		(customMap == nil).if
 			{
@@ -358,7 +365,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil| }
-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil|
+	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil, verbose=nil|
 		var quad, transp = (tratio ? 1);
 		(bounds != nil).if
 		{
@@ -382,7 +389,7 @@ MetaCorpusDB : Dictionary {
 	// this looks like a bad hack... should be accessing something in this[\sftrees]... ???
 
 //-	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil| }
-	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil|
+	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil, verbose=nil|
 		//var old = this[\sfutable][path][\mfccs][relid], temp, newmfccs, newkeypair;
 		var old = this[\sfutable][path][\mfccs][cid], temp, newmfccs, newkeypair;
 //		Post << "\nold: " << old << "\n";
@@ -400,7 +407,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	removeSoundFileUnit { |path, relid| }
-	removeSoundFileUnit { |path, relid|
+	removeSoundFileUnit { |path, relid, verbose=nil|
 		(relid != nil).if
 		{
 			this[\sfutable][path][\mfccs].removeAt(relid);
@@ -421,7 +428,7 @@ MetaCorpusDB : Dictionary {
 
 	// set the \mfccs tables to nil (empty them) for the provided path
 //-	clearSoundFileUnits { |path| }
-	clearSoundFileUnits { |path|
+	clearSoundFileUnits { |path, verbose=nil|
 		Post << "clear soundfileunits!!\n\n\n\n\n";
 		this[\sfutable][path].add(\rawmels -> nil);
 		this[\sfutable][path].add(\mfccs -> nil);
@@ -430,7 +437,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addRawMetadata { |path, mels=nil| }
-	addRawMetadata { |path, mels=nil|
+	addRawMetadata { |path, mels=nil, verbose=nil|
 		(mels != nil).if
 		{
 			this[\sfutable][path][\rawmels] = mels.flatten.clump(25);
@@ -438,7 +445,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addRawMetadataUnit { |path, mels=nil| }
-	addRawMetadataUnit { |path, mels=nil|
+	addRawMetadataUnit { |path, mels=nil, verbose=nil|
 		(mels != nil).if
 		{
 //			Post << "mels: " << mels << "\n";
@@ -449,7 +456,7 @@ MetaCorpusDB : Dictionary {
 	
 //-	gatherKeys { |path| }
 	// raw analysis data -> segmented metadata (desriptors + mfccs)
-	gatherKeys { |path|
+	gatherKeys { |path, verbose=nil|
 		this[\sfutable][path][\keys] = this[\sfutable][path][\keys].flatten.clump(7);
 		this[\sfutable][path][\keys].size.postln;
 		this[\sfutable][path][\keys].do({ |key7, index|
@@ -467,7 +474,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	segmentUnits { |path| }
-	segmentUnits { |path|
+	segmentUnits { |path, verbose=nil|
 		var mfccs, tratio;		
 		//Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
 		mfccs = this[\sfutable][path][\rawmels].flop;
@@ -505,14 +512,14 @@ MetaCorpusDB : Dictionary {
 	
 //-	addCorpusUnit { |uid, metadata| }
 //		add a uid -> metadata mapping to the \cutable (should there be a check to see that uid == metadata[0]?)
-	addCorpusUnit { |uid, metadata|
+	addCorpusUnit { |uid, metadata, verbose=nil|
 		this[\cutable].add(uid -> metadata);
 		^this[\cutable][uid]
 	}
 
 //-	removeCorpusUnit { |uid| }
 // 		opposite of add; sets the mapped flag to false (why?)
-	removeCorpusUnit { |uid|
+	removeCorpusUnit { |uid, verbose=nil|
 		this[\cutable].removeAt(uid);
 		this.soundFileUnitsMapped = false;
 		^this[\cutable][uid]
@@ -525,7 +532,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	getSoundFileUnitMetadata { |sfid, uid| }
-	getSoundFileUnitMetadata { |sfid, uid, grpid=0|
+	getSoundFileUnitMetadata { |sfid, uid, grpid=0, verbose=nil|
 		(this.soundFileUnitsMapped != true).if
 		{
 			this.mapSoundFileUnitsToCorpusUnits;
@@ -535,7 +542,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	mapSoundFileUnitsToCorpusUnits { |override=false| }
-	mapSoundFileUnitsToCorpusUnits { |override=false|
+	mapSoundFileUnitsToCorpusUnits { |override=false, verbose=nil|
 		((this.soundFileUnitsMapped == false) || (override == true)).if
 		{
 			//this.clearCorpusUnits;
@@ -554,7 +561,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	mapBySFRelID { }
-	mapBySFRelID { 
+	mapBySFRelID { |verbose=nil|
 		var fileMap = Dictionary[];
 		var metadata = this.mapSoundFileUnitsToCorpusUnits;
 		
@@ -591,7 +598,7 @@ MetaCorpusDB : Dictionary {
 
 // import & export entire corpora
 //-	importCorpusFromXML { |server, path, sibFlag=false| }
-	importCorpusFromXML { |server, path, sibFlag=false|
+	importCorpusFromXML { |server, path, sibFlag=false, verbose=nil|
 		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
 		var runningCUOffset = this.cuOffset, runningSFOffset = this.sfOffset, runningSFGOffset = this.sfgOffset, thePath, slines, plines;
 		
@@ -798,7 +805,7 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	exportCorpusToXML { |server, path| }
-	exportCorpusToXML { |server, path|
+	exportCorpusToXML { |server, path, verbose=nil|
 		File.use(path.asString, "w", { |f|
 			f.write("<?xml version=1.0 encoding=iso-8859-1 standalone=yes?>\n");
 			f.write("<corpusmap name=\"" ++ this[\anchor].asString ++ "\">\n");
