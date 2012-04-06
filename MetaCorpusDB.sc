@@ -24,8 +24,8 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	initCorpus { |corpusAnchor, srvr| }
-// corpusAnchor
-// srvr
+// corpusAnchor	the name of the corpus, or, alternatively, a path to a directory
+// srvr			the server attached to this corpus
 
 	initCorpus { |corpusAnchor, srvr, verbose=nil|
 		// anchor is an identifier for a corpus (a name, a path, whatever)
@@ -193,9 +193,9 @@ MetaCorpusDB : Dictionary {
 	
 //-	importSoundFileToBuffer { |path, sfid=0| }
 // path
-// sfid=0    obligatory
+// sfid		obligatory, NO DEFAULT
 
-	importSoundFileToBuffer { |path, sfid=0, verbose=nil|
+	importSoundFileToBuffer { |path, sfid, verbose=nil|
 		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
 				this[\sftrees][path].tree[sfid].add(\bfrL -> bfrL);
 			});
@@ -231,49 +231,53 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addTransformation { |index, identifier| }
-// index
-// identifier
+// index -> identifier pairs; builds a mirrored hash table of the available transformations
 
 	addTransformation { |index, identifier, verbose=nil|
 		this[\transformations].add(index -> identifier);
 		this[\transformations].add(identifier -> index);	}
 
-//-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, transpratio| }
-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, transpratio, verbose=nil|
+//-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, tratio=1, verbose=nil| }
+// path
+// mapFlag
+// group
+// sfid
+// dryrun
+// tratio
+
+	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, tratio, verbose=nil|
 		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
-		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0, tratio = transpratio;
-		//( ? this[\sftrees][path].trackbacks[sfid][3]);
+		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0, tratio = tratio;
 		var currBus = 20;
 		
-		// pathname as a Pathname object
+		// pathname as a Pathname object; extract dir, file, and full path as Strings
 		fullpath = PathName.new(path.asString);
-		// extract dir, file, and full path as Strings
-		dir = fullpath.pathOnly;
-		file = fullpath.fileNameWithoutExtension;
+		dir = fullpath.pathOnly.asString;
+		file = fullpath.fileNameWithoutExtension.asString;
 		fullpath = fullpath.fullPath.asString;
 
-		// execute a command in the terminal
+		// execute a command in the terminal .. this will not make a new md dir if it is already there!
 		Pipe.new("cd " ++ dir.asString ++ "; mkdir md", "w").close;
 		
 		rmddir = dir.asString +/+ "md" +/+ file ++ "." ++ tratio ++ ".md.aiff";
-		Post << "RMDDIR: " << rmddir << tratio.class << "\n";
 		
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
-		"Dur: ".post; sFile.duration.postln;
 		
-		"allocation pBuf...".postln;
 		pBuf = this[\server].bufferAllocator.alloc(1);
 		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 35);
-		"pairs: ".post; [pBuf, aBuf].postln;
+		
+		(verbose != nil).if {
+			Post << "RMDDIR: " << rmddir << tratio.class << "\n";
+			Post << "Dur: " << sFile.duration << "\n" << "allocation pBufÉ\n";
+			Post << "pairs: " << [pBuf, aBuf] << "\n";
+		};
 		
 		TempoClock.default.tempo = 1;
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.numFrames / 1024) / tratio).ceil, 25] ]];
 		
-//		Post << "SFID: " << sfid << ", @1: " << this[\sftrees][path].trackbacks << "\n";
 		this[\sftrees][path].trackbacks[sfid][1].do({ |sdef, index|
 			var row = this[\sftrees][path].trackbacks[sfid][2][index];
-			Post << "row initially: " << row << "\n";
 			row.do({ |val, index|
 				
 				switch (val,
@@ -283,17 +287,15 @@ MetaCorpusDB : Dictionary {
 						Post << "update tratio...\n";
 						row[index+1] = tratio;
 					}, 
-					\outbus, {					//						Post << "update outbus\n";
+					\outbus, {
 						row[index+1] = currBus;
 					},
 					\inbus, {
-//						Post << "update inbus\n";	
 						row[index+1] = currBus;
 						currBus = currBus + 1;
 					}
 				);
 			});
-			Post << "row FINALLY: " << row << "\n";
 			oscList = oscList ++ [[0.02, ([\s_new, sdef, -1, 1, 0] ++ row).flatten]];
 		});
 
@@ -301,49 +303,50 @@ MetaCorpusDB : Dictionary {
 		// don't free any buffers (yet)
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.04).unbubble, [\c_set, 0, 0]]];
 				
-		oscList.do({ |item| item.postln });
-//			oscList.postln;
+		(verbose != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
 				
-		(dryrun != true).if
-		{
-			Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
-			0.01.wait;
-			while({
-				res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
-				((timeout % 10) == 0).if { Post << [timeout, res] << "\n" };
-				(res == 0) and: {(timeout = timeout - 1) > 0}
-			},{
-				0.1.wait;
-			});
-			0.01.wait;
+		Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
+		0.01.wait;
+		while({
+			res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
+			((timeout % 10) == 0).if { Post << [timeout, res] << "\n" };
+			(res == 0) and: {(timeout = timeout - 1) > 0}
+		},{
+			0.1.wait;
+		});
+		0.01.wait;
 //			// clear out the rawmels (to possibly reuse!)
 //			this.clearSoundFileUnits;
-			~flag55 = 0;
-			thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
-				bfr.loadToFloatArray(action: { |array|
-	
-					Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n";
+		// here's the stupidest line of code that I have ever written!É otherwise the Buffer will not get loaded to the array
+		~asdfghjkl = 0;
+		thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
+			bfr.loadToFloatArray(action: { |array|
+
+				(verbose != nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
+			
+				ary = array.clump(25).flop;
+				ary[0] = ary[0].ampdb;
+				(1..24).do({ |d| ary[d] = ary[d].collect({ |n| n.asStringPrec(4).asFloat }) });
 				
-					ary = array.clump(25).flop;
-					ary[0] = ary[0].ampdb;
-					(1..24).do({ |d| ary[d] = ary[d].collect({ |n| n.asStringPrec(4).asFloat }) });
-					
-					this.addRawMetadata(fullpath, ary.flop);
-					
-					// why waste the memory?
-					this[\sftrees][fullpath].tree[0][\abfr] = bfr;
-					~flag55 = 1;
-				});
+				this.addRawMetadata(fullpath, ary.flop);
+				
+				// why waste the memory?
+				this[\sftrees][fullpath].tree[0][\abfr] = bfr;
+				~asdfghjkl = 1;
 			});
-			while { ~flag55 == 0 } { 0.5.wait }; "DONE".postln;
-		};
+		});
+		
+		while { ~flag55 == 0 } { 0.5.wait }; "DONE".postln;
+		
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
-		sFile.free;
-		//^1
 	}
 
-//-	mapIDToSF { |path, sfgroup=0, customMap=nil| }
-	mapIDToSF { |path, sfgroup=0, customMap=nil, verbose=nil|
+//-	mapIDToSF { |path, sfgrp=0, customMap=nil| }
+// path
+// sfgrp
+// customMap
+
+	mapIDToSF { |path, sfgrp=0, customMap=nil, verbose=nil|
 		var mapping;
 		(customMap == nil).if
 			{
@@ -354,9 +357,11 @@ MetaCorpusDB : Dictionary {
 				// custom caller responsible for sfOffset!!!
 				//this.sfOffset = mapping.max(this.sfOffset) + 1;
 			};
-//		Post << "sfgroup: " << sfgroup << "\n";	
-//		Post << "sfgmap: " << this[\sfgmap] << "\n";	
-//		Post << "mapping: " << mapping << "\n";
+		(verbose != nil).if {
+			Post << "mapIDtoSF...\n" << "sfgroup: " << sfgroup << "\n";
+			Post << "sfgmap: " << this[\sfgmap] << "\n";
+			Post << "mapping: " << mapping << "\n";
+		};
 		// no check for overwrite... should there be one?
 		(this[\sfgmap][sfgroup] == nil).if { this[\sfgmap].add(sfgroup -> Array[])};
 		this[\sfgmap][sfgroup] = (this[\sfgmap][sfgroup] ++ mapping).flatten;
@@ -365,21 +370,30 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil| }
+// path
+// relid 
+// bounds
+// cid=nil
+// sfg=nil
+// tratio=nil
+// sfid=nil
+
 	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil, verbose=nil|
 		var quad, transp = (tratio ? 1);
 		(bounds != nil).if
 		{
-//			Post << "Adding sound file unit (to sfutable)...mapping: " << (sfid ? this[\sfmap].findKeyForValue(path.asString)) << "\n";
-			
 			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, (sfid ? this[\sfmap].findKeyForValue(path.asString)), relid ];
-			// custom caller responsible!
-			(cid == nil).if { this.cuOffset = this.cuOffset + 1 };
-			//Post << quad << " ... " << bounds << " ... " << path << "\n";
 			
-			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ quad ++ bounds ++ transp; //.flatten.reject({|item| item == nil}).clump(7);
-//
-////			Post << "\n\n" << "KEYS" << this[\sfutable][path][\keys].size << "\n\n";
-////			Post << "\n\n" << "MFCCS" << this[\sfutable][path][\mfccs] << "\n\n";
+			(cid == nil).if { this.cuOffset = this.cuOffset + 1 };
+			
+			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ quad ++ bounds ++ transp;
+
+			(verbose != nil).if {
+				Post << "Adding sound file unit (to sfutable)...mapping: " << (sfid ? this[\sfmap].findKeyForValue(path.asString)) << "\n";
+				Post << quad << " ... " << bounds << " ... " << path << "\n";
+				Post << "\n" << "KEYS" << this[\sfutable][path][\keys].size << "\n";
+				Post << "\n" << "MFCCS" << this[\sfutable][path][\mfccs] << "\n";
+			};
 			this.soundFileUnitsMapped = false;
 			^this[\sfutable][path][\keys].size
 		};
@@ -389,6 +403,15 @@ MetaCorpusDB : Dictionary {
 	// this looks like a bad hack... should be accessing something in this[\sftrees]... ???
 
 //-	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil| }
+// path
+// relid
+// cid=nil
+// onset=nil
+// dur=nil
+// mfccs=nil
+// sfg=nil
+// keypair=nil
+
 	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil, verbose=nil|
 		//var old = this[\sfutable][path][\mfccs][relid], temp, newmfccs, newkeypair;
 		var old = this[\sfutable][path][\mfccs][cid], temp, newmfccs, newkeypair;
@@ -598,8 +621,8 @@ MetaCorpusDB : Dictionary {
 
 //-	importCorpusFromXML { |server, path| }
 //		import & export entire corpora
-//
-//
+// server
+// path
 
 	importCorpusFromXML { |server, path, verbose=nil|
 		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
@@ -802,6 +825,9 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	exportCorpusToXML { |server, path| }
+// server
+// path
+
 	exportCorpusToXML { |server, path, verbose=nil|
 		File.use(path.asString, "w", { |f|
 			f.write("<?xml version=1.0 encoding=iso-8859-1 standalone=yes?>\n");
