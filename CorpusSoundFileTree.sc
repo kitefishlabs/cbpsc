@@ -21,6 +21,7 @@ CorpusSoundFileTree {
 	
 	initCorpusSoundFileTree { |crps|
 		this.corpus = crps;
+		this.tree = Dictionary[];
 		^this
 	}
 	
@@ -82,7 +83,7 @@ CorpusSoundFileTree {
 			this.corpus.sfOffset = sfID + 1;
 		};
 
-		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
+		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 1300000000) } { flag = uniqueFlag };
 
 		this.tree.add(
 			sfID ->
