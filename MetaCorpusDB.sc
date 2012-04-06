@@ -160,8 +160,7 @@ MetaCorpusDB : Dictionary {
 		};
 		
 		(verbose != nil).if {
-			Post << "Adding Entry:   ===============================  " << path.asString;
-			Post << " (" << numChannels << " channels)." << Char.nl;
+			Post << "Adding Entry:   ===============================  " << path.asString << " (" << numChannels << " channels).\n";
 		}
 		
 		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
@@ -189,7 +188,7 @@ MetaCorpusDB : Dictionary {
 // path
 // sfid=0    obligatory
 
-	importSoundFileToBuffer { |path, sfid=0|
+	importSoundFileToBuffer { |path, sfid=0, verbose=nil|
 		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
 				this[\sftrees][path].tree[sfid].add(\bfrL -> bfrL);
 			});
@@ -204,25 +203,30 @@ MetaCorpusDB : Dictionary {
 	}
 
 //-	removeSoundFile { |path| }
-	removeSoundFile { |path|
-		var thepath = PathName.new(path.asString);
-		"Deleting Entry:   ===============================".postln;
-		thepath.postln;
-		thepath = thepath.fullPath;
-		(this[\sftable][thepath.fullPath] != nil).if
+// path
+
+	removeSoundFile { |path, verbose=nil|
+		var thepath;
+		thepath = PathName.new(path.asString).fullPath;
+		(verbose != nil).if { Post << "Deleting Entry: " << thepath << "   ==============================="; };
+		
+		(this[\sftable][thepath] != nil).if
 		{
-			this[\sftable][thepath][\bfrL].free;
-			(this[\sftable][thepath][\bfrR] != nil).if { this[\sftable][thepath.fullPath][\bfrR].free };
+			(this[\sftable][thepath][\bfrR] != nil).if { this[\sftable][thepath][\bfrL].free; };
+			(this[\sftable][thepath][\bfrR] != nil).if { this[\sftable][thepath][\bfrR].free; };
 			this[\sftable][thepath][\abfr].free;
 			this[\sftable][thepath].add(\abfr -> nil, \bfrL -> nil, \bfrR -> nil, \uniqueid -> nil, \sfilegroup -> nil, \mfccs -> nil, \keys -> nil, \srcFileID -> nil, \rawmels -> nil);
 			this[\sftable].add(thepath -> nil);
 			this[\sfgmap].add(thepath -> nil);
 		} {
-			"Something has gone horribly wrong; attempting to remove a non-existant path!".postln;
+			Post << "WARNING: Something has gone horribly wrong; attempting to remove a non-existant path!\n";
 		};
 	}
 
 //-	addTransformation { |index, identifier| }
+// index
+// identifier
+
 	addTransformation { |index, identifier|
 		this[\transformations].add(index -> identifier);
 		this[\transformations].add(identifier -> index);	}
