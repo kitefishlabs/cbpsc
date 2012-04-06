@@ -596,9 +596,12 @@ MetaCorpusDB : Dictionary {
 		^fileMap
 	}
 
-// import & export entire corpora
-//-	importCorpusFromXML { |server, path, sibFlag=false| }
-	importCorpusFromXML { |server, path, sibFlag=false, verbose=nil|
+//-	importCorpusFromXML { |server, path| }
+//		import & export entire corpora
+//
+//
+
+	importCorpusFromXML { |server, path, verbose=nil|
 		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
 		var runningCUOffset = this.cuOffset, runningSFOffset = this.sfOffset, runningSFGOffset = this.sfgOffset, thePath, slines, plines;
 		
@@ -612,14 +615,12 @@ MetaCorpusDB : Dictionary {
 		domdoc.getDocumentElement.getElementsByTagName("descrid").do({ |tag, index|
 			tmpDict.add(tag.getText.asInteger -> tag.getAttribute("name").asSymbol);
 		});
-		(tmpDict != this[\dtable]).if { "Import descriptor list mismatch!".postln; };
+		(tmpDict != this[\dtable]).if { "WARNING: Import descriptor list mismatch!".postln; };
 
 		// get the anchorPath from XML
 		domdoc.getDocumentElement.getElementsByTagName("tree").do({ |tag| // should only be one!
 			thePath = tag.getAttribute("path").asSymbol;
-		});
-		Post << "the path: " << thePath << "\n";
-		
+		});		
 		
 		// nodes correspond to either the one parent or any one of the children
 		// 	- children are handled differently
@@ -629,7 +630,6 @@ MetaCorpusDB : Dictionary {
 			theID = entry.getAttribute("sfID").asInteger + runningSFOffset;
 			theParent = entry.getElementsByTagName("parentFileID")[0].getText.asInteger + runningSFOffset;
 
-//			["...",theID,theParent].postln;
 			(sfDict[thePath] == nil).if
 			{
 				sfDict.add(thePath -> Dictionary[theID -> Dictionary[]]);
@@ -645,7 +645,6 @@ MetaCorpusDB : Dictionary {
 					slines.add(theID -> synthdef.getElementsByTagName("sd").collect({ |sd| sd.getText.asSymbol }) );
 				});
 
-//				Post << "slines: " << slines << "\n";
 				sfDict[thePath][theID].add(\synthdefs -> slines);
 				
 				plines = Dictionary[];
@@ -659,7 +658,6 @@ MetaCorpusDB : Dictionary {
 //				Post << "plines: " << plines.keys << "\n";
 
 				sfDict[thePath][theID].add(\params -> plines);
-				
 //				Post << sfDict << "\n";
 				
 			} {
@@ -676,7 +674,7 @@ MetaCorpusDB : Dictionary {
 				
 				sfDict[thePath][theParent][\children][theID].add(\parentFileID -> theParent);
 				sfDict[thePath][theParent][\children][theID].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
-				Post << "tratio: " << sfDict[thePath][theParent][\children][theID][\tratio] << "\n";
+//				Post << "tratio: " << sfDict[thePath][theParent][\children][theID][\tratio] << "\n";
 				
 				slines = Dictionary[];
 				entry.getElementsByTagName("synthdefs").do({ |synthdef|
@@ -725,7 +723,7 @@ MetaCorpusDB : Dictionary {
 
 			theID = sfDict[pathkey.asSymbol].keys.asArray[0];
 			theGroup = sfDict[pathkey.asSymbol][theID][\sfileGroup];
-			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << "\n";
+//			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << "\n";
 
 			this.addSoundFile(
 				pathkey.asString,
@@ -737,9 +735,10 @@ MetaCorpusDB : Dictionary {
 				params:sfDict[pathkey.asSymbol][theID][\params][theID],
 				tratio:sfDict[pathkey.asSymbol][theID][\tratio]
 			);
-			Post << "tratio: " << sfDict[pathkey.asSymbol][theID][\tratio] << "\n";
+//			Post << "tratio: " << sfDict[pathkey.asSymbol][theID][\tratio] << "\n";
 			this.analyzeSoundFile(pathkey.asString, sfid:theID, dryrun:true, transpratio:sfDict[pathkey.asSymbol][theID][\tratio]);
-			Post << "children's keys: " << sfDict[pathkey.asSymbol][theID][\children].keys << "\n";	
+//			Post << "children's keys: " << sfDict[pathkey.asSymbol][theID][\children].keys << "\n";
+
 			sfDict[pathkey.asSymbol][theID][\children].keys.asArray.sort.do({ |csfid|
 				this.addSoundFile(
 					pathkey.asString,
@@ -750,7 +749,7 @@ MetaCorpusDB : Dictionary {
 					params:sfDict[pathkey.asSymbol][theID][\children][csfid][\params][csfid][1],
 					tratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]
 				);
-				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
+//				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
 				this.analyzeSoundFile(pathkey.asString, sfid:csfid, dryrun:true, transpratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]);
 			});
 
@@ -773,15 +772,15 @@ MetaCorpusDB : Dictionary {
 				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: tmp[0].asInteger, sfg:theGroup.asInteger, tratio:tmp[6].asFloat, sfid:tmp[2].asInteger) - 1;
 //			
 			});
-			Post << "gather keys...\n";
+//			Post << "gather keys...\n";
 			this.gatherKeys(pathkey.asString);
 			
-			Post << this[\sfutable][pathkey.asString][\keys].size << " +=+=+ " << this[\sfutable][pathkey.asString][\mfccs].size << "\n";
+//			Post << this[\sfutable][pathkey.asString][\keys].size << " +=+=+ " << this[\sfutable][pathkey.asString][\mfccs].size << "\n";
 			
 			metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
 				
 				var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
-				Post << cid << ", " << tmp[0..3] << " ";
+//				Post << cid << ", " << tmp[0..3] << " ";
 				path = this[\sfmap][tmp[2]].asString; // at this point, shouldn't tmp[2] have to have an offset added !!!???
 				this.updateSoundFileUnit(
 					path,
@@ -798,10 +797,8 @@ MetaCorpusDB : Dictionary {
 		
 		this.sfgOffset = runningSFGOffset + 1;
 		this.cuOffset = this.cuOffset.max(this[\cutable].keys.maxItem) + 1;
-		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
+//		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
 
-		// clean up
-		sfDict.free; metadataDict.free;
 	}
 
 //-	exportCorpusToXML { |server, path| }
@@ -819,7 +816,6 @@ MetaCorpusDB : Dictionary {
 				var sfile = SoundFile.new;
 				
 //				Post << sfpath << "\n\n" << entry.tree[0] << "\n";
-	
 				entry.tree.keys.do({ |stindex| // SHOULD ONLY BE ONE KEY!!!
 	
 					f.write("      <tree path=\"" ++ entry.anchorPath.asString ++ "\">\n");
