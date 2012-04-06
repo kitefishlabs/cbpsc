@@ -186,13 +186,16 @@ MetaCorpusDB : Dictionary {
 	}
 	
 //-	importSoundFileToBuffer { |path, sfid=0| }
+// path
+// sfid=0    obligatory
+
 	importSoundFileToBuffer { |path, sfid=0|
 		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
 				this[\sftrees][path].tree[sfid].add(\bfrL -> bfrL);
 			});
+		// if stereo, add the right channel
 		(this[\sftrees][path].tree[sfid][\channels] == 2).if
 		{
-			"Strereo file: adding Right Channel!".postln;
 			Buffer.readChannel(this[\server], path, 0, -1, [1], { |bfrR|
 				this[\sftrees][path].tree[sfid].add(\bfrR -> bfrR);
 			});
