@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.5).
+//This file is part of cbpsc (last revision @ version 0.6).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -9,7 +9,7 @@
 // used in cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
 // CorpusSoundFileTree.sc
-// Copyright 2011, Thomas Stoll
+// Copyright 2011-2012, Thomas Stoll
 
 CorpusSoundFileTree {
 	
