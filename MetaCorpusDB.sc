@@ -239,14 +239,13 @@ MetaCorpusDB : Dictionary {
 		this[\transformations].add(index -> identifier);
 		this[\transformations].add(identifier -> index);	}
 
-//-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, tratio=1, verbose=nil| }
+//-	analyzeSoundFile { |path, group=0, sfid, tratio=1, verbose=nil| }
 // path
-// mapFlag=nil
 // group=0
 // sfid
 // tratio=1
 
-	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, tratio, verbose=nil|
+	analyzeSoundFile { |path, group=0, sfid, tratio, verbose=nil|
 		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
 		var currBus = 20;
