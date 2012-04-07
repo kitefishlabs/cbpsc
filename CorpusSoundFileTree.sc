@@ -67,8 +67,18 @@ CorpusSoundFileTree {
 //		^sfID
 //	}
 	
-	
-	addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0, verbose=nil|
+// - addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0, verbose=nil|
+// path, 
+// numChannels=1, 
+// uniqueFlag=nil, 
+// sfg=0
+// srcFileID=nil, 
+// synthdefs=nil, 
+// params=nil
+// tratio=1
+
+
+	addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfg=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
 		var flag, sfID;
 		(verbose).if { Post << "Add an anchor tree...\n"; };
 		this.anchorPath = PathName.new(path.asString).fullPath;
@@ -94,7 +104,7 @@ CorpusSoundFileTree {
 					\bfrR -> nil,
 					\uniqueID -> flag,
 					\channels -> numChannels,
-					\sfileGroup -> (sfGrpID ? 0),
+					\sfileGroup -> sfg,
 
 					\sfileID -> sfID,
 					\parentFileID -> sfID,
@@ -111,8 +121,13 @@ CorpusSoundFileTree {
 		^sfID
 	}
 	
-	
-	
+// - addChildSFTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0, verbose=nil|
+// sourceFileID=nil	assume the worst
+// synthdef=nil
+// params=nil
+// tratio=1
+// sfg=0				0 is the default, rather than nil
+
 	addChildSFTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0, verbose=nil|
 		var travTree, travAccum = [], sfID, srcFileID;
 		var parentSynthdefs, parentParams, psdPlusInsert, ppPlusInsert;
@@ -132,7 +147,6 @@ CorpusSoundFileTree {
 			
 		(this.trackbacks.keys.includes(srcFileID)).if  // be sure that the src file ID is valid!
 		{
-			
 			parentSynthdefs = this.trackbacks[srcFileID][1].deepCopy; 
 			parentParams = this.trackbacks[srcFileID][2].deepCopy;
 			psdPlusInsert = parentSynthdefs.insert(1, synthdef).flatten;
@@ -144,6 +158,7 @@ CorpusSoundFileTree {
 						\abfr -> nil,
 						
 						\sfileID -> sfID,
+						\sfileGroup -> sfg,
 						\parentFileID -> srcFileID,
 						\synthdefs -> psdPlusInsert,
 						\params -> ppPlusInsert,
