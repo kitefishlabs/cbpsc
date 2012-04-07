@@ -336,7 +336,7 @@ MetaCorpusDB : Dictionary {
 			});
 		});
 		
-		while { ~flag55 == 0 } { 0.5.wait }; "DONE".postln;
+		while { ~asdfghjkl == 0 } { 0.5.wait }; "DONE".postln;
 		
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
 	}
