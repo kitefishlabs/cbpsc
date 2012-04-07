@@ -141,15 +141,17 @@ MetaCorpusDB : Dictionary {
 	}
 	
 //-	addSynthDef { |symbol, synthdef| }
+// symbol		key val
+// synthdef	reference to actual SynthDef
+
 	addSynthDef { |symbol, synthdef, verbose=nil|
 		this[\synthdefs].put( symbol, synthdef);
 		this[\synthdefs][symbol].writeDefFile;
 	}
 
-//-	addSoundFile { |path, numChannels=1, siblingFlag=nil, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1| }
+//-	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1| }
 // path             path ====> key for sftrees Dictionary
 // numChannels=1    2 for stereo
-// siblingFlag=nil  XXXXX
 // sfGrpID=0        optional sfile group
 // importFlag=nil   set to import the soundfile (instead of just the metadata) *** this should be inverted!
 // srcFileID=nil    for parent/child relationships
@@ -168,7 +170,7 @@ MetaCorpusDB : Dictionary {
 		
 		(verbose != nil).if {
 			Post << "Adding Entry:   ===============================  " << path.asString << " (" << numChannels << " channels).\n";
-		}
+		};
 		
 		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
 			
@@ -247,7 +249,7 @@ MetaCorpusDB : Dictionary {
 
 	analyzeSoundFile { |path, mapFlag=nil, group=0, sfid, dryrun=false, tratio, verbose=nil|
 		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
-		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0, tratio = tratio;
+		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
 		var currBus = 20;
 		
 		// pathname as a Pathname object; extract dir, file, and full path as Strings
@@ -358,15 +360,15 @@ MetaCorpusDB : Dictionary {
 				//this.sfOffset = mapping.max(this.sfOffset) + 1;
 			};
 		(verbose != nil).if {
-			Post << "mapIDtoSF...\n" << "sfgroup: " << sfgroup << "\n";
+			Post << "mapIDtoSF...\n" << "sfgroup: " << sfgrp << "\n";
 			Post << "sfgmap: " << this[\sfgmap] << "\n";
 			Post << "mapping: " << mapping << "\n";
 		};
 		// no check for overwrite... should there be one?
-		(this[\sfgmap][sfgroup] == nil).if { this[\sfgmap].add(sfgroup -> Array[])};
-		this[\sfgmap][sfgroup] = (this[\sfgmap][sfgroup] ++ mapping).flatten;
+		(this[\sfgmap][sfgrp] == nil).if { this[\sfgmap].add(sfgrp -> Array[])};
+		this[\sfgmap][sfgrp] = (this[\sfgmap][sfgrp] ++ mapping).flatten;
 		this[\sfmap].add(mapping -> path); // PATH is EITHER a STRING ***OR*** an ARRAY
-		this[\sftrees][path].tree[mapping].add(\sfilegroup -> sfgroup);
+		this[\sftrees][path].tree[mapping].add(\sfilegroup -> sfgrp);
 	}
 
 //-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil| }
@@ -628,8 +630,8 @@ MetaCorpusDB : Dictionary {
 		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
 		var runningCUOffset = this.cuOffset, runningSFOffset = this.sfOffset, runningSFGOffset = this.sfgOffset, thePath, slines, plines;
 		
-		Post << "Adding File Entry from XML: " << path << "\n=============\n";
-		Post << "Starting from sf offset: " << runningSFOffset << " + cu Offset: " << runningCUOffset << " + sfg Offset: " << runningSFGOffset << Char.nl;
+//		Post << "Adding File Entry from XML: " << path << "\n=============\n";
+//		Post << "Starting from sf offset: " << runningSFOffset << " + cu Offset: " << runningCUOffset << " + sfg Offset: " << runningSFGOffset << Char.nl;
 
 		// make sure that the XML file exits...
 		(File.exists(path.asString) == false).if { ^nil };
@@ -659,7 +661,7 @@ MetaCorpusDB : Dictionary {
 				sfDict[thePath][theID].add(\parentFileID -> theParent);
 				sfDict[thePath][theID].add(\sfileGroup -> (entry.getElementsByTagName("sfileGroup")[0].getText.asInteger + runningSFGOffset)); //add offset
 				sfDict[thePath][theID].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
-				Post << "tratio: " << sfDict[thePath][theID][\tratio] << "\n";
+//				Post << "tratio: " << sfDict[thePath][theID][\tratio] << "\n";
 				sfDict[thePath][theID].add(\uniqueID -> entry.getElementsByTagName("uniqueID")[0].getText.asFloat);
 				sfDict[thePath][theID].add(\channels -> entry.getElementsByTagName("channels")[0].getText.asString);
 
@@ -751,7 +753,6 @@ MetaCorpusDB : Dictionary {
 			this.addSoundFile(
 				pathkey.asString,
 				sfDict[pathkey.asSymbol][theID][\channels].asInteger,
-				siblingFlag:sibFlag,
 				importFlag:true,
 				sfGrpID:theGroup,  //add offset
 				synthdefs:sfDict[pathkey.asSymbol][theID][\synthdefs][theID],
