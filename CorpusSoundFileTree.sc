@@ -68,9 +68,9 @@ CorpusSoundFileTree {
 //	}
 	
 	
-	addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0|
+	addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0, verbose=nil|
 		var flag, sfID;
-		Post << "Add an anchor tree...\n";
+		(verbose).if { Post << "Add an anchor tree...\n"; };
 		this.anchorPath = PathName.new(path.asString).fullPath;
 
 		// set and correct (if nec.) the new sfID
@@ -106,17 +106,17 @@ CorpusSoundFileTree {
 				]
 		);
 		this.corpus.mapIDToSF(anchorPath, customMap:sfID, sfgroup:sfg);
-		Post << "Creating trackback for: " << sfID << "\n";
+		(verbose).if { Post << "Creating trackback for: " << sfID << "\n"; };
 		this.trackbacks.add(sfID -> [anchorPath, synthdefs, params, tratio]);
 		^sfID
 	}
 	
 	
 	
-	addChildSFTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0|
+	addChildSFTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0, verbose=nil|
 		var travTree, travAccum = [], sfID, srcFileID;
 		var parentSynthdefs, parentParams, psdPlusInsert, ppPlusInsert;
-		Post << "src file id: " << sourceFileID << "\n";
+		(verbose).if { Post << "src file id: " << sourceFileID << "\n"; };
 		// set and correct (if nec.) the new sfID
 		(sourceFileID == nil).if
 		{
@@ -125,7 +125,7 @@ CorpusSoundFileTree {
 			this.corpus.sfOffset = this.corpus.sfOffset + 1;
 		} {
 			srcFileID = sourceFileID;
-			Post << this.corpus.sfOffset << "\n";
+			(verbose).if { Post << this.corpus.sfOffset << "\n"; };
 			sfID = this.corpus.sfOffset.max(srcFileID);
 			this.corpus.sfOffset = sfID + 1;
 		};
@@ -155,8 +155,10 @@ CorpusSoundFileTree {
 			
 			this.trackbacks = this.trackbacks.add(sfID -> [anchorPath, psdPlusInsert, ppPlusInsert, tratio]);
 			this.corpus.mapIDToSF(this.trackbacks[sfID][0], customMap: sfID, sfgroup:sfg);
-//			Post << "updated trackbacks list:\n";
-//			Post << this.trackbacks << "\n";
+			(verbose).if {
+				Post << "updated trackbacks list:\n";
+				Post << this.trackbacks << "\n";
+			};
 			^sfID
 		};
 		^nil
