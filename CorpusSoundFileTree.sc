@@ -22,6 +22,7 @@ CorpusSoundFileTree {
 	initCorpusSoundFileTree { |crps|
 		this.corpus = crps;
 		this.tree = Dictionary[];
+		this.trackbacks = Dictionary[];
 		^this
 	}
 	
@@ -61,7 +62,7 @@ CorpusSoundFileTree {
 //					\children -> Dictionary[]
 //				]
 //		];
-//		this.corpus.mapIDToSF(anchorPath, customMap: sfID, sfgroup:sfg);
+//		this.corpus.mapIDToSF(anchorPath, customMap: sfID, sfgrp:sfg);
 //		Post << "Creating trackback for: " << sfID << "\n";
 //		this.trackbacks = Dictionary[(sfID -> [anchorPath, synthdefs, params, tratio])];
 //		^sfID
@@ -80,7 +81,7 @@ CorpusSoundFileTree {
 
 	addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfg=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
 		var flag, sfID;
-		(verbose).if { Post << "Add an anchor tree...\n"; };
+		(verbose != nil).if { Post << "Add an anchor tree...\n"; };
 		this.anchorPath = PathName.new(path.asString).fullPath;
 
 		// set and correct (if nec.) the new sfID
@@ -95,6 +96,8 @@ CorpusSoundFileTree {
 
 		// SUN March 13, 2011 ca. 3AM == 1.3 billion seconds since epoch
 		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 1300000000) } { flag = uniqueFlag };
+
+		"sdif: ".post; sfID.postln;
 
 		this.tree.add(
 			sfID ->
@@ -115,8 +118,8 @@ CorpusSoundFileTree {
 					\children -> Dictionary[]
 				]
 		);
-		this.corpus.mapIDToSF(anchorPath, customMap:sfID, sfgroup:sfg);
-		(verbose).if { Post << "Creating trackback for: " << sfID << "\n"; };
+		this.corpus.mapIDToSF(anchorPath, customMap:sfID, sfgrp:sfg);
+		(verbose != nil).if { Post << "Creating trackback for: " << sfID << "\n"; };
 		this.trackbacks.add(sfID -> [anchorPath, synthdefs, params, tratio]);
 		^sfID
 	}
@@ -128,10 +131,10 @@ CorpusSoundFileTree {
 // tratio=1
 // sfg=0				0 is the default, rather than nil
 
-	addChildSFTree { |sourceFileID=nil, synthdef=nil, params=nil, tratio=1, sfg=0, verbose=nil|
+	addChildSFTree { |sourceFileID=nil, numChannels=1, synthdef=nil, params=nil, tratio=1, sfg=0, verbose=nil|
 		var travTree, travAccum = [], sfID, srcFileID;
 		var parentSynthdefs, parentParams, psdPlusInsert, ppPlusInsert;
-		(verbose).if { Post << "src file id: " << sourceFileID << "\n"; };
+		(verbose != nil).if { Post << "src file id: " << sourceFileID << "\n"; };
 		// set and correct (if nec.) the new sfID
 		(sourceFileID == nil).if
 		{
@@ -140,7 +143,7 @@ CorpusSoundFileTree {
 			this.corpus.sfOffset = this.corpus.sfOffset + 1;
 		} {
 			srcFileID = sourceFileID;
-			(verbose).if { Post << this.corpus.sfOffset << "\n"; };
+			(verbose != nil).if { Post << this.corpus.sfOffset << "\n"; };
 			sfID = this.corpus.sfOffset.max(srcFileID);
 			this.corpus.sfOffset = sfID + 1;
 		};
@@ -162,6 +165,7 @@ CorpusSoundFileTree {
 						\parentFileID -> srcFileID,
 						\synthdefs -> psdPlusInsert,
 						\params -> ppPlusInsert,
+						\channels -> numChannels,
 						\tratio -> tratio,
 
 						\children -> Dictionary[]
@@ -169,8 +173,8 @@ CorpusSoundFileTree {
 			);
 			
 			this.trackbacks = this.trackbacks.add(sfID -> [anchorPath, psdPlusInsert, ppPlusInsert, tratio]);
-			this.corpus.mapIDToSF(this.trackbacks[sfID][0], customMap: sfID, sfgroup:sfg);
-			(verbose).if {
+			this.corpus.mapIDToSF(this.trackbacks[sfID][0], customMap: sfID, sfgrp:sfg);
+			(verbose != nil).if {
 				Post << "updated trackbacks list:\n";
 				Post << this.trackbacks << "\n";
 			};

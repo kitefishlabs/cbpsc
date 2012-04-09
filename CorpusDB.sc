@@ -177,16 +177,16 @@ CorpusDB : Dictionary {
 			this[\sftrees].add(thepath.fullPath -> CorpusSoundFileTree.new(this));
 			
 			(verbose != nil).if { Post << "add Anchor\n\n"; };
-			res = this[\sftrees][thepath.fullPath].addAnchorSFTree(thepath.fullPath, numChannels, sfGrpID, srcFileID, synthdefs, params, tratio);
+			res = this[\sftrees][thepath.fullPath].addAnchorSFTree(thepath.fullPath, numChannels, nil, sfGrpID, srcFileID, synthdefs, params, tratio, verbose:verbose);
+			((importFlag != nil) && (res != nil)).if { "impoRT!".postln; this.importSoundFileToBuffer(thepath.fullPath, res) };
 			// add an sfile unit to the sfile unit table
 			this[\sfutable].add(thepath.fullPath -> Dictionary[sfOffset -> Dictionary[\mfccs -> nil, \keys -> nil]]);
 			
 		} {
 			(verbose != nil).if { Post << "add child\n"; };
-			res = this[\sftrees][thepath.fullPath].addChildSFTree(srcFileID, synthdefs, params, tratio, sfg:sfGrpID);
+			res = this[\sftrees][thepath.fullPath].addChildSFTree(srcFileID, numChannels, synthdefs, params, tratio, sfg:sfGrpID, verbose:verbose);
 		};
 
-		((importFlag != nil) && (res != nil)).if { "impoRT!".postln; this.importSoundFileToBuffer(thepath.fullPath, res) };
 //		(res != nil).if { this.mapIDToSF(thepath.fullPath, (sfGrpID ? 0)) }; // why does calling mapIDToSF here f*** things up?
 		
 		// res is the sfile ID, which has been returned from one of the add_____Tree functions
@@ -202,6 +202,9 @@ CorpusDB : Dictionary {
 				this[\sftrees][path].tree[sfid].add(\bfrL -> bfrL);
 			});
 		// if stereo, add the right channel
+		
+		":::: ".post; sfid.postln; this[\sftrees][path].tree.postln;
+		
 		(this[\sftrees][path].tree[sfid][\channels] == 2).if
 		{
 			Buffer.readChannel(this[\server], path, 0, -1, [1], { |bfrR|
@@ -245,8 +248,8 @@ CorpusDB : Dictionary {
 // sfid
 // tratio=1
 
-	analyzeSoundFile { |path, group=0, sfid, tratio, verbose=nil|
-		var fullpath, dir, rmddir, file, ext, pBuf, aBuf, sFile, oscList;
+	analyzeSoundFile { |path, group=0, sfid, analyze=true, tratio, verbose=nil|
+		var fullpath, dir, rmddir, file, pBuf, aBuf, sFile, oscList;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
 		var currBus = 20;
 		
@@ -267,7 +270,7 @@ CorpusDB : Dictionary {
 		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 35);
 		
 		(verbose != nil).if {
-			Post << "RMDDIR: " << rmddir << tratio.class << "\n";
+			Post << "RMDDIR: " << rmddir << "\n" << tratio.class << "\n";
 			Post << "Dur: " << sFile.duration << "\n" << "allocation pBufÉ\n";
 			Post << "pairs: " << [pBuf, aBuf] << "\n";
 		};
@@ -276,6 +279,7 @@ CorpusDB : Dictionary {
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.numFrames / 1024) / tratio).ceil, 25] ]];
 		
+		this[\sftrees][path].trackbacks.postln;
 		this[\sftrees][path].trackbacks[sfid][1].do({ |sdef, index|
 			var row = this[\sftrees][path].trackbacks[sfid][2][index];
 			row.do({ |val, index|
@@ -298,46 +302,47 @@ CorpusDB : Dictionary {
 			});
 			oscList = oscList ++ [[0.02, ([\s_new, sdef, -1, 1, 0] ++ row).flatten]];
 		});
-
+		oscList.postln;
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.03).unbubble, [\b_write, aBuf, rmddir, "aiff", "int32"]]];
 		// don't free any buffers (yet)
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.04).unbubble, [\c_set, 0, 0]]];
 				
-		(verbose != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
+		(1 != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
 				
-		Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
-		0.01.wait;
-		while({
-			res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
-			((timeout % 10) == 0).if { Post << [timeout, res] << "\n" };
-			(res == 0) and: {(timeout = timeout - 1) > 0}
-		},{
-			0.1.wait;
-		});
-		0.01.wait;
-//			// clear out the rawmels (to possibly reuse!)
-//			this.clearSoundFileUnits;
-		// here's the stupidest line of code that I have ever written!É otherwise the Buffer will not get loaded to the array
-		~asdfghjkl = 0;
-		thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
-			bfr.loadToFloatArray(action: { |array|
-
-				(verbose != nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
-			
-				ary = array.clump(25).flop;
-				ary[0] = ary[0].ampdb;
-				(1..24).do({ |d| ary[d] = ary[d].collect({ |n| n.asStringPrec(4).asFloat }) });
-				
-				this.addRawMetadata(fullpath, ary.flop);
-				
-				// why waste the memory?
-				this[\sftrees][fullpath].tree[0][\abfr] = bfr;
-				~asdfghjkl = 1;
+		(analyze == true).if {
+			Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
+			0.01.wait;
+			while({
+				res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
+				((timeout % 10) == 0).if { Post << [timeout, res] << "\n" };
+				(res == 0) and: {(timeout = timeout - 1) > 0}
+			},{
+				0.1.wait;
 			});
-		});
-		
-		while { ~asdfghjkl == 0 } { 0.5.wait }; "DONE".postln;
-		
+			0.01.wait;
+	//			// clear out the rawmels (to possibly reuse!)
+	//			this.clearSoundFileUnits;
+			// here's the stupidest line of code that I have ever written!É otherwise the Buffer will not get loaded to the array
+			~asdfghjkl = 0;
+			thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
+				bfr.loadToFloatArray(action: { |array|
+	
+					(1 != nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
+				
+					ary = array.clump(25).flop;
+					ary[0] = ary[0].ampdb;
+					(1..24).do({ |d| ary[d] = ary[d].collect({ |n| n.asStringPrec(4).asFloat }) });
+					
+					this.addRawMetadata(fullpath, ary.flop);
+					
+					// why waste the memory?
+					this[\sftrees][fullpath].tree[0][\abfr] = bfr;
+					~asdfghjkl = 1;
+				});
+			});
+			
+			while { ~asdfghjkl == 0 } { 0.5.wait }; "DONE".postln;
+		};		
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
 	}
 
@@ -378,15 +383,15 @@ CorpusDB : Dictionary {
 // tratio=nil
 // sfid=nil
 
-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil, verbose=nil|
-		var quad, transp = (tratio ? 1);
+	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=1, sfid=nil, verbose=nil|
+		var quad;
 		(bounds != nil).if
 		{
 			quad = [cid ? this.cuOffset, sfg ? this.sfgOffset, (sfid ? this[\sfmap].findKeyForValue(path.asString)), relid ];
 			
 			(cid == nil).if { this.cuOffset = this.cuOffset + 1 };
 			
-			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ quad ++ bounds ++ transp;
+			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ quad ++ bounds ++ tratio;
 
 			(verbose != nil).if {
 				Post << "Adding sound file unit (to sfutable)...mapping: " << (sfid ? this[\sfmap].findKeyForValue(path.asString)) << "\n";
@@ -758,7 +763,7 @@ CorpusDB : Dictionary {
 				tratio:sfDict[pathkey.asSymbol][theID][\tratio]
 			);
 //			Post << "tratio: " << sfDict[pathkey.asSymbol][theID][\tratio] << "\n";
-			this.analyzeSoundFile(pathkey.asString, sfid:theID, dryrun:true, transpratio:sfDict[pathkey.asSymbol][theID][\tratio]);
+			this.analyzeSoundFile(pathkey.asString, sfid:theID, analyze:false, tratio:sfDict[pathkey.asSymbol][theID][\tratio]);
 //			Post << "children's keys: " << sfDict[pathkey.asSymbol][theID][\children].keys << "\n";
 
 			sfDict[pathkey.asSymbol][theID][\children].keys.asArray.sort.do({ |csfid|
@@ -772,7 +777,7 @@ CorpusDB : Dictionary {
 					tratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]
 				);
 //				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
-				this.analyzeSoundFile(pathkey.asString, sfid:csfid, dryrun:true, transpratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]);
+				this.analyzeSoundFile(pathkey.asString, sfid:csfid, analyze:false, tratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]);
 			});
 
 			runningSFOffset = runningSFOffset.max(theID);
