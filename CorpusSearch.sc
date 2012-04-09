@@ -1,4 +1,4 @@
-//This file is part of cbpsc (new/forked @ version 0.5).
+//This file is part of cbpsc (updated @ version 0.5).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -6,9 +6,9 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// cbpsc : created by Tom Stoll : tms@kitefishlabs.com : www.corpora-sonorus.com
 //
-// MetaCorpusSearch.sc
+// CorpusSearch.sc
 // Copyright 2011, Thomas Stoll
 
 MetaCorpusSearch : Dictionary {

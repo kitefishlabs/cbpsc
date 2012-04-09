@@ -6,7 +6,7 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// cbpsc : created by Tom Stoll : tms@kitefishlabs.com : www.corpora-sonorus.com
 //
 // PartitionedCorpusDB.sc
 // (c) 2010-11, Thomas Stoll

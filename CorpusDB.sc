@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.6).
+//This file is part of cbpsc (last revision @ version 1.0).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -9,9 +9,9 @@
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
 // MetaCorpusDB.sc
-// Copyright (C) 2011-2012, Thomas Stoll
+// Copyright (C) 2010-2012, Thomas Stoll
 
-MetaCorpusDB : Dictionary {
+CorpusDB : Dictionary {
 
 	var <>sfOffset, <>cuOffset, <>sfgOffset, <>soundFileUnitsMapped;
 
