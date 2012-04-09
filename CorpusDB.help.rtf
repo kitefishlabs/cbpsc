@@ -1,65 +1,102 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf350
+{\rtf1\ansi\ansicpg1252\cocoartf1138\cocoasubrtf320
 {\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
-{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue191;\red96\green96\blue96;
-}
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\ql\qnatural\pardirnatural
+{\colortbl;\red255\green255\blue255;\red191\green0\blue0;\red0\green0\blue0;\red0\green0\blue191;
+\red255\green102\blue0;\red96\green96\blue96;}
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
 
-\f0\fs18 \cf2 //This file is part of cbpsc (last revision @ version 0.4).\cf0 \
-\pard\pardeftab720\ql\qnatural
-\cf2 //\cf0 \
-\cf2 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\cf0 \
-\cf2 //\cf0 \
-\cf2 //cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\cf0 \
-\cf2 //\cf0 \
-\cf2 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.\cf0 \
-\cf2 //\cf0 \
-\cf2 // cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com\cf0 \
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf2 //\cf0 \
-\cf2 // Copyright 2010-11, Thomas Stoll
-\fs20 \cf0 \
+\f0\fs18 \cf2 //This file is part of cbpsc (last revision @ version 0.6).\cf3 \
+\pard\pardeftab720
+\cf2 //\cf3 \
+\cf2 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\cf3 \
+\cf2 //\cf3 \
+\cf2 //cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\cf3 \
+\cf2 //\cf3 \
+\cf2 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.\cf3 \
+\cf2 //\cf3 \
+\cf2 // cbpsc : created by Thomas Stoll : tms@kitefishlabs.com : www.corpora-sonorus.com\cf3 \
+\pard\pardeftab560\li1140\fi-1140
+\cf2 //\cf3 \
+\cf2 // Copyright 2010-12, Thomas Stoll
+\fs20 \cf3 \
 \
-\pard\pardeftab560\li1140\fi-1140\ql\qnatural
-\cf2 // Set up an internal server.\cf0 \
-\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\ql\qnatural\pardirnatural
-\cf3 Server\cf0 .default = \cf3 Server\cf0 .internal;\
-s = \cf3 Server\cf0 .default.boot;\
+\cf2 // Set up an internal server.\cf3 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardeftab560\pardirnatural
+\cf4 Server\cf3 .default = \cf4 Server\cf3 .internal;\
+s = \cf4 Server\cf3 .default.boot;\
 \
-\cf2 // Define a new corpus with a path and a server: the path will help determine file names later on.\cf0 \
-\cf2 // Each corpus ideally has its own directory. Each corpus directory should have a 'snd' subfolder.\cf0 \
-~mycorpus = \cf3 CorpusDB\cf0 .new(\cf4 "/Users/me/folder/where/the/corpus/is/to/be/stored"\cf0 , s);\
+\cf2 // Define a new corpus with a path and a server: the path will help determine file names later on.\cf3 \
+\cf2 // Each corpus ideally has its own directory. Each corpus directory should have a 'snd' subfolder.\cf3 \
+\cf5 ~mycorpus\cf3  = \cf4 CorpusDB\cf3 .new(\cf6 "/Users/me/folder/where/the/corpus/is/to/be/stored"\cf3 , s);\
 \
-\cf2 // A variable that holds a path to some sound file:\cf0 \
-~soundfile = \cf4 "/some/path/to/a/soundfile.aif"\cf0 \
-\cf2 //ideally:\cf0 \
-~soundfile = \cf4 "/Users/me/folder/where/the/corpus/is/to/be/stored/snd/soundfile.aif"\cf0 \
-\cf2 // but the sound files can live anywhere on your drive.\cf0 \
+\cf2 // A variable that holds a path to some sound file:\cf3 \
+\cf5 ~soundfile\cf3  = \cf6 "/some/path/to/a/soundfile.aif"\cf3 \
+\cf2 //ideally:\cf3 \
+\cf5 ~soundfile\cf3  = \cf6 "/Users/me/folder/where/the/corpus/is/to/be/stored/snd/soundfile.aif"\cf3 \
+\cf2 // but the sound files can live anywhere on your drive.\cf3 \
 \
-\cf2 // Add the sound file to the corpus database.\cf0 \
-~mycorpus.addSoundfile(~soundfile);\
-\cf2 // (the corresponding remove method)\cf0 \
-~mycorpus.removeSoundfile(~soundfile);\
+\cf2 // Add the sound file to the corpus database.\cf3 \
+\cf5 ~mycorpus\cf3 .addSoundfile(\cf5 ~soundfile\cf3 );\
+\cf2 // (the corresponding remove method)\cf3 \
+\cf5 ~mycorpus\cf3 .removeSoundfile(\cf5 ~soundfile\cf3 );\
 \
-\cf2 // Perform the analysis. (note: for extremely long files (> 2-3 minutes) SC might hang and show the 'spinning wheel of death'...it should not hang for too long...if you have to force-quit, please do complain to the author!)\cf0 \
-~mycorpus.analyzeSoundFile(~soundfile);\
+\cf2 // Perform the analysis. (note: for extremely long files (> 2-3 minutes) SC might hang and show the 'spinning wheel of death'...it should not hang for too long...if you have to force-quit, please do complain to the author!)\cf3 \
+\cf5 ~mycorpus\cf3 .analyzeSoundFile(\cf5 ~soundfile\cf3 );\
 \
-\cf2 // Add a unit (a SoundFile Unit or 'a unit relative to a sound file')\cf0 \
-\cf2 // args: the path, an integer id/index (relative to that file),\cf0 \
-\cf2 //      and the bounds (in milliseconds) of this new unit\cf0 \
-~mycorpus.addSoundFileUnit(~soundfile, 0, [0, 1000]);\
+\cf2 // Add a unit (a SoundFile Unit or 'a unit relative to a sound file')\cf3 \
+\cf2 // args: the path, an integer id/index (relative to that file),\cf3 \
+\cf2 //      and the bounds (in milliseconds) of this new unit\cf3 \
+\cf5 ~mycorpus\cf3 .addSoundFileUnit(\cf5 ~soundfile\cf3 , 0, [0, 1000]);\
 \
-\cf2 // Given at least one unit that has been established by .addSoundFileUnit, this function segments the metadata and stores it in the right places.\cf0 \
-~mycorpus.segmentUnits(~soundfile);\
-\cf2 // Note that this has to be called for every sound file that is to be segmented into units.\cf0 \
+\cf2 // Given at least one unit that has been established by .addSoundFileUnit, this function segments the metadata and stores it in the right places.\cf3 \
+\cf5 ~mycorpus\cf3 .segmentUnits(\cf5 ~soundfile\cf3 );\
+\cf2 // Note that this has to be called for every sound file that is to be segmented into units.\cf3 \
 \
-\cf2 // Get the metadata for one unit by supplying the sound file id and the (sound-file-)relative id.\cf0 \
-\cf2 // (Internally, this actually creates a corpus unit table where the units are indexed by corpus-level\cf0 \
-\cf2 // indexes and searches that.)\cf0 \
-~mycorpus.getSoundFileUnitMetadata(0,1);\
-\cf2 // Get the meta data for one unit by supplying the corpus id (also creates/uses the (same) corpus unit table).\cf0 \
-~mycorpus.getCorpusUnitMetadata(6);\
+\cf2 // Get the metadata for one unit by supplying the sound file id and the (sound-file-)relative id.\cf3 \
+\cf2 // (Internally, this actually creates a corpus unit table where the units are indexed by corpus-level\cf3 \
+\cf2 // indexes and searches that.)\cf3 \
+\cf5 ~mycorpus\cf3 .getSoundFileUnitMetadata(0,1);\
+\cf2 // Get the meta data for one unit by supplying the corpus id (also creates/uses the (same) corpus unit table).\cf3 \
+\cf5 ~mycorpus\cf3 .getCorpusUnitMetadata(6);\
 \
 \
-\cf2 // import and export ...\cf0 \
-~mycorpus.importCorpusFromXML(\cf4 "/some/file/path.xml"\cf0 );\
-~mycorpus.exportCorpusToXML(\cf4 "/some/file/path.xml"\cf0 );}
+\cf2 // import and export ...\cf3 \
+\cf5 ~mycorpus\cf3 .importCorpusFromXML(\cf6 "/some/file/path.xml"\cf3 );\
+\cf5 ~mycorpus\cf3 .exportCorpusToXML(\cf6 "/some/file/path.xml"\cf3 );\
+\
+\
+\
+\cf2 // OLD ANALYSIS SYNTH:\cf3 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural
+
+\fs18 \cf2 //	buildAnalysisSynth \{ |pfact=0.6|\cf3 \
+\cf2 //		this.put( \\ansynthdef,\cf3 \
+\cf2 //			SynthDef(\\analyzerNRT, \{ |srcbufNum, start=0, dur=1, savebufNum, srate, hop = 1024|\cf3 \
+\cf2 //				var env, in, chain, freq, hasFreq, power, flatness, centroid, zerox, flux, rolloff, slope, spread, crest, mfcc, driver, array;\cf3 \
+\cf2 //				env = EnvGen.kr(Env.linen(0.01, (dur - 0.02), 0.01, 1), gate: 1, doneAction: 2);\cf3 \
+\cf2 //				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum), startPos: start) * env;\cf3 \
+\cf2 //				chain = FFT(LocalBuf(2048,1), in);\cf3 \
+\cf2 //			\cf3 \
+\cf2 //				# freq, hasFreq = 	Tartini.kr(in, pfact);       // Seems to be better than pitch.kr\cf3 \
+\cf2 //				power =			FFTPower.kr(chain);          // empirical multiplier\cf3 \
+\cf2 //				flatness =		SpecFlatness.kr(chain);\cf3 \
+\cf2 //				centroid =		SpecCentroid.kr(chain);\cf3 \
+\cf2 //				zerox =			ZeroCrossing.ar(in);\cf3 \
+\cf2 //				flux =			FFTFlux.kr(chain, 0.9);      //spectral flux...averaged over a segment or subsegment?\cf3 \
+\cf2 //				rolloff = 		SpecPcile.kr(chain, 0.9);    // rolloff @ 90%\cf3 \
+\cf2 //				slope = 			FFTSlope.kr(chain);\cf3 \
+\cf2 //				spread =			FFTSpread.kr(chain,centroid);\cf3 \
+\cf2 //				crest =			FFTCrest.kr(chain, 100, 2000);\cf3 \
+\cf2 //				mfcc =			MFCC.kr(chain,24);\cf3 \
+\cf2 //				// log the metadata into a buffer and signal sclang to read from the buffer\cf3 \
+\cf2 //				driver = Impulse.kr( srate / hop );\cf3 \
+\cf2 //				Logger.kr(\cf3 \
+\cf2 //					[(freq * 0.0001), hasFreq, power, flatness, (centroid * 0.0001), (zerox / 16384), (flux * 10), (rolloff * 0.000001), (slope * 1000), (spread * 0.00000001), (crest * 0.01), mfcc].flatten,\cf3 \
+\cf2 //					driver,\cf3 \
+\cf2 //					savebufNum\cf3 \
+\cf2 //				);\cf3 \
+\cf2 //				//Poll.kr(driver, power.ampdb, ":::");\cf3 \
+\cf2 //				//Out.ar(0, in);\cf3 \
+\cf2 //			\})\cf3 \
+\cf2 //		);\cf3 \
+\cf2 //		this[\\ansynthdef].writeDefFile;\cf3 \
+\cf2 //	\}}
