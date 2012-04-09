@@ -1,4 +1,4 @@
-//This file is part of cbpsc (new/forked @ version 0.5).
+//This file is part of cbpsc (updated @ version 1.0).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -6,12 +6,12 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// cbpsc : created by Tom Stoll : tms@kitefishlabs.com : www.corpora-sonorus.com
 //
-// MetaCorpusUnitViewer.sc
-// (c) 2011, Thomas Stoll
+// CorpusUnitViewer.sc
+// (c) 2010-2012, Thomas Stoll
 
-MetaCorpusUnitViewer : UnitSpace {
+CorpusUnitViewer : UnitSpace {
 	var <>parent, <>clients;
 	var <>corpus, <>cArray, <>xDescr, <>yDescr, <>sDescr;
 	var <>groupedTable, >ranges, <>cSearch, <>cTree, <>searchRadius;
@@ -25,7 +25,7 @@ MetaCorpusUnitViewer : UnitSpace {
 	initCUV { |argParent, argBounds, argCorpus, argX=5, argY=6, argS=7|
 		this.parent = argParent;
 		this.corpus = argCorpus;
-		this.cSearch_(MetaCorpusSearch.new);
+		this.cSearch_(CorpusSearch.new);
 		this.descriptors_(argX, argY, argS);
 		
 		this.setShape_("circ");
