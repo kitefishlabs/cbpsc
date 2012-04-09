@@ -1,4 +1,4 @@
-//This file is part of cbpsc (updated @ version 0.5).
+//This file is part of cbpsc (updated @ version 1.0).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -11,7 +11,7 @@
 // CorpusSearch.sc
 // Copyright 2011, Thomas Stoll
 
-MetaCorpusSearch : Dictionary {
+CorpusSearch : Dictionary {
 	var <>corpus, <>cArray, <>tree, <>stats, <>normedTree;
 	
 	*new { |crps|
