@@ -302,12 +302,11 @@ CorpusDB : Dictionary {
 			});
 			oscList = oscList ++ [[0.02, ([\s_new, sdef, -1, 1, 0] ++ row).flatten]];
 		});
-		oscList.postln;
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.03).unbubble, [\b_write, aBuf, rmddir, "aiff", "int32"]]];
 		// don't free any buffers (yet)
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.04).unbubble, [\c_set, 0, 0]]];
 				
-		(1 != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
+		(verbose != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
 				
 		(analyze == true).if {
 			Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
@@ -327,7 +326,7 @@ CorpusDB : Dictionary {
 			thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
 				bfr.loadToFloatArray(action: { |array|
 	
-					(1 != nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
+					(verbose != nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
 				
 					ary = array.clump(25).flop;
 					ary[0] = ary[0].ampdb;
@@ -457,7 +456,7 @@ CorpusDB : Dictionary {
 	// set the \mfccs tables to nil (empty them) for the provided path
 //-	clearSoundFileUnits { |path| }
 	clearSoundFileUnits { |path, verbose=nil|
-		Post << "clear soundfileunits!!\n\n\n\n\n";
+		(verbose != nil).if { Post << "clear soundfileunits!!\n\n\n\n\n"; };
 		this[\sfutable][path].add(\rawmels -> nil);
 		this[\sfutable][path].add(\mfccs -> nil);
 		this[\sfutable][path].add(\keys -> nil);
@@ -476,9 +475,8 @@ CorpusDB : Dictionary {
 	addRawMetadataUnit { |path, mels=nil, verbose=nil|
 		(mels != nil).if
 		{
-//			Post << "mels: " << mels << "\n";
+			(verbose != nil).if { Post << "mels: " << mels << "\n"; };
 			this[\sfutable][path][\rawmels] = (this[\sfutable][path][\rawmels] ++ mels).flatten.clump(25);
-			//this[\sfutable][~cfile][\rawmels] = this[\sfutable][path][\rawmels].add(mels).unbubble(2);
 		}
 	}
 	
@@ -486,7 +484,6 @@ CorpusDB : Dictionary {
 	// raw analysis data -> segmented metadata (desriptors + mfccs)
 	gatherKeys { |path, verbose=nil|
 		this[\sfutable][path][\keys] = this[\sfutable][path][\keys].flatten.clump(7);
-		this[\sfutable][path][\keys].size.postln;
 		this[\sfutable][path][\keys].do({ |key7, index|
 			(this[\sfutable][path.asString][\mfccs] == nil).if
 			{
@@ -498,43 +495,48 @@ CorpusDB : Dictionary {
 				};
 			};
 		});
-		this[\sfutable][path.asString][\mfccs].postln;
+		(verbose != nil).if { this[\sfutable][path.asString][\mfccs].postln; };
 	}
 
 //-	segmentUnits { |path| }
 	segmentUnits { |path, verbose=nil|
 		var mfccs, tratio;		
-		//Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
 		mfccs = this[\sfutable][path][\rawmels].flop;
-		//Post << "segment, raw mels' size: " << this[\sfutable][path][\rawmels].size << "\n\n\n\n";
-		
-		//Post << "SIZE: " << this[\sfutable][path][\mfccs].size << "\n";
+		(verbose != nil).if {
+			Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
+			Post << "segment, raw mels' size: " << this[\sfutable][path][\rawmels].size << "\n\n\n\n";
+			Post << "SIZE: " << this[\sfutable][path][\mfccs].size << "\n";
+		};
 		
 		this[\sfutable][path][\mfccs].do({ |cell, indx|
 			var low, high, len, rma = Array[];
-//			Post << "====@@@" << [cell, indx] << "\n";
+			(verbose != nil).if { Post << "====@@@" << [cell, indx] << "\n"; };
 			tratio = this[\sfutable][path][\keys][indx][6];
-//			Post << "CELL: " << cell << "; tratio: " << tratio << "\n";
+			(verbose != nil).if { Post << "CELL: " << cell << "; tratio: " << tratio << "\n"; };
 			low = ((cell[4] / 40) / tratio).floor.asInteger;
-//			Post << "low: " << low << "\n";
+			(verbose != nil).if { Post << "low: " << low << "\n"; };
 			len = (cell[5] / 40).ceil.asInteger;
-//			Post << "Keys: " << this[\sfutable][path][\keys][indx] << "\n";
+			(verbose != nil).if { Post << "Keys: " << this[\sfutable][path][\keys][indx] << "\n"; };
 			high = (low + (len / tratio)).asInteger - 1;
-//			Post << "len: " << len << " + l/t: " << (len / tratio) << "\n";
+			(verbose != nil).if { Post << "len: " << len << " + l/t: " << (len / tratio) << "\n"; };
 			mfccs.do({ |row, ix|
 				var dezeroed;
-//				Post << row.class << " | " << high << "\n\n";
-				Post << [low, high, tratio];
+				(verbose != nil).if { 
+					Post << row.class << " | " << high << "\n\n";
+					Post << [low, high, tratio];
+				};
 				dezeroed = row[low..high];
 				dezeroed = dezeroed.reject({|item| (item.isNumber != true) });
 				rma = rma.add(dezeroed.mean.asStringPrec(3).asFloat);
 			});
 			
-//			Post << "CELL: " << cell << ", index: " << indx << ", rma: " << rma << "\n";
 			this[\sfutable][path][\mfccs][indx] = this[\sfutable][path][\mfccs][indx][0..6].add(rma).flatten;
 			this[\sfutable][path][\keys][indx] = this[\sfutable][path][\keys][indx][0..6];
-//			Post << "\nAFTER:\n" << "KEYS" << this[\sfutable][path][\keys] << "\n\n";
-//			Post << "\n\n" << "MFCCS: " << this[\sfutable][path][\mfccs].size << "\n\n";
+			(verbose != nil).if { 
+				Post << "CELL: " << cell << ", index: " << indx << ", rma: " << rma << "\n";
+				Post << "\nAFTER:\n" << "KEYS" << this[\sfutable][path][\keys] << "\n\n";
+				Post << "\n\n" << "MFCCS: " << this[\sfutable][path][\mfccs].size << "\n\n";
+			};
 		});
 	}
 	
@@ -575,11 +577,9 @@ CorpusDB : Dictionary {
 		{
 			//this.clearCorpusUnits;
 			this[\sfutable].do({ |path|
-				Post << "\n\n\n\npath keys size: " << path[\keys].size << "\n";
-				path[\keys].postln;
+				(verbose != nil).if { Post << "\n\n\n\npath keys size: " << path[\keys].size << "\n" << path[\keys] << "\n"; };
 				path[\keys].do({ |pu, index|
 					//[pu[0], (pu ++ path[\mfccs][index][7..]).flatten].postln;
-//					Post << "mapping index (should be 0!): " << index << "\n";
 					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][7..]).flatten);
 				});
 			});
@@ -593,7 +593,7 @@ CorpusDB : Dictionary {
 		var fileMap = Dictionary[];
 		var metadata = this.mapSoundFileUnitsToCorpusUnits;
 		
-//		Post << "metadata: " << metadata << "\n";
+		(verbose != nil).if { Post << "metadata: " << metadata << "\n"; };
 		
 		(metadata.class == Dictionary).if
 		{
@@ -619,7 +619,7 @@ CorpusDB : Dictionary {
 			});
 		};
 		
-//		Post << "fileMap: " << fileMap << "\n";
+		(verbose != nil).if { Post << "fileMap: " << fileMap << "\n"; };
 		this.add(\sfumap -> fileMap);
 		^fileMap
 	}
