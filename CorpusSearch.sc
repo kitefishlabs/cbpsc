@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.4).
+//This file is part of cbpsc (new/forked @ version 0.5).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -6,11 +6,12 @@
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// cbpsc : created by Thomas Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
+// cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
-// Copyright 2010-11, Thomas Stoll
+// MetaCorpusSearch.sc
+// Copyright 2011, Thomas Stoll
 
-CorpusSearch : Dictionary {
+MetaCorpusSearch : Dictionary {
 	var <>corpus, <>cArray, <>tree, <>stats, <>normedTree;
 	
 	*new { |crps|
@@ -28,14 +29,14 @@ CorpusSearch : Dictionary {
 			.flop.collect({ |col|
 				var stdev, mean = col.mean;
 				stdev = col.inject(0, { |sum, cell| sum + ((cell - mean) ** 2) });
-				[col.minItem, col.maxItem, col.maxItem - col.minItem, mean, (stdev / col.size).sqrt]
+				[col.minItem, col.maxItem, col.maxItem - col.minItem, mean, (stdev / col.size).sqrt, col[(col.size / 2).floor]]
 			});
 		^this.stats
 	}
 	
 	buildTree { |metadata, descriptors, normFlag=false, lastFlag=true|
 		var map, reducedArray = Array[];
-		(descriptors == nil).if { ^nil };
+		(descriptors == nil).if { Post << "Cannot build tree with NIL descriptors:\n"; ^nil };
 		(metadata == nil).if 
 		{
 			map = this.corpus.mapSoundFileUnitsToCorpusUnits;
@@ -50,15 +51,15 @@ CorpusSearch : Dictionary {
 		{
 			reducedArray.flop.postln;
 			reducedArray = reducedArray.flop.collect({ |col, index|
-				((lastFlag == true) && (index != (descriptors.size - 1))).if
+				((lastFlag == true) && (index <= (descriptors.size - 1))).if
 				{
 					col.normalize;
 				} {
 					col
 				};
 			}).flop;
-			"After: ".postln;
-			reducedArray.postln;
+			//"After: ".postln;
+			//reducedArray.postln;
 			this.normedTree = KDTree(reducedArray, lastIsLabel: lastFlag);
 			^this.normedTree
 		};
