@@ -1,4 +1,4 @@
-//This file is part of cbpsc (last revision @ version 0.5).
+//This file is part of cbpsc (new/forked @ version 0.5).
 //
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
@@ -8,10 +8,10 @@
 //
 // cbpsc : created by Tom Stoll : tms@corpora-sonorus.com : www.corpora-sonorus.com
 //
-// CorpusUnitViewer.sc
-// (c) 2010-11, Thomas Stoll
+// MetaCorpusUnitViewer.sc
+// (c) 2011, Thomas Stoll
 
-CorpusUnitViewer : UnitSpace {
+MetaCorpusUnitViewer : UnitSpace {
 	var <>parent, <>clients;
 	var <>corpus, <>cArray, <>xDescr, <>yDescr, <>sDescr;
 	var <>groupedTable, >ranges, <>cSearch, <>cTree, <>searchRadius;
@@ -25,7 +25,7 @@ CorpusUnitViewer : UnitSpace {
 	initCUV { |argParent, argBounds, argCorpus, argX=5, argY=6, argS=7|
 		this.parent = argParent;
 		this.corpus = argCorpus;
-		this.cSearch_(CorpusSearch.new);
+		this.cSearch_(MetaCorpusSearch.new);
 		this.descriptors_(argX, argY, argS);
 		
 		this.setShape_("circ");
@@ -99,21 +99,17 @@ CorpusUnitViewer : UnitSpace {
 		{
 			this.sync;
 //			"building normed array: ".post; this.cArray.postln;
-			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten]; // schema: X,Y,Z, sfid, relid
+			normedArray = [this.cArray[this.xDescr].flatten.normalize(0.02,0.98), this.cArray[this.yDescr].flatten.normalize(0.02,0.98), this.cArray[this.sDescr].flatten.normalize(0.5,1), this.cArray[2].flatten, this.cArray[3].flatten, this.cArray[1].flatten]; // schema: X,Y,Z, sfid, relid
 	
 			this.groupedTable = Dictionary[];
 			normedArray.flop.do({ |val, ind|	// the grouping
-				//val[4].postln;
-				//this.groupedTable[val[4]].postln;
-				(this.groupedTable[val[3]] == nil).if
+
+				(this.groupedTable[ val[3] ] == nil).if
 				{
-					//val[3].postln;
-					//normedArray.flop[ind][0..5].postln;
-					//val.postln;
-					this.groupedTable.add(val[3] -> Dictionary[ind -> normedArray.flop[ind][0..5]]);
+					this.groupedTable.add(val[3] -> Dictionary[val[4] -> normedArray.flop[ind][0..5]]);
 				} {
-					this.groupedTable[val[3]].add(ind -> normedArray.flop[ind][0..5]);
-				};	// completly hashed
+					this.groupedTable[val[3]].add(val[4] -> normedArray.flop[ind][0..5]);
+				};	// completly hashed BY val[3], val[4] (SFID, relid)
 			});
 			this.initSearchTree;
 			this.renderView;
@@ -140,13 +136,13 @@ CorpusUnitViewer : UnitSpace {
 		// groupedTable has to have been formed at this point
 		(groupedTable != nil).if
 		{
-			groupedTable.keysValuesDo({ |key, val|
-				val.do({ |cell, index|
-					arrayedTable = arrayedTable.add([cell[0], cell[1], [key.asInteger, index.asInteger] ]);
+			groupedTable.keysValuesDo({ |sfkey, val|
+				val.keysValuesDo({ |relidkey, cell|
+					arrayedTable = arrayedTable.add([cell[0], cell[1], [sfkey.asInteger, relidkey.asInteger, cell[5]] ]);
 				});
 			});
 			//arrayedTable.postcs;
-			this.cTree = this.cSearch.buildTree(arrayedTable, true);
+			this.cTree = this.cSearch.buildTree(arrayedTable, true, normFlag:false, lastFlag:true); // ALREADY NORMED!
 			//this.cTree.dumpTree;
 			this.searchRadius_(0.08);
 		};
@@ -154,15 +150,15 @@ CorpusUnitViewer : UnitSpace {
 
 	renderView {
 		var nc;
-//		"Rendering View; CHECK SLOT 3 and 4!".postln;
+		"Rendering View; CHECK SLOTs 3, 4 and 5!".postln;
 		this.clearSpace;
 		this.groupedTable.keysValuesDo({ |sfid, dict|
-			dict.keysValuesDo({ |relid, unit|
-				//unit.postln;
-				//unit[3..4].asString.postln;
-				nc = this.createNode(unit[0] * this.bounds.width, unit[1] * this.bounds.height);
-				this.setNodeSize_((nc - 1), unit[2] * 8, unit[2] * 8);
-				this.setNodeState_((nc - 1), unit[3..4]);
+			dict.keysValuesDo({ |relid, vwUnit|
+				vwUnit.postln;
+				vwUnit[3..5].asString.postln;
+				nc = this.createNode(vwUnit[0] * this.bounds.width, vwUnit[1] * this.bounds.height);
+				this.setNodeSize_((nc - 1), vwUnit[2] * 8, vwUnit[2] * 8);
+				this.setNodeState_((nc - 1), [ vwUnit[3], vwUnit[4], vwUnit[5] ] );
 			});
 		});
 		//this.refresh;
