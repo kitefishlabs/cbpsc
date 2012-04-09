@@ -1,6 +1,6 @@
 cbpsc is beta software. I (Tom Stoll) have been testing it and fixing bugs for several months and am working towards a 1.0 release in early 2012. That said, you may encounter bugs and/or undocumented features.
 
-cbpsc has been tested for SC 3.4.4 "with-extras" on a MacBook Pro (first generation Core Duo), and should work on any recent Mac. It uses two quarks that are not in the included classes, "KDTree" and "TabbedView".
+cbpsc has been tested for SC 3.5 "with-extras" on an 2011-vintage iMac, and should work on any recent Mac. It uses two quarks that are not in the included classes, "KDTree" and "TabbedView". These classes also rely on two MCLD UGens.
 
 To install:
 
@@ -17,10 +17,10 @@ To Install KDTree and TabbedView:
 
 To Run the GUI: open "gui.rtf" and follow the directions in the numbered comments. See http://crprsnrs.corpora-sonorus.com/text/cbpsc/1-getting-started for more detailed instructions. Read below for some known issues.
 
-A growing amount of documentation can be found at http://www.corpora-sonorus.com.
+A growing amount of documentation can be found at http://www.corpora-sonorus.com. (Please note that corpora-sonorus.com will soon be merged with and become www.kitefishlabs.com...)
 
 
-KNOWN ISSUES (as of version 0.5 -- October 2011)
+KNOWN ISSUES (as of version 0.6 -- April 2012)
 
 These are a few things you might encounter. They will all hopefully be fixed as soon as possible.
 
@@ -32,4 +32,4 @@ Download and use the following sound files to test the GUI: http://www.freesound
 Or, alternatively, find them in the GIT repo as a zip file. These files are known to work with CBPSC.
 
 
-Email me (Tom Stoll) with questions: tms@corpora-sonorus.com
+Email me (Tom Stoll) with questions: tms@kitefishlabs.com
