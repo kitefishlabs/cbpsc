@@ -1,0 +1,67 @@
+TITLE:: CorpusSoundFileTree
+summary:: Corpus Database SoundFile Tree representations
+categories:: CorpusDB
+related:: Classes/CorpusDB, Tutorials/CorpusDBAdvanced
+
+DESCRIPTION:: CorpusSoundFileTree tracks sound file tree mappings including source (parents) and processed (children) sound files.
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: corpus
+CorpusDB: a CorpusDB instance to be linked to this CorpusSoundFileTree instance.
+
+returns:: (returnvalue)
+
+INSTANCEMETHODS::
+
+METHOD:: addAnchorSFTree
+
+argument:: path
+String: the path to the sound file. SFTrees use sound file pathes as keys in a way that is analogous to how \sftables are indexed.
+ 
+argument:: numChannels
+Integer: defaults to 1; pass 2 for stereo.
+
+argument:: uniqueFlag
+Defaults to false; placeholder for some kind of import-time-based id assignment.
+
+argument:: sfg
+Integer: defaults to 0 (essentially, no grouping); pass another value if you need to store grouping info in the tree.
+
+argument:: srcFileID
+Integer: The sound file ID for the sound file. If nil, uses corpus offset + 1 to generate this value.
+
+argument:: synthdefs
+A list of symbols: symbol names for Synthdefs to form the processing chain. No error checking is performed. Nil is not a default value!
+
+argument:: params
+A list: a list of Synthdef parameters (pairs of arguments and values). No error checking is performed.
+
+argument:: tratio
+Integer: defaults to 1; pass another value if this child is transposed.
+
+argument:: verbose
+
+METHOD:: addChildSFTree
+
+argument:: sourceFileID
+If nil, assume that we appending to the root node. Otherwise pass the sound file ID for the file that this node will be a child of.
+
+argument:: numChannels
+Integer: defaults to 1; pass 2 for stereo.
+
+argument:: synthdef
+A Symbol: symbol name for a Synthdef to add to the end of the processing chain. No error checking is performed. Nil is not a default value!
+
+argument:: params
+A list: a list of Synthdef parameters (pairs of arguments and values). No error checking is performed.
+
+argument:: tratio
+Integer: defaults to 1; pass another value if this child is transposed.
+
+argument:: sfg
+Integer: defaults to 0 (essentially, no grouping); pass another value if you need to store grouping info in the tree.
+
+argument:: verbose

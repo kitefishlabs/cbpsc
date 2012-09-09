@@ -1,0 +1,54 @@
+TITLE:: CorpusSearch
+summary:: Corpus Database Search
+categories:: CorpusDB
+related:: Classes/CorpusDB, Tutorials/CorpusDBSearch
+
+DESCRIPTION:: CorpusSearch helps the user create and query a KDTree (k-dimensional tree) in order to perform nearest-neighbor similarity searches over K parameter dimensions.
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: crps
+CorpusDB: a CorpusDB instance to be linked to this CorpusSearch instance.
+
+INSTANCEMETHODS::
+
+METHOD:: buildTree
+
+argument:: metadata
+An array of arrays: each nested row corresponds to a corpus unit's metadata. If nil, a corpus unit table will be built from the current sound file unit table, and data will be pulled from this corpus unit table.
+
+argument:: descriptors
+A List of descriptor ids (integers) that determine which descriptor columns are used to construct the tree.
+
+argument:: normFlag
+Boolean: defaults to false; if true, normalize each column of data after filtering by descriptor.
+
+argument:: lastFlag
+Boolean: defaults to true; if true, use the last value in each row to index the row. Should map the cid column (normally the first column) to be the last column; note that this should be false if metadata is nil!
+
+METHOD:: getStats
+Get the mins, maxes, ranges, means, standard deviations, and median values for each column of a corpus unit table. (Used in the GUI code and potentially generally useful.)
+
+METHOD:: findNNearest
+
+argument:: target
+Array: target vector; length should correspond to number of descriptors. 
+
+argument:: radius
+Float: Value to limit radius of search. This should be 0.0 -> 1.0, and only really makes sense for a normalized search tree.
+
+argument:: normFlag
+Boolean: defaults to false; if true, we are searching on a normalized tree.
+
+argument:: number
+Integer: defaults to 1; stipulate the max number of units to return from a search.
+
+METHOD:: findNearestInRadius
+
+argument:: target
+Array: target vector; length should correspond to number of descriptors. 
+
+argument:: radius
+Float: Value to limit radius of search. This should be 0.0 -> 1.0, and only really makes sense for a normalized search tree.

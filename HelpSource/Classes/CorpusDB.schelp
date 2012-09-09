@@ -1,0 +1,65 @@
+TITLE:: CorpusDB
+summary:: Corpus Database
+categories:: CorpusDB
+related:: Classes/CorpusSearch, Tutorials/CorpusDBIntro, Tutorials/CorpusDBAdvanced
+
+DESCRIPTION:: CorpusDB maintains a database of sound files and associated metadata, including sound file tree mappings tracking the source and processed sound files.
+
+CLASSMETHODS::
+
+METHOD:: new
+
+argument:: name
+Symbol or String: a name for the corpus, can be a path
+
+argument:: server
+Server: an Internal(?) server
+
+argument:: verbose
+
+returns:: (returnvalue)
+
+INSTANCEMETHODS::
+
+METHOD:: buildSynths
+Internal; builds and loads Synthdefs.
+
+METHOD:: addSynthDef
+Add your own Synthdef to the corpus.
+argument:: symbol
+argument:: synthdef
+
+METHOD:: addSoundFile
+METHOD:: importSoundFileToBuffer
+METHOD:: removeSoundFile
+
+METHOD:: addTransformation
+
+METHOD:: analyzeSoundFile
+argument:: index
+argument:: identifier
+
+METHOD:: mapIDToSF
+
+METHOD:: addSoundFileUnit
+METHOD:: updateSoundFileUnit
+METHOD:: removeSoundFileUnit
+METHOD:: clearSoundFileUnits
+
+METHOD:: addRawMetadata
+METHOD:: addRawMetadataUnit
+
+METHOD:: gatherKeys
+METHOD:: segmentUnits
+
+METHOD:: addCorpusUnit
+METHOD:: removeCorpusUnit
+METHOD:: clearCorpusUnits
+
+METHOD:: getSoundFileUnitMetadata
+
+METHOD:: mapSoundFileUnitsToCorpusUnits
+METHOD:: mapBySFRelID
+
+METHOD:: importCorpusFromXML
+METHOD:: exportCorpusToXML
