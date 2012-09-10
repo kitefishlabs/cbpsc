@@ -172,6 +172,14 @@ CorpusDB : Dictionary {
 			Post << "Adding Entry:   ===============================  " << path.asString << " (" << numChannels << " channels).\n";
 		};
 		
+		(numChannels == 2).if {
+			synthdefs = [\stereoSamplerNRT, \mfccBusAnalyzerNRT];
+		} {
+			synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
+		};
+
+		prms = [[\outbus, 10, \srcbufNum, 0, \tratio, tratio], [\inbus, 10, \savebufNum, 0, \tratio, tratio]];
+				
 		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
 			
 			this[\sftrees].add(thepath.fullPath -> CorpusSoundFileTree.new(this));
