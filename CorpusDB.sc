@@ -119,9 +119,9 @@ CorpusDB : Dictionary {
 				env = EnvGen.kr(Env.linen(attack, ((dur / transp) - (attack+release)), release, 1), gate: 1, doneAction: 13);
 				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: (start * BufSampleRate.kr(srcbufNum))) * env;
 				Out.ar(outbus, in);
-			}).send(s)
+			})
 		);
-		this[\synthdefs][\monoSampler].send;
+		this[\synthdefs][\monoSampler].writeDefFile;
 		this[\synthdefs].put( \stereoSamplerNRT,
 			SynthDef(\stereoSamplerNRT, { |outbus=20, srcbufNum, start=0, dur=1, transp=1, attack=0.01, release=0.01|
 				var env, in, chain;
@@ -210,16 +210,16 @@ CorpusDB : Dictionary {
 
 	importSoundFileToBuffer { |path, sfid, verbose=nil|
 		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
-				this[\sftrees][path].tree[sfid].add(\bfrL -> bfrL);
+				this[\sftrees][path].tree.add(\bfrL -> bfrL);
 			});
 		// if stereo, add the right channel
 		
 		":::: ".post; sfid.postln; this[\sftrees][path].tree.postln;
 		
-		(this[\sftrees][path].tree[sfid][\channels] == 2).if
+		(this[\sftrees][path].tree[\channels] == 2).if
 		{
 			Buffer.readChannel(this[\server], path, 0, -1, [1], { |bfrR|
-				this[\sftrees][path].tree[sfid].add(\bfrR -> bfrR);
+				this[\sftrees][path].tree.add(\bfrR -> bfrR);
 			});
 		};
 		^nil
@@ -350,7 +350,7 @@ CorpusDB : Dictionary {
 					this.addRawMetadata(fullpath, ary.flop);
 					
 					// why waste the memory?
-					this[\sftrees][fullpath].tree[sfid][\abfr] = bfr;
+					this[\sftrees][fullpath].tree[\abfr] = bfr;
 					done = 1;
 				});
 			});
@@ -387,7 +387,7 @@ CorpusDB : Dictionary {
 		(this[\sfgmap][sfgrp] == nil).if { this[\sfgmap].add(sfgrp -> Array[])};
 		this[\sfgmap][sfgrp] = (this[\sfgmap][sfgrp] ++ mapping).flatten;
 		this[\sfmap].add(mapping -> path); // PATH is EITHER a STRING ***OR*** an ARRAY
-		this[\sftrees][path].tree[mapping].add(\sfilegroup -> sfgrp);
+		this[\sftrees][path].tree.add(\sfilegroup -> sfgrp);
 	}
 
 //-	addSoundFileUnit { |path, relid, bounds, cid=nil, sfg=nil, tratio=nil, sfid=nil| }
@@ -865,29 +865,29 @@ CorpusDB : Dictionary {
 			this[\sftrees].keysValuesDo({ |sfpath, entry|
 				var sfile = SoundFile.new;
 				
-//				Post << sfpath << "\n\n" << entry.tree[0] << "\n";
-				entry.tree.keys.do({ |stindex| // SHOULD ONLY BE ONE KEY!!!
+//				Post << sfpath << "\n\n" << entry.tree << "\n";
+//				entry.tree.keys.do({ |stindex| // SHOULD ONLY BE ONE KEY!!!
 	
 					f.write("      <tree path=\"" ++ entry.anchorPath.asString ++ "\">\n");
-					f.write("        <node sfID=\"" ++ entry.tree[stindex][\sfileID].asString ++ "\">\n");
-					f.write("          <parentFileID>" ++ entry.tree[stindex][\parentFileID].asString ++ "</parentFileID>\n");
-					f.write("          <channels>" ++ entry.tree[stindex][\channels].asString ++ "</channels>\n");
-					f.write("          <sfileGroup>" ++ entry.tree[stindex][\sfileGroup].asString ++ "</sfileGroup>\n");
-					f.write("          <tratio>" ++ entry.tree[stindex][\tratio].asString ++ "</tratio>\n");
-					f.write("          <uniqueID>" ++ entry.tree[stindex][\uniqueID].asString ++ "</uniqueID>\n");
+					f.write("        <node sfID=\"" ++ entry.tree[\sfileID].asString ++ "\">\n");
+					f.write("          <parentFileID>" ++ entry.tree[\parentFileID].asString ++ "</parentFileID>\n");
+					f.write("          <channels>" ++ entry.tree[\channels].asString ++ "</channels>\n");
+					f.write("          <sfileGroup>" ++ entry.tree[\sfileGroup].asString ++ "</sfileGroup>\n");
+					f.write("          <tratio>" ++ entry.tree[\tratio].asString ++ "</tratio>\n");
+					f.write("          <uniqueID>" ++ entry.tree[\uniqueID].asString ++ "</uniqueID>\n");
 					f.write("          <synthdefs>\n");
-					entry.tree[stindex][\synthdefs].do({ |sd, index|
+					entry.tree[\synthdefs].do({ |sd, index|
 						f.write("            <sd index=\"" ++ index ++ "\">" ++ sd.asString ++ "</sd>\n");
 					});
 					f.write("          </synthdefs>\n");
 					f.write("          <paramslist>\n");
-					entry.tree[stindex][\params].do({ |p, index|
+					entry.tree[\params].do({ |p, index|
 						f.write("            <params index=\"" ++ index ++ "\">" ++ p.join($ ).asString ++ "</params>\n");
 					});
 					f.write("          </paramslist>\n");
 					f.write("        </node>\n");
 					
-					entry.tree[stindex][\children].keysValuesDo({ |sfid, child|
+					entry.tree[\children].keysValuesDo({ |sfid, child|
 						
 						f.write("        <node sfID=\"" ++ sfid ++ "\">\n");
 						f.write("          <parentFileID>" ++ child[\parentFileID] ++ "</parentFileID>\n");
@@ -907,7 +907,7 @@ CorpusDB : Dictionary {
 						
 					});
 					f.write("      </tree>\n");
-				});
+//				});
 			});
 			f.write("    </heading>\n");
 			f.write("    <heading name=\"UNITS\">\n");
