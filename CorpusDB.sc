@@ -60,7 +60,7 @@ CorpusDB : Dictionary {
 
 	buildSynths {
 		this[\synthdefs].put( \mfccBufferAnalyzerNRT,
-			SynthDef(\mfccBufferAnalyzerNRT, { |srcbufNum, start=0, dur=1, savebufNum, srate, transp=1, hop=1024|
+			SynthDef(\mfccBufferAnalyzerNRT, { |srcbufNum, start=0, dur=1, savebufNum, transp=1|
 				var env, in, chain, power, mfcc, driver, array;
 				env = 	EnvGen.kr(Env.linen(0.01, ((dur / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 2);
 				in = 	PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: start) * env;
@@ -70,7 +70,7 @@ CorpusDB : Dictionary {
 				mfcc =	MFCC.kr(chain,24);
 				
 				// log the metadata into a buffer and signal sclang to read from the buffer
-				driver = 	Impulse.kr( srate / hop );
+				driver = 	Impulse.kr( 25 );
 				Logger.kr(
 					[(power * 0.1), mfcc].flatten,
 					driver,
@@ -82,7 +82,7 @@ CorpusDB : Dictionary {
 		);
 		this[\synthdefs][\mfccBufferAnalyzerNRT].writeDefFile;
 		this[\synthdefs].put( \mfccBusAnalyzerNRT,
-			SynthDef(\mfccBusAnalyzerNRT, { |inbus=20, dur=1, savebufNum, srate=44100, transp=1, hop=1024|
+			SynthDef(\mfccBusAnalyzerNRT, { |inbus=20, dur=1, savebufNum, transp=1|
 				var env, in, chain, power, mfcc, driver, array;
 				in = In.ar(inbus, 1);
 //				env = EnvGen.kr(Env.linen(0.01, ((dur / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 2);
@@ -93,7 +93,7 @@ CorpusDB : Dictionary {
 				mfcc =			MFCC.kr(chain,24);
 				
 				// log the metadata into a buffer and signal sclang to read from the buffer
-				driver = Impulse.kr( srate / hop );
+				driver = Impulse.kr( 25 );
 				Logger.kr(
 					[(power * 0.1), mfcc].flatten,
 					driver,
@@ -119,7 +119,7 @@ CorpusDB : Dictionary {
 				env = EnvGen.kr(Env.linen(attack, ((dur / transp) - (attack+release)), release, 1), gate: 1, doneAction: 13);
 				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: (start * BufSampleRate.kr(srcbufNum))) * env;
 				Out.ar(outbus, in);
-			})
+			}).send(s)
 		);
 		this[\synthdefs][\monoSampler].send;
 		this[\synthdefs].put( \stereoSamplerNRT,
@@ -159,8 +159,8 @@ CorpusDB : Dictionary {
 // params=nil       there parameters (as a list - ['param', val, 'param', val, etc...])
 // tratio=1         the all important transposition ratio
 
-	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
-		var thepath, flag, res;
+	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=true, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
+		var thepath, flag, res, prms;
 		
 		(path != nil).if {
 			thepath = PathName.new(path.asString);
@@ -172,13 +172,16 @@ CorpusDB : Dictionary {
 			Post << "Adding Entry:   ===============================  " << path.asString << " (" << numChannels << " channels).\n";
 		};
 		
-		(numChannels == 2).if {
-			synthdefs = [\stereoSamplerNRT, \mfccBusAnalyzerNRT];
-		} {
-			synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
+		(synthdefs == nil).if {
+			(numChannels == 2).if {
+				synthdefs = [\stereoSamplerNRT, \mfccBusAnalyzerNRT];
+			} {
+				synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
+			};
 		};
-
-		prms = [[\outbus, 10, \srcbufNum, 0, \tratio, tratio], [\inbus, 10, \savebufNum, 0, \tratio, tratio]];
+		(params == nil).if {
+			params = [[\outbus, 10, \srcbufNum, 0, \tratio, tratio, \dur, 1], [\inbus, 10, \savebufNum, 0, \tratio, tratio]];
+		};
 				
 		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
 			
@@ -256,10 +259,11 @@ CorpusDB : Dictionary {
 // sfid
 // tratio=1
 
-	analyzeSoundFile { |path, group=0, sfid, analyze=true, tratio, verbose=nil|
+	analyzeSoundFile { |path, group=0, sfid, analyze=true, tratio=1, verbose=nil|
 		var fullpath, dir, rmddir, file, pBuf, aBuf, sFile, oscList;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
 		var currBus = 20;
+		var done = 0;
 		
 		// pathname as a Pathname object; extract dir, file, and full path as Strings
 		fullpath = PathName.new(path.asString);
@@ -305,6 +309,9 @@ CorpusDB : Dictionary {
 					\inbus, {
 						row[index+1] = currBus;
 						currBus = currBus + 1;
+					},
+					\dur, {
+						row[index+1] = sFile.duration;
 					}
 				);
 			});
@@ -315,7 +322,7 @@ CorpusDB : Dictionary {
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.04).unbubble, [\c_set, 0, 0]]];
 				
 		(verbose != nil).if { oscList.postln; }; // or(?): oscList.do({ |item| item.postln });
-				
+
 		(analyze == true).if {
 			Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
 			0.01.wait;
@@ -330,7 +337,7 @@ CorpusDB : Dictionary {
 	//			// clear out the rawmels (to possibly reuse!)
 	//			this.clearSoundFileUnits;
 			// here's the stupidest line of code that I have ever written!É otherwise the Buffer will not get loaded to the array
-			~asdfghjkl = 0;
+			done = 0;
 			thebuffer = Buffer.read(this[\server], rmddir, action: { |bfr|
 				bfr.loadToFloatArray(action: { |array|
 	
@@ -343,13 +350,15 @@ CorpusDB : Dictionary {
 					this.addRawMetadata(fullpath, ary.flop);
 					
 					// why waste the memory?
-					this[\sftrees][fullpath].tree[0][\abfr] = bfr;
-					~asdfghjkl = 1;
+					this[\sftrees][fullpath].tree[sfid][\abfr] = bfr;
+					done = 1;
 				});
 			});
 			
-			while { ~asdfghjkl == 0 } { 0.5.wait }; "DONE".postln;
-		};		
+			while { done == 0 } { 0.5.wait }; "DONE".postln;
+		};
+		done = 1;
+
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
 	}
 
@@ -398,7 +407,7 @@ CorpusDB : Dictionary {
 			
 			(cid == nil).if { this.cuOffset = this.cuOffset + 1 };
 			
-			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ quad ++ bounds ++ tratio;
+			this[\sfutable][path][\keys] = this[\sfutable][path][\keys] ++ [quad ++ bounds ++ tratio];
 
 			(verbose != nil).if {
 				Post << "Adding sound file unit (to sfutable)...mapping: " << (sfid ? this[\sfmap].findKeyForValue(path.asString)) << "\n";
@@ -508,10 +517,13 @@ CorpusDB : Dictionary {
 
 //-	segmentUnits { |path| }
 	segmentUnits { |path, verbose=nil|
-		var mfccs, tratio;		
+		var mfccs, tratio;
+		
+		this.gatherKeys(path);
+		
 		mfccs = this[\sfutable][path][\rawmels].flop;
 		(verbose != nil).if {
-			Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
+			//Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
 			Post << "segment, raw mels' size: " << this[\sfutable][path][\rawmels].size << "\n\n\n\n";
 			Post << "SIZE: " << this[\sfutable][path][\mfccs].size << "\n";
 		};
