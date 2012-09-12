@@ -182,5 +182,4 @@ CorpusSoundFileTree {
 		};
 		^nil
 	}
-	getNode(
 }
