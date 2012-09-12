@@ -26,48 +26,6 @@ CorpusSoundFileTree {
 		^this
 	}
 	
-//	setAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0|
-//		var flag, sfID;
-//		
-//		this.anchorPath = PathName.new(path.asString).fullPath;
-//
-//		// set and correct (if nec.) the new sfID
-//		(srcFileID == nil).if
-//		{ 
-//			sfID = this.corpus.sfOffset;
-//			this.corpus.sfOffset = this.corpus.sfOffset + 1;
-//		} {
-//			sfID = this.corpus.sfOffset.max(srcFileID);
-//			this.corpus.sfOffset = sfID + 1;
-//		};
-//
-//		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 110376000) } { flag = uniqueFlag };
-//
-//		this.tree = Dictionary[
-//			sfID ->
-//				Dictionary[
-//					\abfr -> nil,
-//					\bfrL -> nil,
-//					\bfrR -> nil,
-//					\uniqueID -> flag,
-//					\channels -> numChannels,
-//					\sfileGroup -> (sfGrpID ? 0),
-//
-//					\sfileID -> sfID,
-//					\parentFileID -> sfID,
-//					\synthdefs -> synthdefs,
-//					\params -> params,
-//					\tratio -> tratio,
-//					
-//					\children -> Dictionary[]
-//				]
-//		];
-//		this.corpus.mapIDToSF(anchorPath, customMap: sfID, sfgrp:sfg);
-//		Post << "Creating trackback for: " << sfID << "\n";
-//		this.trackbacks = Dictionary[(sfID -> [anchorPath, synthdefs, params, tratio])];
-//		^sfID
-//	}
-	
 // - addAnchorSFTree { |path, numChannels=1, uniqueFlag=nil, sfGrpID=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, sfg=0, verbose=nil|
 // path, 
 // numChannels=1, 
