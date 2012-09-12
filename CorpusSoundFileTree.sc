@@ -99,25 +99,25 @@ CorpusSoundFileTree {
 
 		"sdif: ".post; sfID.postln;
 
-		this.tree.add(
-			sfID ->
-				Dictionary[
-					\abfr -> nil,
-					\bfrL -> nil,
-					\bfrR -> nil,
-					\uniqueID -> flag,
-					\channels -> numChannels,
-					\sfileGroup -> sfg,
+//		this.tree.add(
+//			sfID ->
+//				Dictionary[
+		this.tree.add(\abfr -> nil); // just as a reminder
+		this.tree.add(\bfrL -> nil);
+		this.tree.add(\bfrR -> nil);
+		this.tree.add(\uniqueID -> flag);
+		this.tree.add(\channels -> numChannels);
+		this.tree.add(\sfileGroup -> sfg);
 
-					\sfileID -> sfID,
-					\parentFileID -> sfID,
-					\synthdefs -> synthdefs,
-					\params -> params,
-					\tratio -> tratio,
+		this.tree.add(\sfileID -> sfID);
+		this.tree.add(\parentFileID -> sfID);
+		this.tree.add(\synthdefs -> synthdefs);
+		this.tree.add(\params -> params);
+		this.tree.add(\tratio -> tratio);
 					
-					\children -> Dictionary[]
-				]
-		);
+		this.tree.add(\children -> Dictionary[]);
+//				]
+//		);
 		this.corpus.mapIDToSF(anchorPath, customMap:sfID, sfgrp:sfg);
 		(verbose != nil).if { Post << "Creating trackback for: " << sfID << "\n"; };
 		this.trackbacks.add(sfID -> [anchorPath, synthdefs, params, tratio]);
@@ -155,7 +155,7 @@ CorpusSoundFileTree {
 			psdPlusInsert = parentSynthdefs.insert(1, synthdef).flatten;
 			ppPlusInsert = parentParams.insert(1, params);
 						
-			this.tree[srcFileID][\children].add(
+			this.tree[\children].add(
 				sfID ->
 					Dictionary[
 						\abfr -> nil,
@@ -182,4 +182,5 @@ CorpusSoundFileTree {
 		};
 		^nil
 	}
+	getNode(
 }
