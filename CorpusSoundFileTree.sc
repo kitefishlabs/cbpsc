@@ -59,7 +59,7 @@ CorpusSoundFileTree {
 		// SUN March 13, 2011 ca. 3AM == 1.3 billion seconds since epoch
 		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 1300000000) } { flag = uniqueFlag };
 
-		"sdif: ".post; sfID.postln;
+		//"sdif: ".post; sfID.postln;
 
 //		this.tree.add(
 //			sfID ->

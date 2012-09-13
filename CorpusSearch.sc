@@ -55,18 +55,18 @@ CorpusSearch : Dictionary {
 		{
 			//reducedArray.flop.postln;
 			reducedArray = reducedArray.flop.collect({ |col, index|
-				Post << lastFlag << " ::: " << index << " <? " << (descriptors.size - 1) << "\n";
+//				Post << lastFlag << " ::: " << index << " <? " << (descriptors.size - 1) << "\n";
 				((lastFlag == true) && (index < (descriptors.size - 1))).if
 				{
-					Post << "%%%\n";
+//					Post << "%%%\n";
 					col.normalize;
 				} {
-					Post << "$$$\n";
+//					Post << "$$$\n";
 					col
 				};
 			}).flop;
-			"After: ".postln;
-			Post << lastFlag << "\n";
+//			"After: ".postln;
+//			Post << lastFlag << "\n";
 			this.normedTree = KDTree(reducedArray, lastIsLabel: lastFlag);
 			^this.normedTree
 		};

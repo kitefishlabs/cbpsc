@@ -285,7 +285,7 @@ CorpusDB : Dictionary {
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.numFrames / 1024) / tratio).ceil, 25] ]];
 		
-		"tb:".postln; this[\sftrees][path].trackbacks.postln;
+//		"tb:".postln; this[\sftrees][path].trackbacks.postln;
 		this[\sftrees][path].trackbacks[sfid][1].postln;
 		this[\sftrees][path].trackbacks[sfid][1].do({ |sdef, index|
 			var row = this[\sftrees][path].trackbacks[sfid][2][index];
@@ -295,7 +295,7 @@ CorpusDB : Dictionary {
 					\srcbufNum, { row[index+1] = pBuf; },
 					\savebufNum, { row[index+1] = aBuf; }, 
 					\transp, {
-						Post << "update tratio...\n";
+//						Post << "update tratio...\n";
 						row[index+1] = tratio;
 					}, 
 					\outbus, {
@@ -431,16 +431,16 @@ CorpusDB : Dictionary {
 	updateSoundFileUnit { |path, rid=nil, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil, verbose=nil|
 		//var old = this[\sfutable][path][\mfccs][relid], temp, newmfccs, newkeypair;
 		var old = this[\sfutable][path][\mfccs][rid], temp, newmfccs, newkeypair;
-		Post << "\nold: " << old << "\nrid: " << rid << "\n";
+//		Post << "\nold: " << old << "\nrid: " << rid << "\n";
 		temp = [cid ? old[0], sfg ? old[1], old[2], rid ? old[3], onset ? old[4], dur ? old[5], old[6]];
-		Post << "\n" << "temp: " << temp << "\n";
+//		Post << "\n" << "temp: " << temp << "\n";
 		newmfccs = mfccs ? this[\sfutable][path][\mfccs][rid][7..];
-		Post << "newmfccs: " << newmfccs << "\n";
+//		Post << "newmfccs: " << newmfccs << "\n";
 //		newkeypair = keypair ? [ this[\sfutable][path][\keys][relid][6..] ];
 		this[\sfutable][path][\mfccs][rid] = temp ++ newmfccs;
 		this[\sfutable][path][\keys][rid] = temp ++ newkeypair;
 		
-		this[\sfutable][path][\mfccs][rid].postln;
+//		this[\sfutable][path][\mfccs][rid].postln;
 		
 		(sfg != nil).if { this[\sftable][path].add(\sfilegroup -> sfg) };
 	}
@@ -519,8 +519,8 @@ CorpusDB : Dictionary {
 		mfccs = this[\sfutable][path][\rawmels].flop;
 		(verbose != nil).if {
 			//Post << "Raw mels: " << this[\sfutable][path][\rawmels] << "\n";
-			Post << "segment, raw mels' size: " << this[\sfutable][path][\rawmels].size << "\n\n\n\n";
-			Post << "SIZE: " << this[\sfutable][path][\mfccs].size << "\n";
+//			Post << "segment, raw mels' size: " << this[\sfutable][path][\rawmels].size << "\n\n\n\n";
+//			Post << "SIZE: " << this[\sfutable][path][\mfccs].size << "\n";
 		};
 		
 		this[\sfutable][path][\mfccs].do({ |cell, indx|
@@ -594,7 +594,7 @@ CorpusDB : Dictionary {
 			this[\sfutable].do({ |path|
 				(verbose != nil).if { Post << "\n\n\n\npath keys size: " << path[\keys].size << "\n" << path[\keys] << "\n"; };
 				path[\keys].do({ |pu, index|
-					[pu[0], (pu ++ path[\mfccs][index][7..]).flatten].postln;
+					//[pu[0], (pu ++ path[\mfccs][index][7..]).flatten].postln;
 					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][7..]).flatten);
 				});
 			});
@@ -666,11 +666,11 @@ CorpusDB : Dictionary {
 			var theID, theParent;
 			thePath = entry.getAttribute("path").asSymbol;
 			theID = entry.getAttribute("sfID");
-			Post << theID << "\n";
+//			Post << theID << "\n";
 			theID = theID.asInteger + runningSFOffset;
 			theParent = entry.getElementsByTagName("parentFileID")[0].getText.asInteger + runningSFOffset;
 	
-			Post << "the path: " << thePath << "\n";
+//			Post << "the path: " << thePath << "\n";
 
 			(sfDict[thePath] == nil).if
 			{
@@ -699,10 +699,10 @@ CorpusDB : Dictionary {
 //				Post << "plines: " << plines << "\n";
 
 				sfDict[thePath].add(\params -> plines);
-				Post << "sfDict\n" << sfDict << "\n";
+//				Post << "sfDict\n" << sfDict << "\n";
 				
 			} {
-				Post << "ELSE!\n";
+//				Post << "ELSE!\n";
 				(sfDict[thePath][\children] == nil).if
 				{
 					sfDict[thePath].add(\children -> Dictionary[]);
@@ -739,7 +739,7 @@ CorpusDB : Dictionary {
 				sfDict[thePath][\children][theID].add(\params -> plines);
 			};
 		});		
-		Post << "sfdict: \n\n" << sfDict << "\n";
+//		Post << "sfdict: \n\n" << sfDict << "\n";
 		
 		domdoc.getDocumentElement.getElementsByTagName("corpusunit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
@@ -760,14 +760,14 @@ CorpusDB : Dictionary {
 		sfDict.keys.do({ |pathkey|
 			var theID, theGroup;
 
-			Post << "PK: " << pathkey << "\n" << sfDict[pathkey.asSymbol] << "\n\n\n";
+//			Post << "PK: " << pathkey << "\n" << sfDict[pathkey.asSymbol] << "\n\n\n";
 
 			theID = sfDict[pathkey.asSymbol][\sfID];
 			theGroup = sfDict[pathkey.asSymbol][\sfileGroup];
-			Post << sfDict << "\n";
-			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << " | " << theID << "\n\n";
+//			Post << sfDict << "\n";
+//			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << " | " << theID << "\n\n";
 
-			Post << sfDict[pathkey.asSymbol][\synthdefs] << "\n";
+//			Post << sfDict[pathkey.asSymbol][\synthdefs] << "\n";
 
 			this.addSoundFile(
 				pathkey.asString,
@@ -780,11 +780,11 @@ CorpusDB : Dictionary {
 				importFlag:true,
 				verbose:true
 			);
-			Post << "tratio: " << sfDict[pathkey.asSymbol][\tratio] << "\n";
+//			Post << "tratio: " << sfDict[pathkey.asSymbol][\tratio] << "\n";
 			this.analyzeSoundFile(pathkey.asString, sfid:theID, analyze:false, tratio:sfDict[pathkey.asSymbol][\tratio]);
 
 			(sfDict[pathkey.asSymbol][\children] != nil).if {
-				Post << "children's keys: " << sfDict[pathkey.asSymbol][\children].keys << "\n";
+//				Post << "children's keys: " << sfDict[pathkey.asSymbol][\children].keys << "\n";
 	
 				sfDict[pathkey.asSymbol][\children].keys.asArray.sort.do({ |csfid|
 					this.addSoundFile(
@@ -797,21 +797,21 @@ CorpusDB : Dictionary {
 						importFlag: false,
 						verbose:true
 					);
-	//				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
+//					Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
 					this.analyzeSoundFile(pathkey.asString, sfid:csfid, analyze:false, tratio:sfDict[pathkey.asSymbol][\children][csfid][\tratio]);
 				});
 			};
 			runningSFOffset = runningSFOffset.max(theID);
-			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+//			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
 			runningSFGOffset = runningSFGOffset.max(theGroup);
-			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
+//			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
 
 		});
 			
-		Post << metadataDict.keys << "\n\n\n";
-//			Post << "$$: " << metadataDict[ runningSFGOffset ] << "\n";
+//		Post << metadataDict.keys << "\n\n\n";
+//		Post << "$$: " << metadataDict[ runningSFGOffset ] << "\n";
 
-		Post << "\n\n" << metadataDict[  runningSFGOffset ].keys.asArray.sort << "\n\n";
+//		Post << "\n\n" << metadataDict[  runningSFGOffset ].keys.asArray.sort << "\n\n";
 		metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
 			
 			var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
@@ -823,7 +823,7 @@ CorpusDB : Dictionary {
 			last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: tmp[0].asInteger, sfg:tmp[1].asInteger, tratio:tmp[6].asFloat, sfid:tmp[2].asInteger) - 1;
 //			
 
-			Post << "gather keys...\n";
+//			Post << "gather keys...\n";
 			this.gatherKeys(path);
 //			Post << this[\sfutable][path][\keys].size << " +=+=+ " << this[\sfutable][path][\mfccs].size << "\n";
 
@@ -833,7 +833,7 @@ CorpusDB : Dictionary {
 		metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
 			
 			var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
-			Post << "...\n" << cid << ", " << tmp << " ";
+//			Post << "...\n" << cid << ", " << tmp << " ";
 			path = this[\sfmap][tmp[2]].asString; // at this point, shouldn't tmp[2] have to have an offset added !!!???
 			this.updateSoundFileUnit(
 				path,
