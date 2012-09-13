@@ -123,11 +123,11 @@ CODE::
 ~row = ~mycorpus[\cutable][4];
 ~path = ~mycorpus[\sfmap][~row[2]];
 ::
-Next we need to figure out what buffer to use. The sound file index that is stored in the second column of the corpus unit row is our index into the tree. This index is used to get the metadata about the sound file from the tree. The second form hides the long bit of  access code. Finally, we fire off a Synth using that number and metadata from the 5th and 6th columns. Notice that you have to multiply by 0.001, as the metadata is stored as milliseconds, but the synth uses seconds.
+Next we need to figure out what buffer to use. The sound file index that is stored in the second column of the corpus unit row is our index into the tree. This index is used to get the metadata about the sound file from the tree. The second form hides the long bit of  access code. Finally, we fire off a Synth using that number and metadata from the 5th and 6th columns. Notice that you have to multiply by 0.001, as the metadata is stored as milliseconds, but the synth uses seconds. The synthdef we use to play back a sample is called CODE::monoSampler:: and is built internally by our class. We merely create a synth. There is also a stereo version, but since all sound files are stored in the corpus as mono or pairs of mono files, it's a long story as to why we aren't able to use the stereo playback synthdef here.
 
 CODE::
 ~bufnum = ~mycorpus[\sftrees][~path].tree[\bfrR].bufnum;
-Synth(\monoSamplerNRT, [\outbus, 0, \srcbufNum, ~bufnum, 'start', (~row[4]*0.001), 'dur', (~row[5]*0.001), 'transp', 1.0]);
+Synth(\monoSampler, [\outbus, 0, \srcbufNum, ~bufnum, 'start', (~row[4]*0.001), 'dur', (~row[5]*0.001), 'transp', 1.0]);
 ::
 If everything went as planned, you should have heard a 5-second clip of watery boat-rowing sounds.
 
