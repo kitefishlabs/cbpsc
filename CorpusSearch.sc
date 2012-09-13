@@ -34,6 +34,10 @@ CorpusSearch : Dictionary {
 		^this.stats
 	}
 	
+	buildNormalizedTree { |metadata, descriptors|
+		^this.buildTree(metadata, descriptors, true, true);
+	}
+	
 	buildTree { |metadata, descriptors, normFlag=false, lastFlag=true|
 		var map, reducedArray = Array[];
 		(descriptors == nil).if { Post << "Cannot build tree with NIL descriptors:\n"; ^nil };
@@ -74,7 +78,7 @@ CorpusSearch : Dictionary {
 		^this.normedTree.radiusSearch(target, radius).collect({|found| [found.label, found.location]})
 	}
 	
-	findNNearest { |target, radius, normFlag = false, number=1|
+	findNNearest { |target, radius, normFlag = true, number=1|
 		var res;
 		(normFlag == true).if
 		{
