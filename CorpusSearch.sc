@@ -49,17 +49,20 @@ CorpusSearch : Dictionary {
 		};
 		(normFlag == true).if
 		{
-			reducedArray.flop.postln;
+			//reducedArray.flop.postln;
 			reducedArray = reducedArray.flop.collect({ |col, index|
-				((lastFlag == true) && (index <= (descriptors.size - 1))).if
+				Post << lastFlag << " ::: " << index << " <? " << (descriptors.size - 1) << "\n";
+				((lastFlag == true) && (index < (descriptors.size - 1))).if
 				{
+					Post << "%%%\n";
 					col.normalize;
 				} {
+					Post << "$$$\n";
 					col
 				};
 			}).flop;
-			//"After: ".postln;
-			//reducedArray.postln;
+			"After: ".postln;
+			Post << lastFlag << "\n";
 			this.normedTree = KDTree(reducedArray, lastIsLabel: lastFlag);
 			^this.normedTree
 		};

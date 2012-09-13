@@ -48,9 +48,13 @@ CorpusSoundFileTree {
 			sfID = this.corpus.sfOffset;
 			this.corpus.sfOffset = this.corpus.sfOffset + 1;
 		} {
-			sfID = this.corpus.sfOffset.max(srcFileID);
-			this.corpus.sfOffset = sfID + 1;
+			sfID = srcFileID;
 		};
+// shouldn't we check for a collision with an existing sfID here?
+// 		{
+//			sfID = this.corpus.sfOffset.max(srcFileID);
+//			this.corpus.sfOffset = sfID + 1;
+//		};
 
 		// SUN March 13, 2011 ca. 3AM == 1.3 billion seconds since epoch
 		(uniqueFlag == nil).if { flag = (Date.getDate.rawSeconds - 1300000000) } { flag = uniqueFlag };

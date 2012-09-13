@@ -149,18 +149,18 @@ CorpusDB : Dictionary {
 		this[\synthdefs][symbol].writeDefFile;
 	}
 
-//-	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=nil, srcFileID=nil, synthdefs=nil, params=nil, tratio=1| }
+//-	addSoundFile { |path, srcFileID=nil, numChannels=1, sfGrpID=0, tratio=1, synthdefs=nil, params=nil, importFlag=true| }
 // path             path ====> key for sftrees Dictionary
+// srcFileID=nil    for parent/child relationships as well as importing from XML/JSON
 // numChannels=1    2 for stereo
 // sfGrpID=0        optional sfile group
-// importFlag=nil   set to import the soundfile (instead of just the metadata) *** this should be inverted!
-// srcFileID=nil    for parent/child relationships
-// synthdefs=nil    synthdef object names (as a list)
-// params=nil       there parameters (as a list - ['param', val, 'param', val, etc...])
 // tratio=1         the all important transposition ratio
+// importFlag=nil   set to import the soundfile (instead of just the metadata) *** this should be inverted!
+// synthdefs=nil    synthdef object name (as a single-item list for child nodes only)
+// params=nil       there parameters (as a list - ['param', val, 'param', val, etc...])
 
-	addSoundFile { |path, numChannels=1, sfGrpID=0, importFlag=true, srcFileID=nil, synthdefs=nil, params=nil, tratio=1, verbose=nil|
-		var thepath, flag, res, prms;
+	addSoundFile { |path, srcFileID=nil, numChannels=1, sfGrpID=0, tratio=1, synthdefs=nil, params=nil, importFlag=true, verbose=nil|
+		var thepath, flag=false, res, prms;
 		
 		(path != nil).if {
 			thepath = PathName.new(path.asString);
@@ -168,9 +168,7 @@ CorpusDB : Dictionary {
 			^nil;
 		};
 		
-		(verbose != nil).if {
-			Post << "Adding Entry:   ===============================  " << path.asString << " (" << numChannels << " channels).\n";
-		};
+		(verbose != nil).if { Post << "Adding Entry:  ================  " << path.asString << " (" << numChannels << " channels).\n"; };
 		
 		(synthdefs == nil).if {
 			(numChannels == 2).if {
@@ -178,16 +176,17 @@ CorpusDB : Dictionary {
 			} {
 				synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
 			};
+			flag = true;
 		};
 		(params == nil).if {
 			params = [[\outbus, 10, \srcbufNum, 0, \tratio, tratio, \dur, 1], [\inbus, 10, \savebufNum, 0, \tratio, tratio]];
 		};
 				
-		(srcFileID == nil).if { //no parent tree for this path/file, this is a parent
+		(flag == true).if { //no parent tree for this path/file, this is a parent
 			
 			this[\sftrees].add(thepath.fullPath -> CorpusSoundFileTree.new(this));
 			
-			(verbose != nil).if { Post << "add Anchor\n\n"; };
+			(verbose != nil).if { Post << "add new Anchor: " << srcFileID << "\n\n"; };
 			res = this[\sftrees][thepath.fullPath].addAnchorSFTree(thepath.fullPath, numChannels, nil, sfGrpID, srcFileID, synthdefs, params, tratio, verbose:verbose);
 			((importFlag != nil) && (res != nil)).if { "impoRT!".postln; this.importSoundFileToBuffer(thepath.fullPath, res) };
 			// add an sfile unit to the sfile unit table
@@ -196,10 +195,7 @@ CorpusDB : Dictionary {
 		} {
 			(verbose != nil).if { Post << "add child\n"; };
 			res = this[\sftrees][thepath.fullPath].addChildSFTree(srcFileID, numChannels, synthdefs, params, tratio, sfg:sfGrpID, verbose:verbose);
-		};
-
-//		(res != nil).if { this.mapIDToSF(thepath.fullPath, (sfGrpID ? 0)) }; // why does calling mapIDToSF here f*** things up?
-		
+		};		
 		// res is the sfile ID, which has been returned from one of the add_____Tree functions
 		^res
 	}
@@ -211,11 +207,10 @@ CorpusDB : Dictionary {
 	importSoundFileToBuffer { |path, sfid, verbose=nil|
 		Buffer.readChannel(this[\server], path, 0, -1, [0], { |bfrL|
 				this[\sftrees][path].tree.add(\bfrL -> bfrL);
-			});
+		});
 		// if stereo, add the right channel
 		
-		":::: ".post; sfid.postln; this[\sftrees][path].tree.postln;
-		
+//		":::: ".post; sfid.postln; this[\sftrees][path].tree.postln;
 		(this[\sftrees][path].tree[\channels] == 2).if
 		{
 			Buffer.readChannel(this[\server], path, 0, -1, [1], { |bfrR|
@@ -227,7 +222,6 @@ CorpusDB : Dictionary {
 
 //-	removeSoundFile { |path| }
 // path
-
 	removeSoundFile { |path, verbose=nil|
 		var thepath;
 		thepath = PathName.new(path.asString).fullPath;
@@ -291,7 +285,8 @@ CorpusDB : Dictionary {
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.numFrames / 1024) / tratio).ceil, 25] ]];
 		
-		this[\sftrees][path].trackbacks.postln;
+		"tb:".postln; this[\sftrees][path].trackbacks.postln;
+		this[\sftrees][path].trackbacks[sfid][1].postln;
 		this[\sftrees][path].trackbacks[sfid][1].do({ |sdef, index|
 			var row = this[\sftrees][path].trackbacks[sfid][2][index];
 			row.do({ |val, index|
@@ -433,19 +428,19 @@ CorpusDB : Dictionary {
 // sfg=nil
 // keypair=nil
 
-	updateSoundFileUnit { |path, relid, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil, verbose=nil|
+	updateSoundFileUnit { |path, rid=nil, cid=nil, onset=nil, dur=nil, mfccs=nil, sfg=nil, keypair=nil, verbose=nil|
 		//var old = this[\sfutable][path][\mfccs][relid], temp, newmfccs, newkeypair;
-		var old = this[\sfutable][path][\mfccs][cid], temp, newmfccs, newkeypair;
-//		Post << "\nold: " << old << "\n";
-		temp = [cid ? old[0], sfg ? old[1], old[2], old[3], onset ? old[4], dur ? old[5], old[6]];
-//		Post << "\n" << "temp: " << temp << Char.nl;
-		newmfccs = mfccs ? this[\sfutable][path][\mfccs][cid][7..];
-//		Post << "newmfccs: " << newmfccs << Char.nl;
+		var old = this[\sfutable][path][\mfccs][rid], temp, newmfccs, newkeypair;
+		Post << "\nold: " << old << "\nrid: " << rid << "\n";
+		temp = [cid ? old[0], sfg ? old[1], old[2], rid ? old[3], onset ? old[4], dur ? old[5], old[6]];
+		Post << "\n" << "temp: " << temp << "\n";
+		newmfccs = mfccs ? this[\sfutable][path][\mfccs][rid][7..];
+		Post << "newmfccs: " << newmfccs << "\n";
 //		newkeypair = keypair ? [ this[\sfutable][path][\keys][relid][6..] ];
-		this[\sfutable][path][\mfccs][cid] = temp ++ newmfccs;
-		this[\sfutable][path][\keys][cid] = temp ++ newkeypair;
+		this[\sfutable][path][\mfccs][rid] = temp ++ newmfccs;
+		this[\sfutable][path][\keys][rid] = temp ++ newkeypair;
 		
-		//this[\sfutable][path][\mfccs][relid].postln;
+		this[\sfutable][path][\mfccs][rid].postln;
 		
 		(sfg != nil).if { this[\sftable][path].add(\sfilegroup -> sfg) };
 	}
@@ -595,11 +590,11 @@ CorpusDB : Dictionary {
 	mapSoundFileUnitsToCorpusUnits { |override=false, verbose=nil|
 		((this.soundFileUnitsMapped == false) || (override == true)).if
 		{
-			//this.clearCorpusUnits;
+			this.clearCorpusUnits;
 			this[\sfutable].do({ |path|
 				(verbose != nil).if { Post << "\n\n\n\npath keys size: " << path[\keys].size << "\n" << path[\keys] << "\n"; };
 				path[\keys].do({ |pu, index|
-					//[pu[0], (pu ++ path[\mfccs][index][7..]).flatten].postln;
+					[pu[0], (pu ++ path[\mfccs][index][7..]).flatten].postln;
 					this.addCorpusUnit(pu[0], (pu ++ path[\mfccs][index][7..]).flatten);
 				});
 			});
@@ -650,7 +645,7 @@ CorpusDB : Dictionary {
 // path
 
 	importCorpusFromXML { |server, path, verbose=nil|
-		var domdoc, tmpDict = Dictionary[], sfDict = Dictionary[], metadataDict = Dictionary[];
+		var domdoc, tmpDict = Dictionary[], metadataDict = Dictionary[], sfDict;
 		var runningCUOffset = this.cuOffset, runningSFOffset = this.sfOffset, runningSFGOffset = this.sfgOffset, thePath, slines, plines;
 		
 //		Post << "Adding File Entry from XML: " << path << "\n=============\n";
@@ -664,64 +659,63 @@ CorpusDB : Dictionary {
 			tmpDict.add(tag.getText.asInteger -> tag.getAttribute("name").asSymbol);
 		});
 		(tmpDict != this[\dtable]).if { "WARNING: Import descriptor list mismatch!".postln; };
+		sfDict = Dictionary[];
 
 		// get the anchorPath from XML
-		domdoc.getDocumentElement.getElementsByTagName("tree").do({ |tag| // should only be one!
-			thePath = tag.getAttribute("path").asSymbol;
-		});		
-		
-		// nodes correspond to either the one parent or any one of the children
-		// 	- children are handled differently
-		// 	- have to be sure that the offsets are factored in here
-		domdoc.getDocumentElement.getElementsByTagName("node").do({ |entry|
+		domdoc.getDocumentElement.getElementsByTagName("tree").do({ |entry| // should only be one!
 			var theID, theParent;
-			theID = entry.getAttribute("sfID").asInteger + runningSFOffset;
+			thePath = entry.getAttribute("path").asSymbol;
+			theID = entry.getAttribute("sfID");
+			Post << theID << "\n";
+			theID = theID.asInteger + runningSFOffset;
 			theParent = entry.getElementsByTagName("parentFileID")[0].getText.asInteger + runningSFOffset;
+	
+			Post << "the path: " << thePath << "\n";
 
 			(sfDict[thePath] == nil).if
 			{
-				sfDict.add(thePath -> Dictionary[theID -> Dictionary[]]);
-				sfDict[thePath][theID].add(\parentFileID -> theParent);
-				sfDict[thePath][theID].add(\sfileGroup -> (entry.getElementsByTagName("sfileGroup")[0].getText.asInteger + runningSFGOffset)); //add offset
-				sfDict[thePath][theID].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
+				sfDict.add(thePath -> Dictionary[]);
+				sfDict[thePath].add(\sfID -> theID);
+				sfDict[thePath].add(\parentFileID -> theParent);
+				sfDict[thePath].add(\sfileGroup -> (entry.getElementsByTagName("sfileGroup")[0].getText.asInteger + runningSFGOffset)); //add offset
+				sfDict[thePath].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
 //				Post << "tratio: " << sfDict[thePath][theID][\tratio] << "\n";
-				sfDict[thePath][theID].add(\uniqueID -> entry.getElementsByTagName("uniqueID")[0].getText.asFloat);
-				sfDict[thePath][theID].add(\channels -> entry.getElementsByTagName("channels")[0].getText.asString);
+				sfDict[thePath].add(\uniqueID -> entry.getElementsByTagName("uniqueID")[0].getText.asFloat);
+				sfDict[thePath].add(\channels -> entry.getElementsByTagName("channels")[0].getText.asString);
 
-				slines = Dictionary[];
+//				slines = Dictionary[];
 				entry.getElementsByTagName("synthdefs").do({ |synthdef|
-					slines.add(theID -> synthdef.getElementsByTagName("sd").collect({ |sd| sd.getText.asSymbol }) );
+					slines = synthdef.getElementsByTagName("sd").collect({ |sd| sd.getText.asSymbol });
 				});
-
-				sfDict[thePath][theID].add(\synthdefs -> slines);
+				sfDict[thePath].add(\synthdefs -> slines);
 				
-				plines = Dictionary[];
+//				plines = Dictionary[];
 				entry.getElementsByTagName("paramslist").do({ |paramslist|
 
-					plines.add(theID -> paramslist.getElementsByTagName("params").collect({ |p|
-
+					plines = paramslist.getElementsByTagName("params").collect({ |p|
 						p.getText.split($ ).asArray.collect({ |x,i| (i.even).if { x.asSymbol } { x.asFloat } });
-					}));
+					});
 				});
-//				Post << "plines: " << plines.keys << "\n";
+//				Post << "plines: " << plines << "\n";
 
-				sfDict[thePath][theID].add(\params -> plines);
-//				Post << sfDict << "\n";
+				sfDict[thePath].add(\params -> plines);
+				Post << "sfDict\n" << sfDict << "\n";
 				
 			} {
-				(sfDict[thePath][theParent][\children] == nil).if
+				Post << "ELSE!\n";
+				(sfDict[thePath][\children] == nil).if
 				{
-					sfDict[thePath][theParent].add(\children -> Dictionary[]);
+					sfDict[thePath].add(\children -> Dictionary[]);
 //					"children: ".post; sfDict[thePath][theParent][\children].postln;
 				};
-				(sfDict[thePath][theParent][\children][theID] == nil).if
+				(sfDict[thePath][\children][theID] == nil).if
 				{
-					sfDict[thePath][theParent][\children].add(theID -> Dictionary[]);
+					sfDict[thePath][\children].add(theID -> Dictionary[]);
 //					"@ theID: ".post; sfDict[thePath][theParent][\children][theID].postln;
 				};
 				
-				sfDict[thePath][theParent][\children][theID].add(\parentFileID -> theParent);
-				sfDict[thePath][theParent][\children][theID].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
+				sfDict[thePath][\children][theID].add(\parentFileID -> theParent);
+				sfDict[thePath][\children][theID].add(\tratio -> entry.getElementsByTagName("tratio")[0].getText.asFloat);
 //				Post << "tratio: " << sfDict[thePath][theParent][\children][theID][\tratio] << "\n";
 				
 				slines = Dictionary[];
@@ -730,7 +724,7 @@ CorpusDB : Dictionary {
 				});
 
 //				Post << "slines: " << slines << "\n";
-				sfDict[thePath][theParent][\children][theID].add(\synthdefs -> slines);
+				sfDict[thePath][\children][theID].add(\synthdefs -> slines);
 				
 				plines = Dictionary[];
 				entry.getElementsByTagName("paramslist").do({ |paramslist|
@@ -742,11 +736,10 @@ CorpusDB : Dictionary {
 				});
 //				Post << "plines: " << plines[theID].collect({ |pl| pl.collect({ |x| x.class }) }) << "\n";
 //				Post << "plines: " << plines << "\n";
-				sfDict[thePath][theParent][\children][theID].add(\params -> plines);
+				sfDict[thePath][\children][theID].add(\params -> plines);
 			};
-		});
-		
-//		Post << "sfdict: \n\n" << sfDict << "\n";
+		});		
+		Post << "sfdict: \n\n" << sfDict << "\n";
 		
 		domdoc.getDocumentElement.getElementsByTagName("corpusunit").do({ |tag, index|
 			var tmpRow = tag.getText.split($ ).asFloat;
@@ -767,80 +760,92 @@ CorpusDB : Dictionary {
 		sfDict.keys.do({ |pathkey|
 			var theID, theGroup;
 
-//			Post << "PK: " << pathkey << "\n" << sfDict[pathkey.asSymbol] << "\n\n\n";
+			Post << "PK: " << pathkey << "\n" << sfDict[pathkey.asSymbol] << "\n\n\n";
 
-			theID = sfDict[pathkey.asSymbol].keys.asArray[0];
-			theGroup = sfDict[pathkey.asSymbol][theID][\sfileGroup];
-//			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << "\n";
+			theID = sfDict[pathkey.asSymbol][\sfID];
+			theGroup = sfDict[pathkey.asSymbol][\sfileGroup];
+			Post << sfDict << "\n";
+			Post << "the group: " << theGroup << ", the offset: " << runningSFGOffset << " | " << theID << "\n\n";
+
+			Post << sfDict[pathkey.asSymbol][\synthdefs] << "\n";
 
 			this.addSoundFile(
 				pathkey.asString,
-				sfDict[pathkey.asSymbol][theID][\channels].asInteger,
-				importFlag:true,
+				theID,
+				sfDict[pathkey.asSymbol][\channels].asInteger,
 				sfGrpID:theGroup,  //add offset
-				synthdefs:sfDict[pathkey.asSymbol][theID][\synthdefs][theID],
-				params:sfDict[pathkey.asSymbol][theID][\params][theID],
-				tratio:sfDict[pathkey.asSymbol][theID][\tratio]
+				tratio:sfDict[pathkey.asSymbol][\tratio],
+				synthdefs:nil,
+				params:nil,
+				importFlag:true,
+				verbose:true
 			);
-//			Post << "tratio: " << sfDict[pathkey.asSymbol][theID][\tratio] << "\n";
-			this.analyzeSoundFile(pathkey.asString, sfid:theID, analyze:false, tratio:sfDict[pathkey.asSymbol][theID][\tratio]);
-//			Post << "children's keys: " << sfDict[pathkey.asSymbol][theID][\children].keys << "\n";
+			Post << "tratio: " << sfDict[pathkey.asSymbol][\tratio] << "\n";
+			this.analyzeSoundFile(pathkey.asString, sfid:theID, analyze:false, tratio:sfDict[pathkey.asSymbol][\tratio]);
 
-			sfDict[pathkey.asSymbol][theID][\children].keys.asArray.sort.do({ |csfid|
-				this.addSoundFile(
-					pathkey.asString,
-					srcFileID:sfDict[pathkey.asSymbol][theID][\children][csfid][\parentFileID],
-					importFlag: false,
-					sfGrpID:theGroup,  //add offset
-					synthdefs:sfDict[pathkey.asSymbol][theID][\children][csfid][\synthdefs][csfid][1],
-					params:sfDict[pathkey.asSymbol][theID][\children][csfid][\params][csfid][1],
-					tratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]
-				);
-//				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
-				this.analyzeSoundFile(pathkey.asString, sfid:csfid, analyze:false, tratio:sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio]);
-			});
-
+			(sfDict[pathkey.asSymbol][\children] != nil).if {
+				Post << "children's keys: " << sfDict[pathkey.asSymbol][\children].keys << "\n";
+	
+				sfDict[pathkey.asSymbol][\children].keys.asArray.sort.do({ |csfid|
+					this.addSoundFile(
+						pathkey.asString,
+						srcFileID:sfDict[pathkey.asSymbol][\children][csfid][\parentFileID],
+						sfGrpID:theGroup,  //add offset
+						tratio:sfDict[pathkey.asSymbol][\children][csfid][\tratio],
+						synthdefs:sfDict[pathkey.asSymbol][\children][csfid][\synthdefs][csfid][1],
+						params:sfDict[pathkey.asSymbol][\children][csfid][\params][csfid][1],
+						importFlag: false,
+						verbose:true
+					);
+	//				Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
+					this.analyzeSoundFile(pathkey.asString, sfid:csfid, analyze:false, tratio:sfDict[pathkey.asSymbol][\children][csfid][\tratio]);
+				});
+			};
 			runningSFOffset = runningSFOffset.max(theID);
-//			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
 			runningSFGOffset = runningSFGOffset.max(theGroup);
-//			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
-//			Post << metadataDict.keys << "\n\n\n";
+			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
 
+		});
+			
+		Post << metadataDict.keys << "\n\n\n";
+//			Post << "$$: " << metadataDict[ runningSFGOffset ] << "\n";
 
-//			Post << "\n\n" << metadataDict[  sfgkey ].keys.asArray.sort << "\n\n";
-			metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
-				
-				var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
+		Post << "\n\n" << metadataDict[  runningSFGOffset ].keys.asArray.sort << "\n\n";
+		metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
+			
+			var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
 //				Post << tmp[0] << " + " << tmp.size << " ";
 //				Post << "\n\n\n" << tmp << "\n";
-				path = this[\sfmap][tmp[2]].asString;
+			path = this[\sfmap][tmp[2]].asString;
 
-				//Post << "addSoundFileUnit args: " << [path, tmp[3].asInteger, tmp[4..5], (tmp[0].asInteger + this.cuOffset), (theGroup + this.sfgOffset).asInteger, tmp[6].asFloat, tmp[2].asInteger] << "\n";
-				last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: tmp[0].asInteger, sfg:theGroup.asInteger, tratio:tmp[6].asFloat, sfid:tmp[2].asInteger) - 1;
+			//Post << "addSoundFileUnit args: " << [path, tmp[3].asInteger, tmp[4..5], (tmp[0].asInteger + this.cuOffset), (tmp[1] + this.sfgOffset).asInteger, tmp[6].asFloat, tmp[2].asInteger] << "\n";
+			last = this.addSoundFileUnit(path, tmp[3].asInteger, tmp[4..5], cid: tmp[0].asInteger, sfg:tmp[1].asInteger, tratio:tmp[6].asFloat, sfid:tmp[2].asInteger) - 1;
 //			
-			});
-//			Post << "gather keys...\n";
-			this.gatherKeys(pathkey.asString);
-			
-//			Post << this[\sfutable][pathkey.asString][\keys].size << " +=+=+ " << this[\sfutable][pathkey.asString][\mfccs].size << "\n";
-			
-			metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
-				
-				var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
-//				Post << cid << ", " << tmp[0..3] << " ";
-				path = this[\sfmap][tmp[2]].asString; // at this point, shouldn't tmp[2] have to have an offset added !!!???
-				this.updateSoundFileUnit(
-					path,
-					tmp[3].asInteger,
-					cid: tmp[0].asInteger,
-					mfccs: tmp[7..]
-				);
-			});
-			//runningCUOffset = runningCUOffset.max(tmp[0].asInteger + this.cuOffset);
-			//this.sfOffset = this.sfOffset + runningSFOffset + 1;
+
+			Post << "gather keys...\n";
+			this.gatherKeys(path);
+//			Post << this[\sfutable][path][\keys].size << " +=+=+ " << this[\sfutable][path][\mfccs].size << "\n";
+
 		});
+
+		
+		metadataDict[ runningSFGOffset ].keys.asArray.sort.do({ |cid|
+			
+			var tmp = metadataDict[ runningSFGOffset ][ cid ], path, last; // cutable row!
+			Post << "...\n" << cid << ", " << tmp << " ";
+			path = this[\sfmap][tmp[2]].asString; // at this point, shouldn't tmp[2] have to have an offset added !!!???
+			this.updateSoundFileUnit(
+				path,
+				tmp[3].asInteger,
+				cid: tmp[0].asInteger,
+				mfccs: tmp[7..]
+			);
+		});
+		//runningCUOffset = runningCUOffset.max(tmp[0].asInteger + this.cuOffset);
+		//this.sfOffset = this.sfOffset + runningSFOffset + 1;
 //
-		this.mapSoundFileUnitsToCorpusUnits;
+		this.mapSoundFileUnitsToCorpusUnits(true, true);
 		
 		this.sfgOffset = runningSFGOffset + 1;
 		this.cuOffset = this.cuOffset.max(this[\cutable].keys.maxItem) + 1;
@@ -868,28 +873,26 @@ CorpusDB : Dictionary {
 //				Post << sfpath << "\n\n" << entry.tree << "\n";
 //				entry.tree.keys.do({ |stindex| // SHOULD ONLY BE ONE KEY!!!
 	
-					f.write("      <tree path=\"" ++ entry.anchorPath.asString ++ "\">\n");
-					f.write("        <node sfID=\"" ++ entry.tree[\sfileID].asString ++ "\">\n");
-					f.write("          <parentFileID>" ++ entry.tree[\parentFileID].asString ++ "</parentFileID>\n");
-					f.write("          <channels>" ++ entry.tree[\channels].asString ++ "</channels>\n");
-					f.write("          <sfileGroup>" ++ entry.tree[\sfileGroup].asString ++ "</sfileGroup>\n");
-					f.write("          <tratio>" ++ entry.tree[\tratio].asString ++ "</tratio>\n");
-					f.write("          <uniqueID>" ++ entry.tree[\uniqueID].asString ++ "</uniqueID>\n");
-					f.write("          <synthdefs>\n");
+					f.write("      <tree path=\"" ++ entry.anchorPath.asString ++ "\" sfID=\"" ++ entry.tree[\sfileID].asString ++ "\">\n");
+					f.write("        <parentFileID>" ++ entry.tree[\parentFileID].asString ++ "</parentFileID>\n");
+					f.write("        <channels>" ++ entry.tree[\channels].asString ++ "</channels>\n");
+					f.write("        <sfileGroup>" ++ entry.tree[\sfileGroup].asString ++ "</sfileGroup>\n");
+					f.write("        <tratio>" ++ entry.tree[\tratio].asString ++ "</tratio>\n");
+					f.write("        <uniqueID>" ++ entry.tree[\uniqueID].asString ++ "</uniqueID>\n");
+					f.write("        <synthdefs>\n");
 					entry.tree[\synthdefs].do({ |sd, index|
-						f.write("            <sd index=\"" ++ index ++ "\">" ++ sd.asString ++ "</sd>\n");
+						f.write("          <sd index=\"" ++ index ++ "\">" ++ sd.asString ++ "</sd>\n");
 					});
-					f.write("          </synthdefs>\n");
-					f.write("          <paramslist>\n");
+					f.write("        </synthdefs>\n");
+					f.write("        <paramslist>\n");
 					entry.tree[\params].do({ |p, index|
 						f.write("            <params index=\"" ++ index ++ "\">" ++ p.join($ ).asString ++ "</params>\n");
 					});
-					f.write("          </paramslist>\n");
-					f.write("        </node>\n");
+					f.write("        </paramslist>\n");
 					
 					entry.tree[\children].keysValuesDo({ |sfid, child|
 						
-						f.write("        <node sfID=\"" ++ sfid ++ "\">\n");
+						f.write("        <child sfID=\"" ++ sfid ++ "\">\n");
 						f.write("          <parentFileID>" ++ child[\parentFileID] ++ "</parentFileID>\n");
 						f.write("          <tratio>" ++ child[\tratio] ++ "</tratio>\n");
 						f.write("          <synthdefs>\n");
@@ -902,7 +905,7 @@ CorpusDB : Dictionary {
 							f.write("            <params index=\"" ++ index ++ "\">" ++ p.join($ ).asString ++ "</params>\n");
 						});
 						f.write("          </paramslist>\n");
-						f.write("        </node>\n");
+						f.write("        </child>\n");
 	
 						
 					});
