@@ -27,7 +27,7 @@ but the sound files can live anywhere on your drive.
 
 Add the sound file to the corpus database.
 CODE::
-~mycorpus.addSoundfile(~soundfile);
+~latest_index = ~mycorpus.addSoundfile(~soundfile);
 ::
 (the corresponding remove method:)
 CODE::
@@ -36,7 +36,7 @@ CODE::
 
 Perform the analysis. (note: for extremely long files (> 2-3 minutes) SC might hang and show the 'spinning wheel of death'...it should not hang for too long...if you have to force-quit, please do complain to the author!)
 CODE::
-~mycorpus.analyzeSoundFile(~soundfile);
+~mycorpus.analyzeSoundFile(~soundfile, sfid: ~latest_index);
 ::
 Add a unit (a SoundFile Unit or 'a unit relative to a sound file') The arguments are the path, an integer id/index (relative to that file), and the bounds (in milliseconds) of this new unit.
 CODE::
@@ -74,36 +74,31 @@ CODE::
 SECTION:: A LARGER EXAMPLE: MAKE A CORPUS FROM SOME SOUND FILES
 What follows is an example of a corpus built with multiple (2) sound files where each file will be segmented into multiple segments. The sound files are taken from Freesound.org and were made available under Creative Commons licensing. They are conveniently located in the git repo.
 
-Let us suppose that we have a folder for our corpus at "/Users/me/mycorpus". In the directory "mycorpus" we have a snd directory. The following will set up an empty corpus and add two sound files, "36047_dobroide.wav" and "36818_cajo.wav".
+Let us suppose that we have a folder for our corpus at "~/mycorpus". In the directory "mycorpus" we have a snd directory. The following will set up an empty corpus and add two sound files, "36047_dobroide.wav" and "36818_cajo.wav", from the github repo. You should replicate this setup before evaluating the code below.
 
 CODE::
 Server.default = Server.internal;
 s = Server.default.boot;
 
-~mycorpus = CorpusDB.new("/Users/kitefishlabs/mycorpus", s);
-~soundfile1 = "/Users/kitefishlabs/mycorpus/snd/36047_dobroide.wav";
-~soundfile2 = "/Users/kitefishlabs/mycorpus/snd/36818_cajo.wav";
+~mycorpus = CorpusDB.new("~/mycorpus".standardizePath, s); // standardizePath expands the tilde!
+~soundfile1 = "~/mycorpus/snd/36047_dobroide.wav".standardizePath;
+~soundfile2 = "~/mycorpus/snd/36818_cajo.wav".standardizePath;
 
 ~latest = ~mycorpus.addSoundFile(~soundfile1, 
 	numChannels: 2,
-	importFlag: true
+	importFlag: true // this is the default, but I thought you should see it
 );
 
 {
 	~mycorpus.analyzeSoundFile(~soundfile1, sfid:~latest, verbose: true);
-
 }.fork(SystemClock);
 ::
-Evaluate the following separately to add and analyze the second file.
+Evaluate the following separately to add and analyze the second file. The 'numChannels' argument defaults to 1 (mono) and the importFlag defaults to true, so we will drop the latter.
 CODE::
-~latest = ~mycorpus.addSoundFile(~soundfile2, 
-	numChannels: 2, 
-	importFlag: true
-);
+~latest = ~mycorpus.addSoundFile(~soundfile2, numChannels: 2);
 
 {
 ~mycorpus.analyzeSoundFile(~soundfile2, sfid:~latest);
-
 }.fork(SystemClock);
 
 ::
@@ -115,7 +110,6 @@ CODE::
 	9.do({ |n|
 		~mycorpus.addSoundFileUnit(path, relid:n, bounds:[n*5000, 5000]);
 	});
-	~mycorpus.gatherKeys(path);
 	~mycorpus.segmentUnits(path);
 });
 ::
@@ -132,15 +126,17 @@ CODE::
 Next we need to figure out what buffer to use. The sound file index that is stored in the second column of the corpus unit row is our index into the tree. This index is used to get the metadata about the sound file from the tree. The second form hides the long bit of  access code. Finally, we fire off a Synth using that number and metadata from the 5th and 6th columns. Notice that you have to multiply by 0.001, as the metadata is stored as milliseconds, but the synth uses seconds.
 
 CODE::
-~bufnum = ~mycorpus[\sftrees][~path].tree[ ~row[2] ][\bfrR].bufnum;
-~bufnum = ~mycorpus.getBufNum(~path, ~row[2]);
-Synth(\monoSamplerNRT, [\outbus, 0, \srcbufNum, ~bufnum, 'start', (~row[4]*0.001), 'transp', 1.0]); //, 'dur', (~row[5]*0.001)]);
+~bufnum = ~mycorpus[\sftrees][~path].tree[\bfrR].bufnum;
+Synth(\monoSamplerNRT, [\outbus, 0, \srcbufNum, ~bufnum, 'start', (~row[4]*0.001), 'dur', (~row[5]*0.001), 'transp', 1.0]);
 ::
-If everything went as planned, you should have  heard a 5-second clip of watery boat-rowing sounds. 
+If everything went as planned, you should have heard a 5-second clip of watery boat-rowing sounds.
 
 SECTION:: EXPORT and IMPORT!
 In order to save corpora between sessions, use XML...
 CODE::
-~mycorpus.exportCorpusToXML(s, "/Users/kitefishlabs/mycorpus/output.xml")
+~mycorpus.exportCorpusToXML(s, "~/mycorpus/output.xml")
 ::
-In order to load an XML file, do so into a freshly created corpus, or realize that imports will be appended to whatever sound files and units are already there.
+In order to load an XML file, do so into a freshly created corpus, or realize that imports will be appended to whatever sound files and units are already there. Go take a look at your XML file in the finder, and see if you can figure out how to import it into a new corpus.
+
+In the advanced tutorial, you will see further function calls, a discussion on segmentation, and some more in-depth explanations of what is happening under the hood.
+

@@ -2,3 +2,149 @@ TITLE:: Tutorial: Introduction to CorpusSearch
 SUMMARY:: Outlines search class functionality.
 CATEGORIES:: CorpusDB
 RELATED:: Tutorials/CorpusDBIntro, Tutorials/CorpusDBAdvanced, Classes/CorpusSearch
+
+SECTION:: SET UP A CORPUS FOR SEARCH DEMO
+This code is basically lifted from our first complete example. The segmentation algorithm is different, and chops the sound files into smaller segments.
+CODE::
+Server.default = Server.internal;
+s = Server.default.boot;
+
+~mycorpus = CorpusDB.new("~/mycorpus".standardizePath, s); // standardizePath expands the tilde!
+~soundfile1 = "~/mycorpus/snd/36047_dobroide.wav".standardizePath;
+~soundfile2 = "~/mycorpus/snd/36818_cajo.wav".standardizePath;
+
+~latest = ~mycorpus.addSoundFile(~soundfile1, numChannels: 2);
+{
+	~mycorpus.analyzeSoundFile(~soundfile1, sfid:~latest, verbose: true);
+}.fork(SystemClock);
+::
+Again, execute the second add + analyze separately:
+CODE::
+~latest = ~mycorpus.addSoundFile(~soundfile2, numChannels: 2);
+{
+~mycorpus.analyzeSoundFile(~soundfile2, sfid:~latest);
+}.fork(SystemClock);
+::
+This time, we will perform a different segmentation. There is a way to extract the duration of any sound file in our corpus, given its path. In the future, this should be wrapped by a helper function. Also note for now that this only works for a 'parent' file. If we were creating a 'child' (processed) file, then this access pattern would be invalid. We divide the duration by 0.5 (seconds) and apply the floor function to get a nice integer value. This is the number of segments that we will make.
+
+CODE::
+(
+var numsegments = (~mycorpus[\sftrees][~soundfile1].tree[\bfrL].duration / 0.5).floor;
+(0..(numsegments - 1)).do({ |index|
+	~mycorpus.addSoundFileUnit(~soundfile1, index, [((index / 2) * 1000), 500]);
+});
+// repeating for soundfile2 (will gather and use 2nd sound file's duration)
+numsegments = (~mycorpus[\sftrees][~soundfile2].tree[\bfrL].duration / 0.5).floor;
+(0..(numsegments - 1)).do({ |index|
+	~mycorpus.addSoundFileUnit(~soundfile2, index, [((index / 2) * 1000), 500]);
+});
+// finally, segment each sound file
+~mycorpus.segmentUnits(~soundfile1);
+~mycorpus.segmentUnits(~soundfile2);
+// and map to corpus units...
+~mycorpus.mapSoundFileUnitsToCorpusUnits;
+)
+::
+Let's export an XML file:
+CODE::
+~mycorpus.exportCorpusToXML(s, "~/mycorpus/corpus-search-example.xml".standardizePath);
+ ::
+
+SECTION:: IMPORT A CORPUS TO SEARCH ON
+Now we should create a new corpus and import from the XML file created in the above section. We will call the new corpus CODE::~crps::, to differentiate it from the earlier CODE::~mycorpus::. Don't forget that you need the XML Quark for importing!
+
+CODE::
+Server.default = Server.internal;
+s = Server.default.boot;
+
+~crps = CorpusDB.new("~/mycorpus".standardizePath, s);
+~crps.importCorpusFromXML(s, "~/mycorpus/corpus-search-example.xml".standardizePath);
+::
+And just to make sure that worked, pull up a corpus unit (a.k.a. a row from the corpus unit table):
+CODE::
+~crps[\cutable][143]
+::
+The sound files and associated metadata should also be loaded and ready to go:
+CODE::
+Post << ~crps[\sftrees][ ~crps[\sfmap][0] ].tree << "\n"; 
+::
+
+SECTION:: SET UP SEARCH
+Create a CorpusSearch object and build a tree. Let's look at the arguments to the CODE::buildTree:: function: CODE::nil:: means to use the corpus units associated with CODE::~crps::. I chose columns 12, 13, and 0 for the metatdata filter. These correspond to low-mid-range bins in the MFCC. The 0 refers to the column that has the corpus unit ids, and the CODE::lastFlag:true:: tells the search setup to use the corpus unit ids as the labels for each two-column row. These label values are all unique and are never normalized. Finally (and by default) we normalize the non-label descriptors/columns. This is essential for the search algorithm to judge similarity based on distances between points.
+CODE::
+~cs = CorpusSearch(~crps);
+~tree = ~cs.buildTree(nil, [12, 13, 0], lastFlag:true, normFlag:true);
+::
+There are several ways to list corpus data. The first command simply lists all the nodes with their indices. The second call lists all nodes with the node that is closest to it, not inculding itself.
+CODE::
+Post << ~cs.normedTree.asArray(incLabels: true) << "\n";
+
+~cs.normedTree.allNearest.do({|res| "(%, % -> %, %)".format(res.key.label, res.key.location, res.value[0].location, res.value[0].label).postln});
+::
+Incidentally, there is a shortcut function that implies/reminds that you are normalizing. (Note that the lastFlag is taken as a default and left out from here on. Unless stated, we will assume normalization as a preprocessing stop for all CODE::CorpusSearch:: operations.
+CODE::
+~tree = ~cs.buildNormalizedTree(nil, [9, 12, 0]); // different, non-adjacent descriptor columns!
+::
+
+SECTION:: PERFORM SEARCHES
+We can search for a point in normalized parameter space, the unit closest to another unit, and optionally confine our search to a radius-limit. We will grab a search point to search against by using the CODE::asArray(incLabels:true):: function of the KDTree stored as CODE::~tree::.
+CODE::
+~tree.nearest([0.5,0.5])[0].location;
+
+~searchPt = ~tree.asArray(incLabels: true)[100.rand];
+~tree.nearest(~searchPt[0..1])[0].location; // <---look carefully at the result
+
+~cs.findNearestInRadius([0.5, 0.5], 0.5);
+::
+You should notice that the second search returns itself. Here's how to return the next closest node. We will find a solution for this situation in the last section.
+
+You can also do searches based on a rectangular region.
+CODE::
+~tree.rectSearch([0.7, 0.7], [0.8, 0.8]).do({ |kdt| [kdt.location, (kdt.location - [0.75, 0.75]).abs, kdt.label].postln });
+::
+SECTION:: SEARCHING FOR MULTIPLE UNITS, STATS, ETC
+
+Now we will look for the 5 nearest nodes to each node in a corpus. CODE::findNNearest:: takes 3 arguments: target node location, the search radius in normalized range (0. -> 1.) and the max number of nearby nodes to return.
+CODE::
+~cs3 = CorpusSearch(~crps);
+// build a normed tree with first 10 mfccs
+~cs3.buildNormalizedTree(nil, (16..25) ++ 0, true);
+
+// N (5) nearest nodes; note that less than N or no (0) nodes may be found!
+~cs3.normedTree.do({ |node|
+	var res;
+	[node.label, node.location].post; ":".postln;
+	res = ~cs3.findNNearest(node.location, 0.5, normFlag:true, number:5);
+	res.do({ |pair|
+		(pair[0].asInteger != node.label.asInteger).if { pair[0].post; " ".post; };
+	});
+	" ".postln;
+		
+});
+::
+The previous examples show some of the kd-tree search features. The CorpusSearch class also keeps track of stats for your corpus.
+CODE::
+~cs4 = CorpusSearch(~crps);
+~cs4.getStats.postcs;
+
+// the same as getStats, but explicit
+~map = ~crps.mapSoundFileUnitsToCorpusUnits;
+~stats = ~map.keys.asArray.sort.collect({ |row| ~map[row] }).flop.collect({ |col|
+	var stdev, mean = col.mean;
+	// the only complicated part is the calculation of standard deviation
+	stdev = col.inject(0, { |sum, cell| sum + ((cell - mean) ** 2) });
+	[col.minItem, col.maxItem, col.maxItem - col.minItem, mean, (stdev / col.size).sqrt]
+});
+::
+Finally, lets find the center of mass for all the units in the corpus over 10 (normalized) columns.
+CODE::
+// center of mass for N units
+~map = ~crps.mapSoundFileUnitsToCorpusUnits;
+~accum = Array.fillND([10], {0});
+~map.pairsDo({ |key, val|
+	var row = ([val[16..25]]).flatten;
+	~accum = ~accum + row
+});
+// average or 'center of mass' of the columns
+~accum / ~map.size;
+::
