@@ -292,7 +292,7 @@ CorpusDB : Dictionary {
 		
 		TempoClock.default.tempo = 1;
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
-		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.numFrames / 1024) / tratio).ceil, 25] ]];
+		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.duration / 0.04) / tratio).ceil, 25] ]];
 		
 //		"tb:".postln; this[\sftrees][path].trackbacks.postln;
 		this[\sftrees][path].trackbacks[sfid][1].postln;
