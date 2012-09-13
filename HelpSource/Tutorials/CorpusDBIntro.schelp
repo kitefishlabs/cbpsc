@@ -134,7 +134,7 @@ If everything went as planned, you should have heard a 5-second clip of watery b
 SECTION:: EXPORT and IMPORT!
 In order to save corpora between sessions, use XML...
 CODE::
-~mycorpus.exportCorpusToXML(s, "~/mycorpus/output.xml")
+~mycorpus.exportCorpusToXML(s, "~/mycorpus/output.xml".standardizePath)
 ::
 In order to load an XML file, do so into a freshly created corpus, or realize that imports will be appended to whatever sound files and units are already there. Go take a look at your XML file in the finder, and see if you can figure out how to import it into a new corpus.
 

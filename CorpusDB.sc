@@ -321,7 +321,7 @@ CorpusDB : Dictionary {
 			});
 			oscList = oscList ++ [[0.02, ([\s_new, sdef, -1, 1, 0] ++ row).flatten]];
 		});
-		oscList = oscList ++ [[((sFile.duration / tratio) + 0.03).unbubble, [\b_write, aBuf, rmddir, "aiff", "int32"]]];
+		oscList = oscList ++ [[((sFile.duration / tratio) + 0.03).unbubble, [\b_write, aBuf, rmddir, "wav", "float32"]]];
 		// don't free any buffers (yet)
 		oscList = oscList ++ [[((sFile.duration / tratio) + 0.04).unbubble, [\c_set, 0, 0]]];
 				
