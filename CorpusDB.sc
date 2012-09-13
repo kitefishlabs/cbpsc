@@ -105,10 +105,10 @@ CorpusDB : Dictionary {
 		);
 		this[\synthdefs][\mfccBusAnalyzerNRT].writeDefFile;
 		this[\synthdefs].put( \monoSamplerNRT,
-			SynthDef(\monoSamplerNRT, { |outbus=20, srcbufNum, start=0, dur=1, transp=1|
+			SynthDef(\monoSamplerNRT, { |outbus=20, srcbufNum, transp=1|
 				var env, in, chain;
 				env = EnvGen.kr(Env.linen(0.01, ((BufDur.kr(srcbufNum) / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 13);
-				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: (start * BufSampleRate.kr(srcbufNum))) * env;
+				in = PlayBuf.ar(1, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: 0) * env;
 				Out.ar(outbus, in);
 			})
 		);
@@ -123,14 +123,23 @@ CorpusDB : Dictionary {
 		);
 		this[\synthdefs][\monoSampler].writeDefFile;
 		this[\synthdefs].put( \stereoSamplerNRT,
-			SynthDef(\stereoSamplerNRT, { |outbus=20, srcbufNum, start=0, dur=1, transp=1, attack=0.01, release=0.01|
+			SynthDef(\stereoSamplerNRT, { |outbus=20, srcbufNum, transp=1|
+				var env, in, chain;
+				env = EnvGen.kr(Env.linen(0.01, ((BufDur.kr(srcbufNum) / transp) - 0.02), 0.01, 1), gate: 1, doneAction: 2);
+				in = PlayBuf.ar(2, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: 0) * env;
+				Out.ar(outbus, in);
+			})
+		);
+		this[\synthdefs][\stereoSamplerNRT].writeDefFile;
+		this[\synthdefs].put( \stereoSampler,
+			SynthDef(\stereoSampler, { |outbus=20, srcbufNum, start=0, dur=1, transp=1, attack=0.01, release=0.01|
 				var env, in, chain;
 				env = EnvGen.kr(Env.linen(attack, ((dur / transp) - (attack+release)), release, 1), gate: 1, doneAction: 2);
 				in = PlayBuf.ar(2, srcbufNum, BufRateScale.kr(srcbufNum) * transp, startPos: (start * BufSampleRate.kr(srcbufNum))) * env;
 				Out.ar(outbus, in);
 			})
 		);
-		this[\synthdefs][\stereoSamplerNRT].writeDefFile;
+		this[\synthdefs][\stereoSampler].writeDefFile;
 		
 		this[\synthdefs].put( \thru,
 			SynthDef(\thru, { |outbus=21, inbus=20|
