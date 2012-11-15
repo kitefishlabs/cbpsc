@@ -180,13 +180,14 @@ CorpusDB : Dictionary {
 		(verbose != nil).if { Post << "Adding Entry:  ================  " << path.asString << " (" << numChannels << " channels).\n"; };
 		
 		(synthdefs == nil).if {
-			(numChannels == 2).if {
-				synthdefs = [\stereoSamplerNRT, \mfccBusAnalyzerNRT];
-			} {
-				synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
-			};
+//			(numChannels == 2).if {
+//				synthdefs = [\stereoSamplerNRT, \mfccBusAnalyzerNRT];
+//			} {
+			synthdefs = [\monoSamplerNRT, \mfccBusAnalyzerNRT];
+//			};
 			flag = true;
 		};
+		(verbose != nil).if { Post << "synthdefs: "<< synthdefs << "\n" };
 		(params == nil).if {
 			params = [[\outbus, 10, \srcbufNum, 0, \tratio, tratio, \dur, 1], [\inbus, 10, \savebufNum, 0, \tratio, tratio]];
 		};
@@ -282,7 +283,7 @@ CorpusDB : Dictionary {
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
 		
 		pBuf = this[\server].bufferAllocator.alloc(1);
-		aBuf = this[\server].bufferAllocator.alloc(1); //Buffer.new(this[\server], (sFile.numFrames / 1024).ceil, 35);
+		aBuf = this[\server].bufferAllocator.alloc(1);
 		
 		(verbose != nil).if {
 			Post << "RMDDIR: " << rmddir << "\n" << tratio.class << "\n";
@@ -294,10 +295,10 @@ CorpusDB : Dictionary {
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.duration / 0.04) / tratio).ceil, 25] ]];
 		
-//		"tb:".postln; this[\sftrees][path].trackbacks.postln;
-		this[\sftrees][path].trackbacks[sfid][1].postln;
+		(verbose != nil).if { Post << this[\sftrees][path].trackbacks[sfid][1] << "\n"; };
 		this[\sftrees][path].trackbacks[sfid][1].do({ |sdef, index|
 			var row = this[\sftrees][path].trackbacks[sfid][2][index];
+			Post << "row: " << row << "\n";
 			row.do({ |val, index|
 				
 				switch (val,
@@ -331,6 +332,7 @@ CorpusDB : Dictionary {
 			Score.recordNRT(oscList, "/tmp/analyzeNRT.osc", "/tmp/dummyOut.aiff", options: ServerOptions.new.numOutputBusChannels = 1);
 			0.01.wait;
 			while({
+				Post << "ps -xc | grep 'scsynth'" << "\n";
 				res = "ps -xc | grep 'scsynth'".systemCmd; //256 if not running, 0 if running
 				((timeout % 10) == 0).if { Post << [timeout, res] << "\n" };
 				(res == 0) and: {(timeout = timeout - 1) > 0}
@@ -449,7 +451,7 @@ CorpusDB : Dictionary {
 		this[\sfutable][path][\mfccs][rid] = temp ++ newmfccs;
 		this[\sfutable][path][\keys][rid] = temp ++ newkeypair;
 		
-//		this[\sfutable][path][\mfccs][rid].postln;
+//		Post << this[\sfutable][path][\mfccs][rid] << "\n";
 		
 		(sfg != nil).if { this[\sftable][path].add(\sfilegroup -> sfg) };
 	}
@@ -586,13 +588,13 @@ CorpusDB : Dictionary {
 	}
 
 //-	getSoundFileUnitMetadata { |sfid, uid| }
-	getSoundFileUnitMetadata { |sfid, uid, grpid=0, verbose=nil|
+	getSoundFileUnitMetadata { |sfid, relid, grpid=0, verbose=nil|
 		(this.soundFileUnitsMapped != true).if
 		{
 			this.mapSoundFileUnitsToCorpusUnits;
 		};
 		
-		^this[\cutable].detect({ |item, i| ((item[1] == grpid) && (item[2] == sfid) && (item[3] == uid)) });
+		^this[\cutable].detect({ |item, i| ((item[1] == grpid) && (item[2] == sfid) && (item[3] == relid)) });
 	}
 
 //-	mapSoundFileUnitsToCorpusUnits { |override=false| }
@@ -766,7 +768,7 @@ CorpusDB : Dictionary {
 
 //		Post << "metadata dict: \n\n" << metadataDict << "\n";
 
-		sfDict.keys.do({ |pathkey|
+		sfDict.keys.asArray.sort.do({ |pathkey|
 			var theID, theGroup;
 
 //			Post << "PK: " << pathkey << "\n" << sfDict[pathkey.asSymbol] << "\n\n\n";
@@ -778,6 +780,7 @@ CorpusDB : Dictionary {
 
 //			Post << sfDict[pathkey.asSymbol][\synthdefs] << "\n";
 
+			Post << "number of channels: " << sfDict[pathkey.asSymbol][\channels].asInteger << "\n";
 			this.addSoundFile(
 				pathkey.asString,
 				theID,
@@ -787,7 +790,7 @@ CorpusDB : Dictionary {
 				synthdefs:nil,
 				params:nil,
 				importFlag:true,
-				verbose:true
+				verbose:false
 			);
 //			Post << "tratio: " << sfDict[pathkey.asSymbol][\tratio] << "\n";
 			this.analyzeSoundFile(pathkey.asString, sfid:theID, analyze:false, tratio:sfDict[pathkey.asSymbol][\tratio]);
@@ -804,14 +807,14 @@ CorpusDB : Dictionary {
 						synthdefs:sfDict[pathkey.asSymbol][\children][csfid][\synthdefs][csfid][1],
 						params:sfDict[pathkey.asSymbol][\children][csfid][\params][csfid][1],
 						importFlag: false,
-						verbose:true
+						verbose:false
 					);
 //					Post << "found tratio: " << sfDict[pathkey.asSymbol][theID][\children][csfid][\tratio] << "\n";
 					this.analyzeSoundFile(pathkey.asString, sfid:csfid, analyze:false, tratio:sfDict[pathkey.asSymbol][\children][csfid][\tratio]);
 				});
 			};
 			runningSFOffset = runningSFOffset.max(theID);
-//			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
+			Post << "runningSFOffset after a sfile entry iteration: " << runningSFOffset << Char.nl;
 			runningSFGOffset = runningSFGOffset.max(theGroup);
 //			Post << "runningSFGOffset after a sfgroup entry iteration: " << runningSFGOffset << Char.nl;
 
@@ -854,11 +857,12 @@ CorpusDB : Dictionary {
 		//runningCUOffset = runningCUOffset.max(tmp[0].asInteger + this.cuOffset);
 		//this.sfOffset = this.sfOffset + runningSFOffset + 1;
 //
-		this.mapSoundFileUnitsToCorpusUnits(true, true);
+		this.mapSoundFileUnitsToCorpusUnits(override:true); // not verbose:true
 		
 		this.sfgOffset = runningSFGOffset + 1;
+		this.sfOffset = runningSFOffset.max(this[\sfmap].keys.maxItem) + 1;
 		this.cuOffset = this.cuOffset.max(this[\cutable].keys.maxItem) + 1;
-//		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
+		Post << "After import: " << this.cuOffset << " + " << this.sfOffset << " + " << this.sfgOffset << Char.nl;
 
 	}
 
@@ -868,7 +872,7 @@ CorpusDB : Dictionary {
 
 	exportCorpusToXML { |server, path, verbose=nil|
 		File.use(path.asString, "w", { |f|
-			f.write("<?xml version=1.0 encoding=iso-8859-1 standalone=yes?>\n");
+			f.write("<?xml version=1.0 encoding=utf8 standalone=yes?>\n");
 			f.write("<corpusmap name=\"" ++ this[\anchor].asString ++ "\">\n");
 			f.write("    <heading name=\"DMAP\">\n");
 			this[\dtable].keys.asArray.sort.do({|ky|
