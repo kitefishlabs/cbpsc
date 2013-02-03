@@ -1,3 +1,10 @@
+cbpsc
+=====
+
+Corpus-based Processing for SuperCollider.
+
+© 2010-2012, Tom Stoll, released under the terms of GPL v.3, all rights reserved. Please see COPYING for a copy of the license.
+
 cbpsc is beta software. I (Tom Stoll) have been testing it and fixing bugs for several months and am working towards a 1.0 release in late 2012. That said, you may encounter bugs and/or undocumented features.
 
 cbpsc has been tested for SC 3.5.4 "with-extras" on an 2012-vintage Mac, and should work on any recent Mac. It uses three quarks that are not in the included classes, "KDTree", "TabbedView", and "XML". Analysis Synthdefs also rely on two MCLD UGens.
