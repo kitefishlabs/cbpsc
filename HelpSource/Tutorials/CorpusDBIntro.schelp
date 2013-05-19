@@ -1,7 +1,7 @@
 TITLE:: Tutorial: Introduction to CorpusDB
-SUMMARY:: Outlines creation and use of a simple corpus.
-CATEGORIES:: CorpusDB
-RELATED:: Tutorials/CorpusDBAdvanced, Tutorials/CorpusDBSearch, Classes/CorpusDB
+summary:: Outlines creation and use of a simple corpus.
+categories:: CorpusDB
+related:: Tutorials/CorpusDBAdvanced, Tutorials/CorpusDBSearch, Classes/CorpusDB
 
 SECTION:: SIMPLE CORPUS OPERATIONS + WORKFLOW.
 Set up an internal server.
@@ -84,7 +84,7 @@ s = Server.default.boot;
 ~soundfile1 = "~/mycorpus/snd/36047_dobroide.wav".standardizePath;
 ~soundfile2 = "~/mycorpus/snd/36818_cajo.wav".standardizePath;
 
-~latest = ~mycorpus.addSoundFile(~soundfile1, 
+~latest = ~mycorpus.addSoundFile(~soundfile1,
 	numChannels: 2,
 	importFlag: true // this is the default, but I thought you should see it
 );
