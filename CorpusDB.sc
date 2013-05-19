@@ -11,7 +11,7 @@
 // CorpusDB.sc
 // Copyright (C) 2010-2013, Thomas Stoll
 
-CorpusDB2 {
+CorpusDB {
 
 	var <>anchor, <>server, <>rate, <>hopSeconds, <>hopMS, <>sfTree, <>segTable, <>cuTable, <>rawTable, <>rawMaps, <>powers, <>mfccs, <>activationLayers, <>cookedLayers, <>sfMap, <>sfgMap, <>tagMap, <>transformations, <>synthdefs, <>sfOffset, <>cuOffset, <>dTable, <>soundFileUnitsMapped;
 
@@ -93,9 +93,9 @@ CorpusDB2 {
 
 	}
 
-	removeSoundFile {|filename| ^nil }
+	removeSoundFile {|filePath| ^nil }
 
-	importSoundFileToBuffer { |path, id| ^nil }
+	importSoundFileToBuffer { |path, sfid| ^nil }
 
 	analyzeSoundFile { |sfID, group=0, tRatio=1.0, subdir=nil, verbose=nil|
 
@@ -295,8 +295,6 @@ CorpusDB2 {
 		^sfID
 	}
 
-	getSndPath { |fname| ^(this.anchorPath +/+ "snd" +/+ fname) } // needs subdir mod
-
 	updateSoundFileUnit { |sfID, relID=nil, onset=nil, duration=nil, tag=nil|
 
 		var id, res;
@@ -336,6 +334,8 @@ CorpusDB2 {
 			^sfID
 		};
 	}
+
+	getSndPath { |fileName| ^(this.anchorPath +/+ "snd" +/+ fileName) } // needs subdir mod
 
 	getRawMetadata { |sfID|
 
@@ -490,12 +490,12 @@ CorpusDB2 {
 
 	}
 
-	cuidsForSFID { |sfid| ^this.cuTable.items.asArray.select({|cunit| cunit[2] == sfid }).flop[0].sort }
+	cuidsForSFID { |sfID| ^this.cuTable.items.asArray.select({|cunit| cunit[2] == sfID }).flop[0].sort }
 
-	exportCorpusToJSON { |jsonpath|
+	exportCorpusToJSON { |jsonPath|
 
 		var f, toplevel, sf, d;
-		f = File.open(jsonpath, "w");
+		f = File.open(jsonPath, "w");
 		toplevel = Dictionary["descriptors" -> this.dTable ];
 		sf = Dictionary[];
 		this.sfTree.nodes.keys.do({ |sfid|
@@ -519,7 +519,7 @@ CorpusDB2 {
 		f.close;
 	}
 
-	importCorpusFromJSON { |jsonpath, appendFlag=nil, importFlag=nil|
+	importCorpusFromJSON { |jsonPath, appendFlag=nil, importFlag=nil|
 
 		var jsonString, soundfiles, corpusunits;
 
@@ -531,7 +531,7 @@ CorpusDB2 {
  			Post << "appendflag is TRUE\n" << "sf offset: " << this.sfOffset << "\n";
 		};
 		// set up
-		File.use(jsonpath, "r", { |f|
+		File.use(jsonPath, "r", { |f|
 
 			jsonString = f.readAllString.parseJson;
 		});
