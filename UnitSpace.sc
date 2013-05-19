@@ -28,25 +28,25 @@ UnitSpace {
 	var nodeSize, swapNode;
 	var font, <>fontColor, <>drawStrings;
 	var <>zoomedNodes, <>transFactor, <>zoomFactor, zoomDirtyFlag;
-	
+
 	var <>refreshDeferred = false; // if set to true (externally), external caller calls refresh
 //	var lazyRefreshFunc;
 	var searchFlag = false, <>crossHairs = nil;
-	
-	*new { |w, bounds, xdivs, ydivs| 
+
+	*new { |w, bounds, xdivs, ydivs|
 		^super.new.initUnitSpace(w, bounds, xdivs, ydivs);
 	}
-	
+
 	initUnitSpace { |argParent, argbounds, xDivs=nil, yDivs=nil|
 		var a, b, rect, relX, relY, pen;
-		//"SHould be True: ".post; w.isKindOf(SCScrollView).postln;
+		//"SHould be True: ".post; w.isKindOf(ScrollView.implClass).postln;
 		parent = argParent;
-		(parent.isKindOf(SCScrollView) != true).if { ^nil }; // { parent.acceptsMouseOver = true };
+		(parent.isKindOf(ScrollView.implClass) != true).if { ^nil }; // { parent.acceptsMouseOver = true };
 		"initializing UnitSpace".post;
-		
+
 		bounds = argbounds ? Rect(0, 0, 400, 300);
 		bounds = Rect(bounds.left + 0.5, bounds.top + 0.5, bounds.width, bounds.height);
-		
+
 		xDivisions = xDivs ? argbounds.width;
 		yDivisions = yDivs ? argbounds.height;
 		grid = (bounds.width @ bounds.height) / (xDivisions @ yDivisions);
@@ -60,7 +60,7 @@ UnitSpace {
 		chosencolor = Color.green;
 		selnodecolor = Color.blue;
 		zoomDirtyFlag = true;
-		
+
 		unitNodes = Array[]; // list of UnitNode objects
 		connections = Array[]; // list of arrays with connections eg. [2,3]
 		// init helper vars
@@ -86,7 +86,7 @@ UnitSpace {
 				["DOWN", me, key, modifiers, unicode].postln;
 				if(unicode == 127, {
 					selNodes.do({ |box|
-						zoomedNodes.copy.do({ |node, i| 
+						zoomedNodes.copy.do({ |node, i|
 							if(box === node, {this.deleteNode(i)});
 						})
 					});
@@ -119,7 +119,7 @@ UnitSpace {
 								{ // if selected and "c" then connection is possible
 									zoomedNodes.do({ |node, i| (node === chosennode).if { a = i } });
 									selNodes.do({ |selnode, j|
-										unitNodes.do({ |node, i| 
+										unitNodes.do({ |node, i|
 											(node === selnode).if
 											{
 												b = i;
@@ -134,8 +134,8 @@ UnitSpace {
 					(selNodes != nil).if { selNodes.do({ |sn| sn.color = fillcolor}) };
 					selNodes = List[];
 				};
-				
-				(chosennode !=nil).if 
+
+				(chosennode !=nil).if
 				{ // a node is selected
 					chosennode.color = chosencolor;
 					downAction.value(chosennode);
@@ -148,10 +148,10 @@ UnitSpace {
 			})
 			.mouseMoveAction_({ |me, x, y, mod|
 				//selNodes.postln;
-				(chosennode != nil).if 
+				(chosennode != nil).if
 				{ // a node is selected
 					block {|break|
-						selNodes.do({ |sn| 
+						selNodes.do({ |sn|
 							(sn === chosennode).if   // if the mousedown box is one of selected
 							{
 								break.value( // then move the whole thing ...
@@ -159,7 +159,7 @@ UnitSpace {
 										node.setLoc_(node.refloc + (x@y) - refPoint);
 									});
 								);
-							}; 
+							};
 						});
 						chosennode.setLoc_(Point(x,y)); // called if chosennode not found in selNodes (block never calls break)
 					};
@@ -231,7 +231,7 @@ UnitSpace {
 						);
 					});
 					zoomDirtyFlag = false;
-				};				
+				};
 				pen.width = 1;
 				pen.color = background; // background color
 				pen.fillRect(bounds); // background fill
@@ -289,12 +289,12 @@ UnitSpace {
 					(this.drawStrings != nil).if
 					{
 						node.string.drawInRect(Rect(node.rect.left+node.size+5,
-				    							node.rect.top-3, 80, 16),   
+				    							node.rect.top-3, 80, 16),
 											font, fontColor);
 					};
 				});
 				pen.stroke;
-				
+
 				// selection Rect
 				pen.width = 1;
 				pen.color = selectFillColor;
@@ -305,7 +305,7 @@ UnitSpace {
 									endSelPoint.y - startSelPoint.y
 									));
 				pen.color = selectStrokeColor;
-				pen.strokeRect(Rect(	startSelPoint.x + 0.5, 
+				pen.strokeRect(Rect(	startSelPoint.x + 0.5,
 									startSelPoint.y + 0.5,
 									endSelPoint.x - startSelPoint.x,
 									endSelPoint.y - startSelPoint.y
@@ -326,7 +326,7 @@ UnitSpace {
 				pen.strokeRect(bounds);
 			});
 	}
-	
+
 	clearSpace {
 		unitNodes = Array[];
 		connections = Array[];
@@ -334,28 +334,28 @@ UnitSpace {
 		zoomDirtyFlag = true;
 		this.refresh;
 	}
-	
+
 	setXDivisions_ { |xd|
-		xDivisions = xd; 
+		xDivisions = xd;
 		grid = (bounds.width @ bounds.height) / (xDivisions @ yDivisions);
 		"GRID: ".post; grid.postln;
 	}
-	
+
 	setYDivisions_ { |yd|
-		yDivisions = yd; 
+		yDivisions = yd;
 		grid = (bounds.width @ bounds.height) / (xDivisions @ yDivisions);
 		"GRID: ".post; grid.postln;
 	}
-	
+
 	createConnection { |node1, node2, weight, refresh=true|
 		if((nodeCount < node1) || (nodeCount < node2), {
 			"Can't connect - there aren't that many nodes".postln;
 		}, {
 			block {|break|
-				connections.do({arg conn; 
+				connections.do({arg conn;
 					if((conn[0..1] == [node1, node2]) || (conn[0..1] == [node2, node1]), {
 						break.value;
-					});	
+					});
 				});
 				// if not broken out of the block, then add the connection
 				connections = connections.add([node1, node2, weight]);
@@ -387,8 +387,8 @@ UnitSpace {
 		(refreshDeferred.not).if { this.refresh };
 		^nodeCount
 	}
-	
-	deleteNode { |nodenr, refresh=true| 
+
+	deleteNode { |nodenr, refresh=true|
 		var del = 0;
 		connections.copy.do({ |conn, i|
 			(conn.includes(nodenr)).if { connections = connections.removeAt((i-del)); del=del+1 };
@@ -400,7 +400,7 @@ UnitSpace {
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if {this.refresh};
 	}
-	
+
 	setNodeLoc_ {arg index, argX, argY, refresh=true;
 		var x, y;
 		x = argX+bounds.left + 0.5;
@@ -409,7 +409,7 @@ UnitSpace {
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if {this.refresh};
 	}
-	
+
 	setNodeLocAction_ {arg index, argX, argY, action, refresh=true;
 		var x, y;
 		x = argX+bounds.left + 0.5;
@@ -422,21 +422,21 @@ UnitSpace {
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if {this.refresh};
 	}
-	
+
 	getNodeLoc { |index|
 		var x, y;
 		x = unitNodes[index].nodeloc.x - bounds.left;
 		y = unitNodes[index].nodeloc.y - bounds.top;
 		^(x-0.5 @ y-0.5);
 	}
-	
+
 //	getNodeStates {
 //		var locs, color, width, height, string;
 //		locs = List[]; color = List[]; width = List[]; height = List[]; string = List[];
-//		unitNodes.do({ |node| 
+//		unitNodes.do({ |node|
 //			locs.add(node.nodeloc);
-//			color.add(node.color); 
-//			width.add(node.width); 
+//			color.add(node.color);
+//			width.add(node.width);
 //			height.add(node.height);
 //			string.add(node.string);
 //		});
@@ -445,8 +445,8 @@ UnitSpace {
 //
 //	setNodeStates_ {arg array; // array with [locs, connections, color, WIDTH, HEIGHT, string]
 //		if(array[0].isNil == false, {
-//			unitNodes = Array[]; 
-//			array[0].do({arg loc; 
+//			unitNodes = Array[];
+//			array[0].do({arg loc;
 //				unitNodes = unitNodes.add(UnitNode.new(loc.x, loc.y, fillcolor, this, nil, nil, nil));
 //				nodeCount = nodeCount + 1;
 //				})
@@ -459,22 +459,22 @@ UnitSpace {
 //	}
 
 	setBackgrColor_ { |color, refresh=true| background = color; (refreshDeferred.not).if {this.refresh} }
-		
+
 	setFillColor_ { |color|
 		fillcolor = color;
 		unitNodes.do({ |node| node.setColor_(color) });
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if { this.refresh };
 	}
-	
+
 	setOutlineColor_ { |color| outlinecolor = color; (refreshDeferred.not).if { this.refresh } }
-	
+
 	setSelectFillColor_ { |color, refresh=true| selectFillColor = color; (refreshDeferred.not).if {this.refresh} }
 
 	setSelectStrokeColor_ { |color, refresh=true| selectStrokeColor = color; (refreshDeferred.not).if {this.refresh} }
-	
+
 	setShape_ { |argshape, refresh=true| shape = argshape; (refreshDeferred.not).if {this.refresh} }
-	
+
 	reconstruct { arg aFunc;
 		refreshDeferred = true;
 		aFunc.value( this );
@@ -490,7 +490,7 @@ UnitSpace {
 //			refreshDeferred = true;
 //		});
 //	}
-				
+
 	setNodeSize_ { |index, width, height|
 		unitNodes[index].setSize_(width, height);
 		zoomDirtyFlag = true;
@@ -498,17 +498,17 @@ UnitSpace {
 	}
 
 	getNodeSize { |index| ^(unitNodes[index].width @ unitNodes[index].height) }
-	
+
 	setNodeColor_ { |index, color, refresh| unitNodes[index].setColor_(color); (refreshDeferred.not).if { this.refresh } }
-	
+
 	getNodeColor { |index| ^unitNodes[index].color }
-	
+
 	setFont_ { |fnt|
 		font = fnt;
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if { this.refresh }
 	 }
-	
+
 	setFontColor_ { |fc|
 		fontColor = fc;
 		zoomDirtyFlag = true;
@@ -525,26 +525,26 @@ UnitSpace {
 		zoomDirtyFlag = true;
 		(refreshDeferred.not).if { this.refresh }
 	}
-	
+
 	getNodeString { |index| ^unitNodes[index].string }
-	
+
 	// PASSED FUNCTIONS OF MOUSE OR BACKGROUND
 	nodeDownAction_ { |func| downAction = func }
-	
+
 	nodeUpAction_ { |func| upAction = func }
-	
+
 	nodeTrackAction_ { |func| trackAction = func }
-	
+
 	nodeOverAction_ { |func| overAction = func } //; parent.acceptsMouseOver = true!!!!!!!!!!!!
-	
+
 	connectAction_ { |func| connAction = func }
-	
+
 	setMouseOverState_ { |state| parent.acceptsMouseOver = state } // win???
-	
+
 	keyDownAction_ { |func| keyDownAction = func }
-	
+
 	setBackgrDrawFunc_ { |func| backgrDrawFunc = func; this.refresh }
-	
+
 	// local function
 	findNode { |x, y|
 		var targ = x@y;
@@ -558,11 +558,11 @@ UnitNode {
 	var <>spritenum, <>temp;
 	var bounds, <>xGrid, <>yGrid;
 	var <>string;
-	
+
 	*new { |x, y, color, parent, width, height, state|
 		^super.new.initGridNode(x, y, color, parent, width, height, state);
 	}
-	
+
 	initGridNode { |argX, argY, argcolor, argparent, argwidth=nil, argheight=nil, argstate=nil |
 		bounds = argparent.bounds;
 		width = argwidth ? 12;
@@ -578,17 +578,17 @@ UnitNode {
 		color = argcolor;
 		outlinecolor = Color.black;
 	}
-		
+
 	setLoc_ { |point|
 		// keep unitnode inside the bounds
-		((point.x) < (bounds.left)).if 
+		((point.x) < (bounds.left)).if
 			{
 				nodeloc.x = (bounds.left / yGrid).floor * yGrid; // we're making the assumption that bnds.top == 0
 			} {
 				nodeloc.x = (point.x.min(bounds.width - this.width) / yGrid).floor * yGrid;
 			};
 
-		((point.y) < (bounds.top)).if 
+		((point.y) < (bounds.top)).if
 			{
 				nodeloc.y = (bounds.top / xGrid).floor * xGrid; // we're making the assumption that bnds.top == 0
 			} {
@@ -596,9 +596,9 @@ UnitNode {
 			};
 		rect = Rect( nodeloc.x, nodeloc.y, width, height);
 	}
-		
+
 	setState_ { |argstate| state = argstate; string = state[0..1].asString }
-	
+
 	setSize_ { |wi,ht|
 		width = wi; height = ht;
 		rect = Rect(nodeloc.x+0.5,  ((nodeloc.y / yGrid).floor * yGrid) + (yGrid / 2) - (height / 2) + 0.5, width, height);
