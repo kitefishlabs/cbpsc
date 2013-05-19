@@ -3,19 +3,19 @@ cbpsc
 
 Corpus-based Processing for SuperCollider.
 
-© 2010-2012, Tom Stoll, released under the terms of GPL v.3, all rights reserved. Please see COPYING for a copy of the license.
+© 2010-2013, Tom Stoll, released under the terms of GPL v.3, all rights reserved. Please see COPYING for a copy of the license.
 
-cbpsc is beta software. I (Tom Stoll) have been testing it and fixing bugs for several months and am working towards a 1.0 release in late 2012. That said, you may encounter bugs and/or undocumented features.
+cbpsc is beta software. I (Tom Stoll) have been testing it and fixing bugs for several months and am working towards a 1.0 release. That said, you may encounter bugs and/or undocumented features.
 
-cbpsc has been tested for SC 3.5.4 "with-extras" on an 2012-vintage Mac, and should work on any recent Mac. It uses three quarks that are not in the included classes, "KDTree", "TabbedView", and "XML". Analysis Synthdefs also rely on two MCLD UGens.
+cbpsc has been tested with SC-0.3.6 extensively and exclusively on the Mac platform. It uses a quark that is not in the included classes: "KDTree". Analysis Synthdefs also rely on two MCLD UGens.
 
 To install:
 
   1. Unzip the archive or clone the Git repo.
-  2. Drag the 4 .sc files to your Extensions folder (~/Library/Application Support/SuperCollider/Extensions or /Library/Application Support/SuperCollider/Extensions).
+  2. Drag the .sc files to your Extensions folder (~/Library/Application Support/SuperCollider/Extensions or /Library/Application Support/SuperCollider/Extensions).
   3. Recompile sclang (apple-K).
 
-To Install KDTree, TabbedView, and XML:
+To Install KDTree:
 
   1. Evaluate "Quarks.gui".
   2. When the window appears, select "KDTree", "TabbedView", and "XML". Their buttons should turn blue and change from "-" to "+".
@@ -25,15 +25,15 @@ To Install KDTree, TabbedView, and XML:
 Where to start? Look at the tutorials and help classes. Look at the classes themselves. A growing amount of documentation can be found at http://www.kitefishlabs.com. 
 
 
-KNOWN ISSUES (as of version 0.7 -- September 2012)
+KNOWN ISSUES (as of version 1.0 (beta) -- May 2013)
 
 These are a few things you might encounter. They will all hopefully be fixed as soon as possible.
 
 1. Watch the Server GUI when importing large amounts of audio data. It may turn itself 'inactive' at times when under a heavy computational load. You must wait a few seconds until the Server is active to continue using the GUI without errors.
 
-2. The GUI code is released as historical code. It mostly works, but would require some tweaks to make it current with the latest code in the main classes. I will get to this this fall, but let me know if this is something that you are interested in.
+2. The GUI code is released as *historical* code. It mostly works, but would require some tweaks to make it current with the latest code in the main classes. I will get to this this fall, but let me know if this is something that you are interested in.
 
-3. There is one more set of updates that I am working on that are implemented in the Python version that have to be back-ported to SC. These revolve around "child" nodes in sound file trees. Note that I have not mentioned the parent-child relationships that are possible between sound files. This major feature will be up and running soon, and then this software will be considered 1.0. It will develop in parallel with the Python version of CBPSC.
+3. Many updates and new/reworked features implemented in the Python version have now been back-ported to the SC version. These revolve around "child" nodes in sound file trees, and other structural aspects.
 
 
 TEST SOUND SET
