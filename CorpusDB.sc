@@ -1,12 +1,12 @@
-//This file is part of CorpusDB (last revision @ version 1.0). Was formerly known as cbpsc.
+//This file is part of cbpsc (last revision @ version 1.0).
 //
-//CorpusDB is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+//cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
-//CorpusDB is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+//cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License along with cbpsc.  If not, see <http://www.gnu.org/licenses/>.
 //
-// CorpusDB : created by Tom Stoll : tms@kitefishlabs.com : www.kitefishlabs.com
+// cbpsc : created by Tom Stoll : tms@kitefishlabs.com : www.kitefishlabs.com
 //
 // CorpusDB.sc
 // Copyright (C) 2010-2013, Thomas Stoll
