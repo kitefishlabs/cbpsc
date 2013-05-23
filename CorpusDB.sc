@@ -76,7 +76,7 @@ CorpusDB {
 			Post << "addRootNode result: ";
 			Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.group << ", " << rootNode.tRatio << "\n";
 
-			(importFlag.isNil.not).if { this.importSoundFileToBuffer(rootNode.sfPath, sfID) } {};
+			(importFlag.isNil.not).if { this.importSoundFileToBuffer(rootNode.sfPath, sfID) };
 
 			^rootNode
 
@@ -90,7 +90,6 @@ CorpusDB {
 			^childNode
 
 		};
-
 	}
 
 	removeSoundFile {|filePath| ^nil }
@@ -179,7 +178,7 @@ CorpusDB {
 					\savebufNum, { row[index+1] = aBuf },
 					\transp,     { row[index+1] = tbTRatio },
 					\outbus,     { row[index+1] = currBus },
-					\inbus,      { row[index+1] = currBus; currBus = currBus + 1 },
+					\inbus,      { row[index+1] = currBus; currBus = currBus + 1; },
 					\dur,        { row[index+1] = tbDur }
 				);
 			});
@@ -248,7 +247,6 @@ CorpusDB {
 
 	}
 
-
 	mapIDToSF { |sfID, path=nil, sfGroup=0|
 
 		var id;
@@ -268,6 +266,7 @@ CorpusDB {
 		((this.sfMap[sfID].isNil) && (path.isNil.not)).if {
 			(sfID -> path).postln;
 			this.sfMap.add(sfID -> path);
+			this.sfMap.add(path -> sfID);
 		} {
 			Post << "Either this sfid -> path mapping has already been made *OR* you are only mapping a group! Failed to map a path!\n"
 			^nil
@@ -332,6 +331,15 @@ CorpusDB {
 		} {
 			this.sfTree.nodes[sfID].unitSegments = List[]; // bad OOP programming!
 			^sfID
+		};
+	}
+
+	getUnitSegment { |sfID, relID|
+		(this.sfMap[sfID].isNil.not).if
+		{
+			^this.sfTree.nodes[this.sfMap[sfID]].unitSegments[relID]
+		} {
+			^nil
 		};
 	}
 

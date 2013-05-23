@@ -14,13 +14,14 @@
 
 
 //
-// Copyright 2010-11, Thomas Stoll
+// Copyright 2010-13, Thomas Stoll
 
 // 1. evaluate the parenthesized functions
 
 (
 ~newSoundFileUnitRow = { |currfile, pid, parent, top, bot|
 	var currSFNode = ~crps.sfTree.nodes[ ~crps.sfMap[currfile] ], foo, sfu;
+	[currfile, pid, parent, top, bot].postln;
 	[ Button.new(parent, Rect(0, (pid * 25), 22, 22))
 			.states_([[pid.asString, Color.blue, Color.white], [pid.asString, Color.white, Color.blue]])
 			.value_(0)
@@ -42,6 +43,9 @@
 
 
 			.value_(currSFNode.unitSegments[pid].onset)
+		    .clipLo_(0.0)
+    		.clipHi_(currSFNode.duration)
+		    .decimals_(3)
 			.action_({|val|
 			    "ONSET VAL: ".post; val.value.postln;
 				~crps.updateSoundFileUnit(currSFNode.sfID, pid, onset:val.value);
@@ -53,6 +57,9 @@
 			}),
 		NumberBox.new(parent, Rect(140, (pid * 25), 60, 20))
 			.value_(currSFNode.unitSegments[pid].duration)
+		    .clipLo_(0.0)
+    		.clipHi_(currSFNode.duration)
+		    .decimals_(3)
 			.action_({|val|
 			    "DUR VAL: ".post; val.value.postln;
 				~crps.updateSoundFileUnit(currSFNode.sfID, pid, duration:val.value);
@@ -79,9 +86,6 @@
 	bot.setSelection(rid, [theunit.onset, theunit.duration] * 44100);
 	//"Row ".post; rid.post; " updated.".postln;
 };
-
-
-
 
 ~updateSFViews = { |cfpath, top, bot, currid|
 	var theunits = ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments;
@@ -115,10 +119,9 @@
 	currSFNode.unitMFCCs[pid].postln; "::::".postln;
 	(currSFNode.unitMFCCs[pid].ampdb / 32).class.postln;
 	foo = (1 + (currSFNode.unitMFCCs[pid].ampdb / 32)).min(1.0).max(0.0);
-	foo.postln;
-	~gui[\tabs][tab][\areas][\highlighter][\ms].size.postln;
 
 	~gui[\tabs][tab][\areas][\highlighter][\ms].size = 225 / 25 ;
+	~gui[\tabs][tab][\areas][\highlighter][\ms].acceptsMouse_(False);
 	~gui[\tabs][tab][\areas][\highlighter][\ms].size.postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].value = foo[0];
 	"1".postln;
@@ -380,12 +383,6 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 
 
 
-// ~crps = ~mycorpus;
-//
-// ~crps.sfTree.nodes[0]
-// ~crps.sfMap[0]
-// ~crps.sfMap
-
 ////***********************************************************************************************
 ////		Begin GUI code
 ////
@@ -437,10 +434,10 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 
 //// waveform area
 ~gui[\tabs][1][\areas][\waveform].add(\fullView -> SoundFileView(~gui[\tabs][1][\areas][\waveform][\view], Rect(0, 0, 1080, 60))
+	.acceptsMouse_(False)
 	.gridColor_(Color.gray)
-
-
-	.action_())
+	.action_()
+	)
 	.add(\zoomBar -> RangeSlider(~gui[\tabs][1][\areas][\waveform][\view], Rect(0, 60, 1080, 20))
 	.lo_(0.0).hi_(1.0)
 	.mouseUpAction_({ |slider|
@@ -470,11 +467,7 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 )
 	.add(\closeView -> SoundFileView(~gui[\tabs][1][\areas][\waveform][\view], Rect(0, 80, 1080, 80))
 
-
-
 		.gridColor_(Color.gray)
-
-
 		.mouseUpAction_({ |vw,x,y|
 			// update the data model
 	            ~crps.updateSoundFileUnit(~crps.sfMap[ ~gui[\cf] ], ~gui[\cp],
@@ -816,16 +809,16 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 	.mouseUpAction_({ |bttn|
 		var last = ~gui[\soundFileUnitRowViews].size - 1;
 		var sfile = ~gui[\cf];
-		var sfid = ~crps.sfMap.findKeyForValue(~gui[\cf]);
+		var sfid = ~crps.sfMap[ ~gui[\cf] ];
 		var waveformArea = ~gui[\tabs][1][\areas][\waveform];
 		// update the last one, filling to duration of sfile
 		~crps.updateSoundFileUnit(~crps.sfMap[ ~gui[\cf] ], last,
-			duration: (~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].buffer.duration - ~crps.getSoundFileUnitMetadata(sfid, last)[4]);//### replacement for getSFUM
+			duration: (~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].buffer.duration - (~crps.getUnitSegment(sfid, last).onset + ~crps.getUnitSegment(sfid, last).duration)));//### replacement for getSFUM
 		(last > 0).if
 		{
 			((last - 1)..0).do({ |pid|
-				~crps.updateSoundFileUnit( ~crps.sfMap[ ~gui[\cf] ], pid,
-					duration: (~crps.getSoundFileUnitMetadata(sfid , pid + 1)[4] - ~crps.getSoundFileUnitMetadata(sfid , pid)[4]));
+				~crps.updateSoundFileUnit(~crps.sfMap[ ~gui[\cf] ], pid,
+					duration: (~crps.getUnitSegment(sfid, (pid + 1)).onset - ~crps.getUnitSegment(sfid, pid).onset));
 			});
 		};
 		~gui[\soundFileUnitRowViews].do({ |line| line.pop; line.do({ |elem| elem.remove; elem.free }) });
@@ -886,10 +879,10 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 			~gui[\cf] = cf;
 			// if non-nil, read out cached units into sfunitrows
 			"units... ".postln;
-			(~crps.sfTree.nodes[ ~crps.sfMap[cf] ] != nil).if
+			(~crps.sfTree.nodes[cf] != nil).if
 			{
 				" from cache...".postln;
-				~crps.sfTree.nodes[ ~crps.sfMap[cf] ].unitSegments.do({ |pu, ix|
+				~crps.sfTree.nodes[cf].unitSegments.do({ |pu, ix|
 					~gui[\soundFileUnitRowViews] = ~gui[\soundFileUnitRowViews].add(ix ->
 						~newSoundFileUnitRow.value(
 							~gui[\cf],
