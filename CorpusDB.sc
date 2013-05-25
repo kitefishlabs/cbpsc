@@ -70,23 +70,24 @@ CorpusDB {
 		};
 
 		(srcFileID.isNil).if {
-			Post << "FILEPATH: " << filePath << "\n";
 
 			rootNode = this.sfTree.addRootNode(filePath, sfID, tRatio, sfGrpID, uniqueFlag:uflag);
-			Post << "addRootNode result: ";
-			Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.group << ", " << rootNode.tRatio << "\n";
-
+			(verbose.isNil.not).if {
+				Post << "FILEPATH: " << filePath << "\n";
+				Post << "addRootNode result: ";
+				Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.group << ", " << rootNode.tRatio << "\n";
+			};
 			(importFlag.isNil.not).if { this.importSoundFileToBuffer(rootNode.sfPath, sfID) };
 
 			^rootNode
 
 		} {
-			"".postln;
-			[srcFileID, sfID].postln;
 
 			childNode = this.sfTree.addChildNode(srcFileID, sfID, tRatio, sfGrpID, synthdef, params, uniqueFlag:uflag);
-			Post << "addChildNode result: " << childNode.parentID << ", " << childNode.sfID << ", " << childNode.group << ", " << childNode.tRatio << "\n";
-
+			(verbose.isNil.not).if {
+				Post << "\n" << [srcFileID, sfID] << "\n";
+				Post << "addChildNode result: " << childNode.parentID << ", " << childNode.sfID << ", " << childNode.group << ", " << childNode.tRatio << "\n";
+			};
 			^childNode
 
 		};
@@ -104,13 +105,11 @@ CorpusDB {
 		var done = 0;
 
 		filepath = this.lookupPath(sfID);
-		filepath.postln;
 		// pathname as a Pathname object; extract dir, file, and full path as Strings
 		fullpath = PathName.new(filepath);
 		dir = fullpath.pathOnly.asString;
 		file = fullpath.fileNameWithoutExtension.asString;
 		fullpath = fullpath.fullPath.asString;
-		Post << "\n" << fullpath << "\n\n";
 		// execute a command in the terminal .. this will not make a new md dir if it is already there!
 		Pipe.new("cd " ++ dir.asString ++ "; mkdir md", "w").close;
 
@@ -121,7 +120,7 @@ CorpusDB {
 		pBuf = this.server.bufferAllocator.alloc(1);
 		aBuf = this.server.bufferAllocator.alloc(1);
 
-		(verbose == nil).if {
+		(verbose.isNil.not).if {
 			Post << "RMDDIR: " << mdpath << "\n" << tRatio.class << "\n";
 			Post << "Dur: " << sFile.duration << "\n";
 			Post << "pairs: " << [pBuf, aBuf] << "\n";
@@ -131,7 +130,6 @@ CorpusDB {
 		oscList = [[0.0, [\b_allocReadChannel, pBuf, fullpath, 0, -1, [0]]]];
 		oscList = oscList ++ [[0.01, [\b_alloc, aBuf, ((sFile.duration / this.hopSeconds) / tRatio).ceil, 25] ]];
 
-		Post << "\n\n" << this.sfTree.nodes[sfID].class << "\n\n";
 		(this.sfTree.nodes[sfID].class == SamplerNode).if {
 
 			tbDur = this.sfTree.trackbacks[sfID][1];
@@ -143,12 +141,12 @@ CorpusDB {
 			tbDur = this.sfTree.trackbacks[parentID][1];
 			tbTRatio = this.sfTree.trackbacks[parentID][2];
 			tbSynthdefs = [this.sfTree.trackbacks[parentID][3].asSymbol, this.sfTree.trackbacks[sfID][0].asSymbol];
-			tbSynthdefs.postln;
+			// tbSynthdefs.postln;
 			tbParams = this.sfTree.trackbacks[sfID][1];
 
 		};
 
-		(verbose == nil).if {
+		(verbose.isNil.not).if {
 			Post << this.sfTree.trackbacks[sfID][0] << "\n"; // path
 			Post << fullpath << "\n";
 			Post << tbDur << "\n"; // duration
@@ -156,7 +154,6 @@ CorpusDB {
 			Post << tbTRatio << "\n"; // tRatio should == tbTRatio
 			Post << tRatio << "\n";
 			Post << tbSynthdefs << "\n"; // synthdef name
-
 			Post << this.sfTree.nodes[sfID] << "\n";
 		};
 
@@ -166,11 +163,9 @@ CorpusDB {
 		// insert code here
 		(this.sfTree.nodes[sfID].class == EfxNode).if { prows = prows.insert(1, tbParams) } {};
 
-		prows.postln;
-
 		prows.do({ |row, index|
 
-			(verbose == nil).if { Post << "row: " << row << "\n"; } {};
+			(verbose.isNil.not).if { Post << "row: " << row << "\n"; } {};
 			row.do({ |val, index|
 
 				switch (val,
@@ -182,14 +177,12 @@ CorpusDB {
 					\dur,        { row[index+1] = tbDur }
 				);
 			});
-/*			">>>>> ".post;
-			([\s_new, srows[index].asSymbol, -1, 1, 0] ++ row).flatten.postln;*/
 			oscList = oscList ++ [[0.02, ([\s_new, srows[index].asSymbol, -1, 1, 0] ++ row).flatten]];
 		});
 		oscList = oscList ++ [[((tbDur / tbTRatio) + 0.03).unbubble, [\b_write, aBuf, mdpath, "wav", "float32"]]];
 		oscList = oscList ++ [[((tbDur / tbTRatio) + 0.04).unbubble, [\c_set, 0, 0]]];
 
-		(verbose == nil).if { oscList.postln; } {};
+		(verbose.isNil.not).if { oscList.postln; } {};
 
 		Score.recordNRT(
 			oscList,
@@ -212,7 +205,7 @@ CorpusDB {
 		thebuffer = Buffer.read(this.server, mdpath, action: { |bfr|
 			bfr.loadToFloatArray(action: { |array|
 
-				(verbose == nil).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
+				(verbose.isNil.not).if { Post << "Array 1 (rank/size):" << array.rank << ", " << array.size << ", " << array.flatten.sum << "\n"; };
 
 				ary = array.clump(25).flop;
 				ary[0] = ary[0].ampdb.replace( -inf, -120.0);
@@ -226,17 +219,17 @@ CorpusDB {
 				this.powers.add(sfID -> ary[0]);
 				this.mfccs.add(sfID -> ary[1..].flop);
 				// this.activationLayers.add(sfID -> Array.fill(ary[0].size, { 1.0 }));
-				this.powers[sfID].postln;
-				this.mfccs[sfID].collect({|row| row.sum }).postln;
-				this.powers[sfID].size.postln;
-				this.mfccs[sfID].size.postln;
+				// this.powers[sfID].postln;
+				// this.mfccs[sfID].collect({|row| row.sum }).postln;
+				// this.powers[sfID].size.postln;
+				// this.mfccs[sfID].size.postln;
 
 				this.activationLayers.add(sfID -> this.powers[sfID].collect({ |pwr| (pwr <= -120).if { 0 } { 1 } }));
-				this.activationLayers[sfID].postln;
-				(this.activationLayers[sfID].sum.asFloat / this.activationLayers[sfID].size.asFloat).postln;
+				// this.activationLayers[sfID].postln;
+				// (this.activationLayers[sfID].sum.asFloat / this.activationLayers[sfID].size.asFloat).postln;
 
 				this.cookedLayers.add(sfID -> this.mfccs[sfID].collect({ |row, i| row * this.activationLayers[sfID][i] }) );
-				this.cookedLayers[sfID].size.postln;
+				// this.cookedLayers[sfID].size.postln;
 				done = 1;
 			});
 		});
@@ -264,7 +257,6 @@ CorpusDB {
 			this.sfgMap[sfGroup].add(sfID);
 		};
 		((this.sfMap[sfID].isNil) && (path.isNil.not)).if {
-			(sfID -> path).postln;
 			this.sfMap.add(sfID -> path);
 			this.sfMap.add(path -> sfID);
 		} {
@@ -281,14 +273,15 @@ CorpusDB {
 // 		((sfID.isNil) && (path.isNil.not)).if {
 //			id = this.lookupSFID(this.getSoundFilePath(path));
 //		} {};
-		Post << "SFID: " << sfID << " | onset: " << onset << " | dur: " << duration << "\n";
-
+		(verbose.isNil.not).if {
+			Post << "SFID: " << sfID << " | onset: " << onset << " | dur: " << duration << "\n";
+		};
 		(this.sfTree.nodes[sfID].isNil).if {
 			Post << "Error: there is no Node for " << sfID << " in the sf tree. Add SFU failed.\n";
 			^nil
 		} {
 			res = this.sfTree.nodes[sfID].addOnsetAndDurPair(onset, duration);
-			Post << "TAG: " << tag << "\n";
+			(verbose.isNil.not).if { Post << "TAG: " << tag << "\n"; };
 		};
 		this.soundFileUnitsMapped = false;
 		^sfID
@@ -363,16 +356,16 @@ CorpusDB {
 		segList = this.sfTree.nodes[sfID].unitSegments.sort({ |a,b| a.onset < b.onset });
 		rawamps = this.powers[sfID];
 		cookedmfccs = this.cookedLayers[sfID];
-		"cooked size: ".post; cookedmfccs.size.postln;
-		"cooked size - 0: ".post; cookedmfccs[0].size.postln;
+		// "cooked size: ".post; cookedmfccs.size.postln;
+		// "cooked size - 0: ".post; cookedmfccs[0].size.postln;
 		segList.do({ |sfu, relid|
 
 			var offset, dur;
-			sfu.class.postln;
-			sfu.postln;
+			// sfu.class.postln;
+			// sfu.postln;
 			offset = (sfu.onset / this.hopSeconds).asInteger;
 			dur = (sfu.duration / this.hopSeconds).asInteger;
-			Post << offset << " | " << dur << "    " << cookedmfccs[offset..(offset+dur-1)][0].size << "\n"; //.collect({|col, i| col.mean }).flop.size <<"\n";
+			// Post << offset << " | " << dur << "    " << cookedmfccs[offset..(offset+dur-1)][0].size << "\n"; //.collect({|col, i| col.mean }).flop.size <<"\n";
 			this.sfTree.nodes[sfID].addMetadataForRelID(
 				relid,
 				this.analyzeScalar(rawamps, offset, dur),
@@ -383,9 +376,9 @@ CorpusDB {
 
 	analyzeScalar { |raw, offset, duration|
 		var chopped, mean, max, lval, rval, slope;
-		"RAW: ".post; raw.postln;
+		// "RAW: ".post; raw.postln;
 		chopped = raw[offset..(offset+duration-1)];
-		"CHOPPED: ".post; chopped.postln;
+		// "CHOPPED: ".post; chopped.postln;
 		mean = chopped.mean;
 		max = chopped.maxItem;
 		lval = chopped[..2].mean;
@@ -398,14 +391,14 @@ CorpusDB {
 	removeCorpusUnit { |uid| this.cuTable.add(uid -> nil) }
 	clearCorpusUnits { this.cuTable = Dictionary[] }
 
-// 	lookupSFID { |path|
-// 		(this.sfMap[path].isNil).if {
-// 			Post << "Error: there is no entry for " << path << " in the sf map. Lookup SFID failed.\n";
-// 			^nil
-// 		} {
-// 			^this.sfMap[path]
-// 		};
-//	}
+	lookupSFID { |path|
+		(this.sfMap[path].isNil).if {
+			Post << "Error: there is no entry for " << path << " in the sf map. Lookup SFID failed.\n";
+			^nil
+		} {
+			^this.sfMap[path]
+		};
+	}
 
 	lookupPath { |sfID|
 		(this.sfMap[sfID].isNil).if {
@@ -417,10 +410,6 @@ CorpusDB {
 	}
 
 	getSoundFileUnitMetadata { |sfID|
-//		var id;
-//		((sfID.isNil) && (path.isNil.not)).if {
-//			id = this.lookupSFID(this.getSoundFilePath(path));
-//		} {};
 		^this.cuTable.detect({ |item, i| (item[2] == sfID) }); // is this enough?
 	}
 
@@ -429,26 +418,26 @@ CorpusDB {
 		var sfnodes = this.sfTree.nodes;
 		"map sound file units to corpus units".postln;
 		this.clearCorpusUnits;
-		sfnodes.keys.postln;
+		// sfnodes.keys.postln;
 
 		sfnodes.keys.asArray.sort.do({ |nid|
 			var sfID, sfgrp, sftratio, sfunitsegs, relid, ampSeg, mfccsSeg, index, row, node;
-			nid.postln;
+			// nid.postln;
 			node = sfnodes[nid];
-			node.postln;
+			// node.postln;
 			sfID = node.sfID;
 			sfgrp = node.group;
 			sftratio = node.tRatio;
 			sfunitsegs = node.unitSegments;
 
 			node.unitAmps.keys.asArray.sort.do({ |k, relid|
-				k.postln;
+				// k.postln;
 				ampSeg = node.unitAmps[k];
 				mfccsSeg = node.unitMFCCs[k];
 				index = this.cuOffset;
 
 				row = [index, relid, sfID, sfgrp, sfunitsegs[relid].onset, sfunitsegs[relid].duration, sftratio, sfunitsegs[relid].tag];
-				Post << "INDEX: " << index << "\n";
+				// Post << "INDEX: " << index << "\n";
 				this.addCorpusUnit(index, (row ++ ampSeg ++ mfccsSeg).flat);
 				this.cuOffset = this.cuOffset + 1;
 
@@ -478,7 +467,7 @@ CorpusDB {
 		this.cuTable.keys.asArray.sort.do({ |cuid|
 			xlist = xlist ++ [this.cuTable[cuid]];
 		});
-		Post << "X's size: " << xlist.size << "\n";
+		// Post << "X's size: " << xlist.size << "\n";
 
 		(type == "I").if { ^xlist.flop[..7].flop } {};
 		(type == "A").if { ^xlist.flop[8..12].flop } {};
@@ -507,22 +496,22 @@ CorpusDB {
 		toplevel = Dictionary["descriptors" -> this.dTable ];
 		sf = Dictionary[];
 		this.sfTree.nodes.keys.do({ |sfid|
-			"-------------------------------------".postln;
-			sfid.post; " --->".postln;
-			this.sfTree.nodes[sfid].jsonRepr.postln;
-			"=====================================".postln;
+			// "-------------------------------------".postln;
+			// sfid.post; " --->".postln;
+			// this.sfTree.nodes[sfid].jsonRepr.postln;
+			// "=====================================".postln;
 			sf.add(sfid.asString -> this.sfTree.nodes[sfid].jsonRepr);
 			toplevel.add("soundfiletree" -> sf);
 		});
 		// roll the cutable rows into dictionary
 		d = Dictionary[];
- 		Post << "keys: " << this.cuTable.keys.asArray.sort;
+		// Post << "keys: " << this.cuTable.keys.asArray.sort;
 		this.cuTable.keys.asArray.sort.do({ |cid|
- 			Post << "cutable entry: " << this.cuTable[cid].class << "\n";
+			// Post << "cutable entry: " << this.cuTable[cid].class << "\n";
 			d.add(cid.asString -> this.cuTable[cid].asFloat);
 		});
 		toplevel.add("corpusunits" -> d);
-		toplevel.postln;
+		// toplevel.postln;
 		JSONSerializer.writeToFile(toplevel, f);
 		f.close;
 	}
@@ -532,11 +521,11 @@ CorpusDB {
 		var jsonString, soundfiles, corpusunits;
 
 		(appendFlag.isNil).if {
-			Post << "appendflag is FALSE\n" << "sf offset: " << this.sfOffset << "\n";
+			Post << "appendflag is FALSE\n" << "sf offset: " << this.sfOffset << "\n" << "Resetting corpus!\n";
 			this.resetCorpus;
 
 		} {
- 			Post << "appendflag is TRUE\n" << "sf offset: " << this.sfOffset << "\n";
+ 			Post << "appendflag is TRUE\n" << "Starting @ sf offset: " << this.sfOffset << "\n";
 		};
 		// set up
 		File.use(jsonPath, "r", { |f|
@@ -548,13 +537,13 @@ CorpusDB {
 		soundfiles.keys.asArray.asInteger.sort.do({ |key|
 			var sf, pkey, pid, sfid, fullpath, filename;
 			sf = soundfiles[key.asString];
-			sf.keys.postln;
+			// sf.keys.postln;
 			(sf.includesKey("parentid")).if {
 
 				pid = sf["parentid"];
 
-				Post << key << " | " << sf["sfid"] << " | " << pid << "\n";
-				"-------------".postln;
+				// Post << key << " | " << sf["sfid"] << " | " << pid << "\n";
+				// "-------------".postln;
 				sfid = this.addSoundFile(filePath:nil,
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:(pid.asInteger + this.sfOffset),
@@ -569,8 +558,8 @@ CorpusDB {
 				fullpath = PathName.new(sf["path"].asString);
 				filename = fullpath.fullPath.asString;
 
-				Post << key << " | " << sf["sfid"] << " | " << sf["group"] << " | " << sf["uniqueid"] << "\n";
-				"-------------".postln;
+				// Post << key << " | " << sf["sfid"] << " | " << sf["group"] << " | " << sf["uniqueid"] << "\n";
+				// "-------------".postln;
 				sfid = this.addSoundFile(filePath:filename,
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:nil,
