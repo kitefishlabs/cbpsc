@@ -1,6 +1,4 @@
-
-
-//This file is part of cbpsc (last revision @ version 0.4).
+//This file is part of cbpsc (last revision @ version 1.0).
 
 
 //
@@ -40,8 +38,6 @@
 
 		sfu = currSFNode.unitSegments[pid];
 		NumberBox.new(parent, Rect(75, (pid * 25), 60, 20))
-
-
 			.value_(currSFNode.unitSegments[pid].onset)
 		    .clipLo_(0.0)
     		.clipHi_(currSFNode.duration)
@@ -50,6 +46,7 @@
 			    "ONSET VAL: ".post; val.value.postln;
 				~crps.updateSoundFileUnit(currSFNode.sfID, pid, onset:val.value);
 				~crps.segmentUnits(currSFNode.sfID);
+    			~updateSoundFileUnitRowViews.value(currSFNode.sfID, bot);
 				~updateSFViews.value(currSFNode.sfID, top, bot, pid);
 //				~updateCurrentSoundFileUnit.value(pid,1);
     			~gui[\soundFileUnitRowViews][pid][5].value_(([sfu.onset, sfu.duration] ++ currSFNode.unitMFCCs[pid][0..]).flatten.collect({|x|x.asStringPrec(3)}));
@@ -64,6 +61,7 @@
 			    "DUR VAL: ".post; val.value.postln;
 				~crps.updateSoundFileUnit(currSFNode.sfID, pid, duration:val.value);
 				~crps.segmentUnits(currSFNode.sfID);
+    			~updateSoundFileUnitRowViews.value(currSFNode.sfID, bot);
 				~updateSFViews.value(currSFNode.sfID, top, bot, pid);
 //				~updateCurrentSoundFileUnit.value(pid,1);
 				~gui[\soundFileUnitRowViews][pid][5].value_(([sfu.onset, sfu.duration] ++ currSFNode.unitMFCCs[pid][0..]).flatten.collect({|x|x.asStringPrec(3)}));
@@ -76,10 +74,22 @@
 		pid.asInteger ];
 };
 
+~updateSoundFileUnitRowViews = { |sfid, bot|
+	var usegs = ~crps.sfTree.nodes[sfid].unitSegments;
+	var waveformArea = ~gui[\tabs][1][\areas][\waveform];
+
+	usegs.do({|sfu, rid|
+
+		~deleteSoundFileUnit.value(rid, waveformArea[\fullView], waveformArea[\closeView]); // |did, top, bot|
+	});
+	usegs.do({|sfu, rid|
+		~newSoundFileUnitRow.value(sfid, rid, ~gui[\tabs][1][\areas][\segments][\view], waveformArea[\fullView], waveformArea[\closeView]); // |currfile, pid, parent, top, bot|
+	});
+};
+
 ~updateSoundFileUnitRow = { |rid, bot|
 	var theunit = ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments[rid];
-	Post << "[updateSoundFileUnitRow] theunit: " << theunit << "\n";
-	[rid, bot].postln;
+	Post << "<updateSoundFileUnitRow> theunit: " << theunit << "  rid: " << rid << "\n";
 	~gui[\soundFileUnitRowViews][rid][3].value_(theunit.onset); ////!!!!!!!!!
 	~gui[\soundFileUnitRowViews][rid][4].value_(theunit.duration);
 	bot.setSelection(rid, [0, 0]);
@@ -89,7 +99,9 @@
 
 ~updateSFViews = { |cfpath, top, bot, currid|
 	var theunits = ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments;
-	Post << "[updateSFViews] theunits: " << theunits << "\n";
+	[cfpath, top, bot, currid].postln;
+	Post << "[updateSFViews] theunits: " << "\n";
+	theunits.do({ |u| [u.onset, u.duration].postln; });
 	// clear Views
 	(0..63).do({ |i| top.selectNone(i) });
 	bot.selectNone(0);
@@ -110,32 +122,32 @@
 
 ~updateMFCCSpectrum = { |currfileid, pid, tab| // better: call with curr id int!!!
 	var currSFNode = ~crps.sfTree.nodes[ currfileid ], foo;
-	Post << "curr. file: " << currfileid << "\n";
-	currSFNode.unitMFCCs[pid].ampdb.postln;
+	// Post << "curr. file: " << currfileid << "\n";
+	// currSFNode.unitMFCCs[pid].ampdb.postln;
 
 	(~gui[\tabs][tab][\areas][\highlighter][\view].children != nil).if { ~gui[\tabs][tab][\areas][\highlighter][\view].children.do({ |child| child.remove; child.free }) };
 	~gui[\tabs][tab][\areas][\highlighter].add(\ms -> MultiSliderView.new(~gui[\tabs][tab][\areas][\highlighter][\view], Rect(0,0,125,225)));
 
-	currSFNode.unitMFCCs[pid].postln; "::::".postln;
-	(currSFNode.unitMFCCs[pid].ampdb / 32).class.postln;
+	// currSFNode.unitMFCCs[pid].postln; "::::".postln;
+	// (currSFNode.unitMFCCs[pid].ampdb / 32).class.postln;
 	foo = (1 + (currSFNode.unitMFCCs[pid].ampdb / 32)).min(1.0).max(0.0);
 
 	~gui[\tabs][tab][\areas][\highlighter][\ms].size = 225 / 25 ;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].acceptsMouse_(False);
-	~gui[\tabs][tab][\areas][\highlighter][\ms].size.postln;
+	// ~gui[\tabs][tab][\areas][\highlighter][\ms].size.postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].value = foo[0];
-	"1".postln;
+	// "1".postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].isFilled_(true); // width in pixels of each stick
 
-	"2".postln;
+	// "2".postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].indexThumbSize_(225 / 25 * 0.2); // spacing on the value axis
-	"3".postln;
+	// "3".postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].gap_((225 / 25 * 0.8));
-	"4".postln;
+	// "4".postln;
 	~gui[\tabs][tab][\areas][\highlighter][\ms].indexIsHorizontal_(false);
-	"5".postln;
+	// "5".postln;
 	~gui[\tabs][tab][\areas][\highlighter][\view].refresh;
-	"6".postln;
+	// "6".postln;
 
 };
 
@@ -182,6 +194,7 @@
 		bot.setSelection(0, [~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments[~gui[\cp]].onset, ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments[~gui[\cp]].duration] * 44100);
 	};
 	~crps.segmentUnits(~crps.sfMap[ ~gui[\cf] ]);
+	~updateSoundFileUnitRowViews.value(~crps.sfMap[ ~gui[\cf] ], bot);
 };
 
 ~buildGraphParams = { |tabnum, xx, yy, ss, dragtarget = nil, fontcolor, initSelection|
@@ -456,12 +469,9 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 		~gui[\tabs][1][\areas][\analysis].children.do(_.remove);
 		Plotter(parent: ~gui[\tabs][1][\areas][\analysis])
 		.value_(temp)
-
-
 		.plotMode_(\linear)
 		.superpose_(false)
 		.findSpecs_(true)
-
 
 	});
 )
@@ -470,15 +480,18 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 		.gridColor_(Color.gray)
 		.mouseUpAction_({ |vw,x,y|
 			// update the data model
-	            ~crps.updateSoundFileUnit(~crps.sfMap[ ~gui[\cf] ], ~gui[\cp],
-				(~gui[\tabs][1][\areas][\waveform][\closeView].selectionStart(0) / 44100.0).max(0).floor,
-				(~gui[\tabs][1][\areas][\waveform][\closeView].selectionSize(0) / 44100.0).ceil);
+	        [~crps.sfMap[ ~gui[\cf] ], ~gui[\cp],
+        		(~gui[\tabs][1][\areas][\waveform][\closeView].selectionStart(0) / 44100.0).max(0),
+       			(~gui[\tabs][1][\areas][\waveform][\closeView].selectionSize(0) / 44100.0)].postln;
+	        ~crps.updateSoundFileUnit(~crps.sfMap[ ~gui[\cf] ], ~gui[\cp],
+			  	(~gui[\tabs][1][\areas][\waveform][\closeView].selectionStart(0) / 44100.0).max(0),
+    			(~gui[\tabs][1][\areas][\waveform][\closeView].selectionSize(0) / 44100.0));
 
 			// update number boxes + fullView
 			~updateSoundFileUnitRow.value(~gui[\cp], ~gui[\tabs][1][\areas][\waveform][\fullView]);
 
     		~crps.segmentUnits( ~crps.sfMap[ ~gui[\cf] ] );
-
+    		~updateSoundFileUnitRowViews.value(~crps.sfMap[ ~gui[\cf] ], ~gui[\tabs][1][\areas][\waveform][\closeView]);
 
 			~gui[\soundFileUnitRowViews].keys.do({ |pid|
 			~gui[\soundFileUnitRowViews][pid][5].value_(([~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments[pid].onset, ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitSegments[pid].duration] ++ ~crps.sfTree.nodes[ ~crps.sfMap[ ~gui[\cf] ] ].unitMFCCs[pid][0..]).flatten.collect({|x|x.asStringPrec(3)})); // $$$$
@@ -562,7 +575,6 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 				"cancelled".postln;
 			}, false);
 		}))
-		//"/Users/tms/dev/supercollider/2.manifold/snd/chanting.speaking/73356_voice_prayer_speaking_reverberant.md.aiff".matchRegexp("md")
 	.add(\removeFileButton -> Button(~gui[\tabs][0][\areas][\filesList][\view], Rect(105, 5, 45, 20))
 		.states_([["-file", Color.red, Color.white]])
 		.value_(0)
@@ -628,6 +640,7 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 			fileListArea.items_(tmp.asSet.asArray.sort);
 			fileListArea.enabled = true;
 		}))
+// left hand side file list
 	.add(\fileListView -> ListView(~gui[\tabs][0][\areas][\filesList][\view], Rect(5, 30, 400, 400))
     	.background_(Color.black)
 	    .stringColor_(Color.white)
@@ -709,12 +722,6 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 						0.01.wait;
 						analysisArea.children.do(_.remove);
 
-//						~origArray = ~crps[\sfutable][~gui[\cf]][\rawmels];
-//						~modArray = [];
-//						~descriptors = [0,1,2,7].sort;
-//						~origArray.flop.do({ |col,index| (~descriptors.asSet.includes(index)).if { ~modArray = ~modArray ++ col.bubble } });
-//						//~modArray.postcs;
-
 						Plotter(parent: analysisArea)
 							.value_(~crps.mfccs[ ~crps.sfMap[cf] ].flop) //(~modArray)  //[0]
 							.plotMode_(\plines)
@@ -740,19 +747,11 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 					Plotter(parent: analysisArea)
 						.value_(~crps.mfccs[ ~crps.sfMap[cf] ].flop)  //[0]
 						.plotMode_(\plines)
-
-
 						.superpose_(false)
-
-
 						.findSpecs_(true)
-
-
 						.editFunc_({|pl, pli, idx, val|
 							pli.post; "...".post; idx.post; "....".post; val.postln;
 							~crps.mfccs[ ~crps.sfMap[cf] ][pli][idx] = val;
-
-
 						});
 					AppClock.sched(0, { |tm| fileListArea[\fileListView].enabled = true });
 				};
@@ -762,20 +761,15 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 		}));
 
 
-
-
+// ListView for added files
 ~gui[\tabs][0][\areas][\addedFilesList].add(\addedFileListView -> ListView(~gui[\tabs][0][\areas][\addedFilesList][\view], Rect(5, 30, 400, 400))
-
-
 	.stringColor_(Color.white)
 	.items_([]));
 
 
-
-
 //// segments area
+// + button
 ~gui[\tabs][1][\areas][\segBtns].add(\plusButton -> Button(~gui[\tabs][1][\areas][\segBtns][\view], Rect(2, 5, 20, 20))
-
 
 	.states_([["+",Color.black,Color.white]])
 	.value_(0)
@@ -803,6 +797,7 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 
 	});
 );
+// -> button
 ~gui[\tabs][1][\areas][\segBtns].add(\fillButton -> Button(~gui[\tabs][1][\areas][\segBtns][\view], Rect(2, 30, 20, 20))
 	.states_([["->",Color.black,Color.white]])
 	.value_(0)
@@ -843,18 +838,14 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 );
 
 
-
-
-
+// corpus files dropdown
 ~gui[\tabs][1][\areas][\buttons].add(\corpusFiles -> PopUpMenu.new(~gui[\tabs][1][\areas][\buttons][\view], Rect(100, 0, 100, 20))
 	.items_([])
 	.stringColor_(Color.white)
 	.action_({ |menu|
 //		~gui[\fileListDict][ menu.item ].postln;
 
-
 		var cf, path, file, ext, mdpath, sf, entry;
-
 
 			// declare abbreviations for areas of the gui to be accessed:
 			var waveformArea = ~gui[\tabs][1][\areas][\waveform], analysisArea = ~gui[\tabs][1][\areas][\analysis], fileListArea = ~gui[\tabs][0][\areas][\filesList], addedFileListArea = ~gui[\tabs][0][\areas][\addedFilesList];
@@ -975,12 +966,6 @@ SynthDef.new(\unitSamplerStereo, { |out=0, busTrig=1, bufNumL, bufNumR, transp=1
 			};
 			// update the sfviews (close and full) no matter what
 			~updateSFViews.value(~gui[\cf], waveformArea[\fullView], waveformArea[\closeView], 0);
-
-
-
-
-
-
 
 	}));
 
