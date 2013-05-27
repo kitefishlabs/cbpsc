@@ -13,7 +13,7 @@
 
 CorpusDB {
 
-	var <>anchor, <>server, <>rate, <>hopSeconds, <>hopMS, <>sfTree, <>segTable, <>cuTable, <>rawTable, <>rawMaps, <>powers, <>mfccs, <>activationLayers, <>cookedLayers, <>sfMap, <>sfgMap, <>tagMap, <>transformations, <>synthdefs, <>sfOffset, <>cuOffset, <>dTable, <>soundFileUnitsMapped;
+	var <>anchor, <>server, <>rate, <>hopSeconds, <>hopMS, <>sfTree, <>segTable, <>cuTable, <>powers, <>mfccs, <>sfMap, <>sfgMap, <>tagMap, <>transformations, <>synthdefs, <>sfOffset, <>cuOffset, <>dTable, <>soundFileUnitsMapped;
 
 	*new { |anchor, server, hopMS=40|
 		^super.new.initCorpusDB(anchor, server, hopMS)
@@ -39,8 +39,8 @@ CorpusDB {
 		// this.rawMaps = Dictionary[];
 		this.powers = Dictionary[];
 		this.mfccs = Dictionary[];
-		this.activationLayers = Dictionary[];
-		this.cookedLayers = Dictionary[];
+		// this.activationLayers = Dictionary[];
+		// this.cookedLayers = Dictionary[];
 		// corpus-level mappings and helper data structures
 		this.sfMap = Dictionary[];
 		this.sfgMap = Dictionary[];
@@ -222,11 +222,11 @@ CorpusDB {
 				// this.powers[sfID].size.postln;
 				// this.mfccs[sfID].size.postln;
 
-				this.activationLayers.add(sfID -> this.powers[sfID].collect({ |pwr| (pwr <= -120).if { 0 } { 1 } }));
+				// this.activationLayers.add(sfID -> this.powers[sfID].collect({ |pwr| (pwr <= -120).if { 0 } { 1 } }));
 				// this.activationLayers[sfID].postln;
 				// (this.activationLayers[sfID].sum.asFloat / this.activationLayers[sfID].size.asFloat).postln;
 
-				this.cookedLayers.add(sfID -> this.mfccs[sfID].collect({ |row, i| row * this.activationLayers[sfID][i] }) );
+				// this.cookedLayers.add(sfID -> this.mfccs[sfID].collect({ |row, i| row * this.activationLayers[sfID][i] }) );
 				// this.cookedLayers[sfID].size.postln;
 				done = 1;
 			});
@@ -242,8 +242,8 @@ CorpusDB {
 	clearAnalysisData { |sfID|
 		this.powers.add(sfID -> nil);
 		this.mfccs.add(sfID -> nil);
-		this.activationLayers.add(sfID -> nil);
-		this.cookedLayers.add(sfID -> nil);
+		// this.activationLayers.add(sfID -> nil);
+		// this.cookedLayers.add(sfID -> nil);
 	}
 
 	mapIDToSF { |sfID, path=nil, sfGroup=0|
@@ -345,16 +345,16 @@ CorpusDB {
 
 	getRawMetadata { |sfID|
 
-		((this.powers[sfID].isNil) || (this.mfccs[sfID].isNil) || (this.activationLayers.isNil) || (this.cookedLayers.isNil)).if {
+		((this.powers[sfID].isNil) || (this.mfccs[sfID].isNil)).if {
 			^nil //this.activateRawMetadata(sfID)
 		} {
-			^[this.powers[sfID], this.mfccs[sfID], this.activationLayers[sfID], this.cookedLayers[sfID]]
+			^[this.powers[sfID], this.mfccs[sfID]] //[, this.activationLayers[sfID], this.cookedLayers[sfID]]
 		};
 	}
 
 	// getSortedUnitsList { |sfID| ^this.sfTree.nodes[sfID].sortSegmentsList }
 
-	segmentUnits { |sfID|
+/*	segmentUnits { |sfID|
 
 		var segList, rawamps, cookedmfccs;
 
@@ -375,6 +375,26 @@ CorpusDB {
 				relid,
 				this.analyzeScalar(rawamps, offset, dur),
 				cookedmfccs[offset..(offset+dur-1)].flop.collect({|col, i| col.mean }).flop
+			);
+		});
+	}*/
+
+	segmentUnits { |sfID|
+
+		var segList, rawamps, rawmfccs;
+
+		segList = this.sfTree.nodes[sfID].unitSegments.sort({ |a,b| a.onset < b.onset });
+		rawamps = this.powers[sfID];
+		rawmfccs = this.mfccs[sfID];
+		segList.do({ |sfu, relid|
+
+			var offset, dur;
+			offset = (sfu.onset / this.hopSeconds).asInteger;
+			dur = (sfu.duration / this.hopSeconds).asInteger;
+			this.sfTree.nodes[sfID].addMetadataForRelID(
+				relid,
+				this.analyzeScalar(rawamps, offset, dur),
+				rawmfccs[offset..(offset+dur-1)].flop.collect({|col, i| col.mean }).flop
 			);
 		});
 	}
