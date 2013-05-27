@@ -1,3 +1,5 @@
+//This file is part of cbpsc (last revision @ version 1.0).
+//
 //cbpsc is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 //
 //cbpsc is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
@@ -12,30 +14,30 @@
 SFTree {
 	var <>corpus, <>anchorPath, <>nodes, <>trackbacks;
 
-	*new { |corpus, path, verbose=nil|
-		^super.new.initSFTree(corpus, path, verbose)
+	*new { |corpus, anchorpath, verbose=nil|
+		^super.new.initSFTree(corpus, anchorpath, verbose)
 	}
 
-	initSFTree { |corpus, path, verbose|
+	initSFTree { |corpus, anchorpath, verbose|
 		this.corpus = corpus;
-		this.anchorPath = path;
+		this.anchorPath = anchorpath;
 		this.nodes = Dictionary[];
 		this.trackbacks = Dictionary[];
 		^this
 	}
 
-	addRootNode { |filePath, sfID, tRatio, sfg=0, uniqueFlag=nil, verbose=nil|
+	addRootNode { |filename, sfID, tRatio, sfg=0, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
 
-		var uniqueflag, sndFile, duration, chnls, synthdef;
+		var joinedPath, uniqueflag, sndFile, duration, chnls, synthdef;
 
-		// (sndSubdir.isNil).if {
-		// 	joinedPath = this.anchorPath +/+ "snd" +/+ filename;
-		// } {
-		// 	joinedPath = this.anchorPath +/+ "snd" +/+ sndSubdir +/+ filename;
-		// };
+		(sndSubdir.isNil).if {
+			joinedPath = this.anchorPath +/+ "snd" +/+ filename;
+		} {
+			joinedPath = this.anchorPath +/+ "snd" +/+ sndSubdir +/+ filename;
+		};
 		uniqueflag = uniqueFlag ? 1000000.rand;
 
-		sndFile = SoundFile.new; sndFile.openRead(filePath); sndFile.close;
+		sndFile = SoundFile.new; sndFile.openRead(joinedPath); sndFile.close;
 
 // 		sndFile.numFrames.asFloat.postln;
 // 		sndFile.sampleRate.asFloat.postln;
@@ -46,10 +48,10 @@ SFTree {
 
 		synthdef = (chnls == 1).if { "monoSamplerNRT" } { "stereoSamplerNRT" };
 		Post << "sfID: " << sfID << "\n";
-		this.nodes.add(sfID -> SamplerNode.new(filePath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
+		this.nodes.add(sfID -> SamplerNode.new(joinedPath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
 		this.nodes[sfID].postln;
-		this.corpus.mapIDToSF(sfID, filePath, sfg);
-		this.trackbacks.add(sfID -> [filePath, duration, tRatio, synthdef]);
+		this.corpus.mapIDToSF(sfID, joinedPath, sfg);
+		this.trackbacks.add(sfID -> [joinedPath, duration, tRatio, synthdef]);
 		^this.nodes[sfID]
 	}
 
@@ -135,8 +137,10 @@ SFNode {
 }
 
 
+
+
 SamplerNode : SFNode {
-	var <>sfPath;
+	var <>sfPath, <>buffer;
 
 	*new { |sfpath, synthname, duration= -1, uniqueID= -1, channels=1, group=0, tRatio=1.0, sfID= -1, verbose=nil|
 		^super.new.initSFNode(synthname, nil, duration, uniqueID, channels, group, tRatio, sfID).initSamplerNode(sfpath)
@@ -145,7 +149,15 @@ SamplerNode : SFNode {
 	initSamplerNode { |sfpath|
 		"Assigning sfPath to SamplerNode!".postln;
 		this.sfPath = sfpath;
+		this.buffer = nil;
 		^this
+	}
+
+	mapBuffer { |buffer|
+
+		this.buffer = buffer;
+		^this.buffer
+
 	}
 
 	jsonRepr {
