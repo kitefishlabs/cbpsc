@@ -57,7 +57,7 @@ CorpusDB {
 	}
 
 	// pass sfID as nil to let CorpusDB to choose an id for you! (useful in batch mode.)
-	addSoundFile { |filePath=nil, sfid=nil, srcFileID=nil, tRatio=1.0, sfGrpID=0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil|
+	addSoundFile { |filePath=nil, sfid=nil, srcFileID=nil, tRatio=1.0, sfGrpID=0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil, verbose=nil|
 
 		var sfID, rootNode, childNode, joinedPath;
 		Post << "add sound file sfid arg: " << sfid << "\n";
@@ -117,8 +117,8 @@ CorpusDB {
 
 		sFile = SoundFile.new; sFile.openRead(fullpath); sFile.close;
 
-		pBuf = this.server.bufferAllocator.alloc(1);
-		aBuf = this.server.bufferAllocator.alloc(1);
+		pBuf = 10; // this.server.bufferAllocator.alloc(1);
+		aBuf = 11; // this.server.bufferAllocator.alloc(1);
 
 		(verbose.isNil.not).if {
 			Post << "RMDDIR: " << mdpath << "\n" << tRatio.class << "\n";
@@ -143,7 +143,6 @@ CorpusDB {
 			tbSynthdefs = [this.sfTree.trackbacks[parentID][3].asSymbol, this.sfTree.trackbacks[sfID][0].asSymbol];
 			// tbSynthdefs.postln;
 			tbParams = this.sfTree.trackbacks[sfID][1];
-
 		};
 
 		(verbose.isNil.not).if {
@@ -156,7 +155,6 @@ CorpusDB {
 			Post << tbSynthdefs << "\n"; // synthdef name
 			Post << this.sfTree.nodes[sfID] << "\n";
 		};
-
 
 		srows = [tbSynthdefs,  \mfcc24BusAnalyzerNRT].flat;
 		prows = [[\srcbufNum, pBuf, \outbus, 0, \start, 0, \dur, tbDur, \transp, tbTRatio], [\inbus, 0, \savebufNum, aBuf, \transp, tbTRatio]];
@@ -236,14 +234,21 @@ CorpusDB {
 
 		while { done == 0 } { 0.5.wait }; "DONE".postln;
 		done = 1;
+		thebuffer.free;
 		aBuf.free; pBuf.free; // "---.md.aiff" saved to disc; free buffers on server
 
 	}
 
+	clearAnalysisData { |sfID|
+		this.powers.add(sfID -> nil);
+		this.mfccs.add(sfID -> nil);
+		this.activationLayers.add(sfID -> nil);
+		this.cookedLayers.add(sfID -> nil);
+	}
+
 	mapIDToSF { |sfID, path=nil, sfGroup=0|
 
-		var id;
-
+		// var id;
 		// (sfID.notNil).if {
 		// 	id = sfID;
 		// } {
@@ -266,7 +271,7 @@ CorpusDB {
 		^sfID
 	}
 
-	addSoundFileUnit { |sfID, onset=0, duration=0, tag=0|
+	addSoundFileUnit { |sfID, onset=0, duration=0, tag=0, verbose=nil|
 
 		var id, res;
 
@@ -341,7 +346,7 @@ CorpusDB {
 	getRawMetadata { |sfID|
 
 		((this.powers[sfID].isNil) || (this.mfccs[sfID].isNil) || (this.activationLayers.isNil) || (this.cookedLayers.isNil)).if {
-			^this.activateRawMetadata(sfID)
+			^nil //this.activateRawMetadata(sfID)
 		} {
 			^[this.powers[sfID], this.mfccs[sfID], this.activationLayers[sfID], this.cookedLayers[sfID]]
 		};
