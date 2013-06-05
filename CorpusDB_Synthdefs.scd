@@ -4,7 +4,7 @@
 SynthDef(\power_mfcc24BusAnalyzerNRT, { |inbus=20, savebufNum=0, hop=0.04|
 	var in, chain, power, mfccs, driver, array;
 	in = In.ar(inbus, 1);
-	chain = FFT(LocalBuf(8192,1), in);
+	chain = FFT(LocalBuf(4096,1), in);
 
 	power =			FFTPower.kr(chain);          // empirical multiplier
 	mfccs =			MFCC.kr(chain, numcoeff:24); // or 13|24|42...
