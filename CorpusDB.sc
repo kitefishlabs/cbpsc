@@ -39,18 +39,12 @@ CorpusDB {
 		// this.rawMaps = Dictionary[];
 		this.powers = Dictionary[];
 		this.mfccs = Dictionary[];
-		// this.activationLayers = Dictionary[];
-		// this.cookedLayers = Dictionary[];
 		// corpus-level mappings and helper data structures
 		this.sfMap = Dictionary[];
 		this.sfgMap = Dictionary[];
-		this.tagMap = Dictionary[];
-		this.transformations = Dictionary[0 -> \thru, \thru -> 0];
-		this.synthdefs = Dictionary[];
 		// information about the corpus's current state
 		this.sfOffset = 0;
 		this.cuOffset = 0;
-		//this.sfgSet = Set[]; // to-do: make this work: the set has to be valid after every change to cutable & segtable
 		this.dTable = Dictionary[0 -> \unitID, 1 -> \sfRelID, 2 -> \sfileID, 3 -> \sfGrpID,
 			4 -> \onset, 5 -> \duration, 6 -> \tRatio, 7 -> \uTag];
 		this.soundFileUnitsMapped = false;
