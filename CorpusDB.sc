@@ -91,12 +91,20 @@ CorpusDB {
 
 	analyzeSoundFile { |sfID, group=0, tRatio=1.0, subdir=nil, verbose=nil|
 
-		var filepath, fullpath, dir, mdpath, file, pBuf, aBuf, sFile, oscList, srows, prows;
+		var filepath, parentid, fullpath, dir, mdpath, file, pBuf, aBuf, sFile, oscList, srows, prows;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
 		var currBus = 20, tbDur, tbTRatio, tbSynthdefs, tbParams, parentID;
 		var done = 0;
 
-		filepath = this.lookupPath(sfID);
+		(this.sfTree.nodes[sfID].class == SamplerNode).if {
+
+			filepath = this.sfTree.nodes[sfID].sfPath;
+
+		} {
+			parentid = this.sfTree.nodes[sfID].parentID;
+			filepath = this.sfTree.nodes[parentid].sfPath;
+		};
+
 		// pathname as a Pathname object; extract dir, file, and full path as Strings
 		fullpath = PathName.new(filepath);
 		dir = fullpath.pathOnly.asString;
@@ -124,21 +132,21 @@ CorpusDB {
 
 		(this.sfTree.nodes[sfID].class == SamplerNode).if {
 
-			tbDur = this.sfTree.trackbacks[sfID][1];
-			tbTRatio = this.sfTree.trackbacks[sfID][2];
-			tbSynthdefs = [this.sfTree.trackbacks[sfID][3].asSymbol];
+			tbDur = this.sfTree.sfMap[sfID][1];
+			tbTRatio = this.sfTree.sfMap[sfID][2];
+			tbSynthdefs = [this.sfTree.sfMap[sfID][3].asSymbol];
 		} {
 
 			parentID = this.sfTree.nodes[sfID].parentID;
-			tbDur = this.sfTree.trackbacks[parentID][1];
-			tbTRatio = this.sfTree.trackbacks[parentID][2];
-			tbSynthdefs = [this.sfTree.trackbacks[parentID][3].asSymbol, this.sfTree.trackbacks[sfID][0].asSymbol];
+			tbDur = this.sfTree.sfMap[parentID][1];
+			tbTRatio = this.sfTree.sfMap[parentID][2];
+			tbSynthdefs = [this.sfTree.sfMap[parentID][3].asSymbol, this.sfTree.sfMap[sfID][0].asSymbol];
 			// tbSynthdefs.postln;
-			tbParams = this.sfTree.trackbacks[sfID][1];
+			tbParams = this.sfTree.sfMap[sfID][1];
 		};
 
 		(verbose.isNil.not).if {
-			Post << this.sfTree.trackbacks[sfID][0] << "\n"; // path
+			Post << this.sfTree.sfMap[sfID][0] << "\n"; // path
 			Post << fullpath << "\n";
 			Post << tbDur << "\n"; // duration
 			Post << sFile.duration << "\n";
