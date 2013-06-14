@@ -39,11 +39,13 @@ SFTree {
 
 	addRootNode { |filename, sfID, tRatio, sfg=0, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
 
-		var joinedPath, uniqueflag, sndFile, duration, chnls, synthdef;
+		var relPath, joinedPath, uniqueflag, sndFile, duration, chnls, synthdef;
 
 		(sndSubdir.isNil).if {
+			relPath = filename;
 			joinedPath = this.anchorPath +/+ "snd" +/+ filename;
 		} {
+			relPath = sndSubdir +/+ filename;
 			joinedPath = this.anchorPath +/+ "snd" +/+ sndSubdir +/+ filename;
 		};
 		uniqueflag = uniqueFlag ? 1000000.rand;
@@ -59,10 +61,10 @@ SFTree {
 
 		synthdef = (chnls == 1).if { "monoSamplerNRT" } { "stereoSamplerNRT" };
 		Post << "sfID: " << sfID << "\n";
-		this.nodes.add(sfID -> SamplerNode.new(joinedPath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
+		this.nodes.add(sfID -> SamplerNode.new(relPath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
 		this.nodes[sfID].postln;
-		this.corpus.mapIDToSF(sfID, joinedPath, sfg);
-		this.sfMap.add(sfID -> [joinedPath, duration, tRatio, synthdef]);
+		this.corpus.mapIDToSF(sfID, relPath, sfg);
+		this.sfMap.add(sfID -> [relPath, duration, tRatio, synthdef]);
 		^this.nodes[sfID]
 	}
 

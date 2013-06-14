@@ -98,11 +98,11 @@ CorpusDB {
 
 		(this.sfTree.nodes[sfID].class == SamplerNode).if {
 
-			filepath = this.sfTree.nodes[sfID].sfPath;
+			filepath = this.anchor +/+ "snd" +/+ this.sfTree.nodes[sfID].sfPath;
 
 		} {
 			parentid = this.sfTree.nodes[sfID].parentID;
-			filepath = this.sfTree.nodes[parentid].sfPath;
+			filepath = this.anchor +/+ "snd" +/+ this.sfTree.nodes[parentid].sfPath;
 		};
 
 		// pathname as a Pathname object; extract dir, file, and full path as Strings
