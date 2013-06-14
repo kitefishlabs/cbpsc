@@ -13,7 +13,7 @@
 
 CorpusDB {
 
-	var <>anchor, <>server, <>rate, <>hopSeconds, <>hopMS, <>sfTree, <>segTable, <>cuTable, <>powers, <>mfccs, <>sfMap, <>sfgMap, <>tagMap, <>transformations, <>synthdefs, <>sfOffset, <>cuOffset, <>dTable, <>soundFileUnitsMapped;
+	var <>anchor, <>server, <>rate, <>hopSeconds, <>hopMS, <>sfTree, <>segTable, <>cuTable, <>powers, <>mfccs, <>tagMap, <>transformations, <>synthdefs, <>sfOffset, <>cuOffset, <>dTable, <>soundFileUnitsMapped;
 
 	*new { |anchor, server, hopMS=40|
 		^super.new.initCorpusDB(anchor, server, hopMS)
@@ -40,8 +40,6 @@ CorpusDB {
 		this.powers = Dictionary[];
 		this.mfccs = Dictionary[];
 		// corpus-level mappings and helper data structures
-		this.sfMap = Dictionary[];
-		this.sfgMap = Dictionary[];
 		// information about the corpus's current state
 		this.sfOffset = 0;
 		this.cuOffset = 0;
@@ -250,19 +248,8 @@ CorpusDB {
 		// 	id = this.sfOffset;
 		// };
 
-		(this.sfgMap[sfGroup].isNil).if {
-			this.sfgMap.add(sfGroup -> Set[sfID]);
-		} {
-			this.sfgMap[sfGroup].add(sfID);
-		};
-		((this.sfMap[sfID].isNil) && (path.isNil.not)).if {
-			this.sfMap.add(sfID -> path);
-			this.sfMap.add(path -> sfID);
-		} {
-			Post << "Either this sfid -> path mapping has already been made *OR* you are only mapping a group! Failed to map a path!\n"
-			^nil
-		};
-		^sfID
+		^this.sfTree.mapSoundFileToGroup(sfID, sfGroup);
+
 	}
 
 	addSoundFileUnit { |sfID, onset=0, duration=0, tag=0, verbose=nil|
@@ -326,14 +313,14 @@ CorpusDB {
 		};
 	}
 
-	getUnitSegment { |sfID, relID|
-		(this.sfMap[sfID].isNil.not).if
-		{
-			^this.sfTree.nodes[this.sfMap[sfID]].unitSegments[relID]
-		} {
-			^nil
-		};
-	}
+	// getUnitSegment { |sfID, relID|
+	// 	(this.sfMap[sfID].isNil.not).if
+	// 	{
+	// 		^this.sfTree.nodes[this.sfMap[sfID]].unitSegments[relID]
+	// 	} {
+	// 		^nil
+	// 	};
+	// }
 
 	getSndPath { |fileName| ^(this.anchorPath +/+ "snd" +/+ fileName) } // needs subdir mod
 
@@ -410,23 +397,23 @@ CorpusDB {
 	removeCorpusUnit { |uid| this.cuTable.add(uid -> nil) }
 	clearCorpusUnits { this.cuTable = Dictionary[] }
 
-	lookupSFID { |path|
-		(this.sfMap[path].isNil).if {
-			Post << "Error: there is no entry for " << path << " in the sf map. Lookup SFID failed.\n";
-			^nil
-		} {
-			^this.sfMap[path]
-		};
-	}
-
-	lookupPath { |sfID|
-		(this.sfMap[sfID].isNil).if {
-			Post << "Error: there is no entry for " << sfID << " in the sf map. Lookup SFID failed.\n";
-			^nil
-		} {
-			^this.sfMap[sfID]
-		};
-	}
+	// lookupSFID { |path|
+	// 	(this.sfMap[path].isNil).if {
+	// 		Post << "Error: there is no entry for " << path << " in the sf map. Lookup SFID failed.\n";
+	// 		^nil
+	// 	} {
+	// 		^this.sfMap[path]
+	// 	};
+	// }
+	//
+	// lookupPath { |sfID|
+	// 	(this.sfMap[sfID].isNil).if {
+	// 		Post << "Error: there is no entry for " << sfID << " in the sf map. Lookup SFID failed.\n";
+	// 		^nil
+	// 	} {
+	// 		^this.sfMap[sfID]
+	// 	};
+	// }
 
 	getSoundFileUnitMetadata { |sfID|
 		^this.cuTable.detect({ |item, i| (item[2] == sfID) }); // is this enough?

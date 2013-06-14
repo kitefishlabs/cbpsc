@@ -12,7 +12,7 @@
 // Copyright (C) 2013, Thomas Stoll
 
 SFTree {
-	var <>corpus, <>anchorPath, <>nodes, <>trackbacks;
+	var <>corpus, <>anchorPath, <>nodes, <>sfMap, <>sfgmap;
 
 	*new { |corpus, anchorpath, verbose=nil|
 		^super.new.initSFTree(corpus, anchorpath, verbose)
@@ -22,8 +22,19 @@ SFTree {
 		this.corpus = corpus;
 		this.anchorPath = anchorpath;
 		this.nodes = Dictionary[];
-		this.trackbacks = Dictionary[];
+		this.sfMap = Dictionary[];
+		this.sfgmap = Dictionary[];
 		^this
+	}
+
+	mapSoundFileToGroup { |sfID, sfGroup|
+		(this.sfgmap[sfGroup].isNil).if {
+			this.sfgmap.add(sfGroup -> Set[sfID]);
+			^this.sfgmap[sfGroup]
+		} {
+			this.sfgmap[sfGroup].add(sfID);
+			^this.sfgmap[sfGroup]
+		}
 	}
 
 	addRootNode { |filename, sfID, tRatio, sfg=0, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
@@ -51,7 +62,7 @@ SFTree {
 		this.nodes.add(sfID -> SamplerNode.new(joinedPath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
 		this.nodes[sfID].postln;
 		this.corpus.mapIDToSF(sfID, joinedPath, sfg);
-		this.trackbacks.add(sfID -> [joinedPath, duration, tRatio, synthdef]);
+		this.sfMap.add(sfID -> [joinedPath, duration, tRatio, synthdef]);
 		^this.nodes[sfID]
 	}
 
@@ -70,7 +81,7 @@ SFTree {
 		this.nodes.add(childID -> EfxNode.new(synthdef, params, parentNode.duration, uniqueflag, parentNode.channels, sfg, parentNode.tRatio, childID, parentID));
 		this.nodes[parentID].postln;
 		this.corpus.mapIDToSF(childID, this.nodes[parentID].sfPath, sfg);
-		this.trackbacks.add(childID -> [synthdef, params]);
+		this.sfMap.add(childID -> [synthdef, params]);
 		^this.nodes[this.nodes[childID].sfID]
 	}
 }
