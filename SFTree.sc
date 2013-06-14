@@ -12,7 +12,7 @@
 // Copyright (C) 2013, Thomas Stoll
 
 SFTree {
-	var <>corpus, <>anchorPath, <>nodes, <>sfMap, <>sfgmap;
+	var <>corpus, <>anchorPath, <>nodes, <>sfMap, <>sfgMap;
 
 	*new { |corpus, anchorpath, verbose=nil|
 		^super.new.initSFTree(corpus, anchorpath, verbose)
@@ -23,17 +23,17 @@ SFTree {
 		this.anchorPath = anchorpath;
 		this.nodes = Dictionary[];
 		this.sfMap = Dictionary[];
-		this.sfgmap = Dictionary[];
+		this.sfgMap = Dictionary[];
 		^this
 	}
 
 	mapSoundFileToGroup { |sfID, sfGroup|
-		(this.sfgmap[sfGroup].isNil).if {
-			this.sfgmap.add(sfGroup -> Set[sfID]);
-			^this.sfgmap[sfGroup]
+		(this.sfgMap[sfGroup].isNil).if {
+			this.sfgMap.add(sfGroup -> Set[sfID]);
+			^this.sfgMap[sfGroup]
 		} {
-			this.sfgmap[sfGroup].add(sfID);
-			^this.sfgmap[sfGroup]
+			this.sfgMap[sfGroup].add(sfID);
+			^this.sfgMap[sfGroup]
 		}
 	}
 

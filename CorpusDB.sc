@@ -49,7 +49,7 @@ CorpusDB {
 	}
 
 	// pass sfID as nil to let CorpusDB to choose an id for you! (useful in batch mode.)
-	addSoundFile { |filePath=nil, sfid=nil, srcFileID=nil, tRatio=1.0, sfGrpID=0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil, verbose=nil|
+	addSoundFile { |filename=nil, sfid=nil, srcFileID=nil, tRatio=1.0, sfGrpID=0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil, verbose=nil|
 
 		var sfID, rootNode, childNode, joinedPath;
 		Post << "add sound file sfid arg: " << sfid << "\n";
@@ -63,9 +63,9 @@ CorpusDB {
 
 		(srcFileID.isNil).if {
 
-			rootNode = this.sfTree.addRootNode(filePath, sfID, tRatio, sfGrpID, uniqueFlag:uflag);
+			rootNode = this.sfTree.addRootNode(filename, sfID, tRatio, sfGrpID, uniqueFlag:uflag);
 			(verbose.isNil.not).if {
-				Post << "FILEPATH: " << filePath << "\n";
+				Post << "FILENAME: " << filename << "\n";
 				Post << "addRootNode result: ";
 				Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.group << ", " << rootNode.tRatio << "\n";
 			};
