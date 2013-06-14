@@ -522,7 +522,7 @@ CorpusDB {
 		// Post << "keys: " << this.cuTable.keys.asArray.sort;
 		this.cuTable.keys.asArray.sort.do({ |cid|
 			// Post << "cutable entry: " << this.cuTable[cid].class << "\n";
-			d.add(cid.asString -> this.cuTable[cid].asFloat);
+			d.add(cid.asString -> this.cuTable[cid].asString);
 		});
 		toplevel.add("corpusunits" -> d);
 		// toplevel.postln;
@@ -530,7 +530,7 @@ CorpusDB {
 		f.close;
 	}
 
-	importCorpusFromJSON { |jsonPath, appendFlag=nil, importFlag=nil|
+	importCorpusFromJSON { |jsonPath, appendFlag=nil, newAnchor=nil, importFlag=nil|
 
 		var jsonString, soundfiles, corpusunits;
 
@@ -543,44 +543,48 @@ CorpusDB {
 		};
 		// set up
 		File.use(jsonPath, "r", { |f|
-
 			jsonString = f.readAllString.parseJson;
 		});
 
+		(newAnchor.notNil).if { this.anchor = newAnchor; };
+		// warn user if conflicting anchor path?
+
 		soundfiles = jsonString["soundfiletree"];
+		soundfiles.keys.asArray.asInteger.sort.postln;
 		soundfiles.keys.asArray.asInteger.sort.do({ |key|
+
 			var sf, pkey, pid, sfid, fullpath, filename;
 			sf = soundfiles[key.asString];
-			// sf.keys.postln;
+			sf.keys.postln;
 			(sf.includesKey("parentid")).if {
 
-				pid = sf["parentid"];
+				pid = sf["parentID"];
 
-				// Post << key << " | " << sf["sfid"] << " | " << pid << "\n";
-				// "-------------".postln;
-				sfid = this.addSoundFile(filePath:nil,
+				Post << key << " | " << sf["sfID"] << " | " << pid << "\n";
+				"-------------".postln;
+				sfid = this.addSoundFile(filename:nil,
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:(pid.asInteger + this.sfOffset),
-					tRatio:sf["tratio"].asFloat,
+					tRatio:sf["tRatio"].asFloat,
 					sfGrpID:sf["group"].asInteger,
 					synthdef:sf["synth"].asString,
 					params:sf["params"],
-					uflag:sf["uniqueid"].asInteger
+					uflag:sf["uniqueID"].asInteger
 				);
 
 			} {
 				fullpath = PathName.new(sf["path"].asString);
 				filename = fullpath.fullPath.asString;
 
-				// Post << key << " | " << sf["sfid"] << " | " << sf["group"] << " | " << sf["uniqueid"] << "\n";
-				// "-------------".postln;
-				sfid = this.addSoundFile(filePath:filename,
+				Post << key << " | " << sf["sfID"] << " | " << sf["group"] << " | " << sf["uniqueID"] << "\n";
+				"-------------".postln;
+				sfid = this.addSoundFile(filename:filename,
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:nil,
-					tRatio:sf["tratio"].asFloat,
+					tRatio:sf["tRatio"].asFloat,
 					sfGrpID:sf["group"].asInteger,
 					importFlag:importFlag,
-					uflag:sf["uniqueid"].asInteger
+					uflag:sf["uniqueID"].asInteger
 				);
 			};
 		});
@@ -588,14 +592,17 @@ CorpusDB {
 
 		corpusunits = jsonString["corpusunits"];
 		corpusunits.keys.asArray.do({ |key|
-			var cunit = corpusunits[key][1..].reverse[1..].reverse.split($,).asFloat;
+			var cunit;
+			//"=================".postln;
+			//corpusunits[key][1..].reverse[1..].reverse.postln;
+			cunit = corpusunits[key][1..].reverse[1..].reverse.split($,).asFloat; //
 			// ugly hack that works!
 			// "CUNIT: ".post;
 			// cunit.postcs;
 			// "\n".post;
 			cunit[0] = cunit[0].asInteger + this.cuOffset;
 			cunit[2] = cunit[2].asInteger + this.sfOffset;
-			// Post << cunit[0] << " | " << cunit[2] << "\n";
+			Post << cunit[0] << " | " << cunit[2] << "\n";
 			this.addCorpusUnit((key.asInteger + this.cuOffset), cunit);
 		});
 
