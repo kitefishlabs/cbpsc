@@ -43,13 +43,12 @@ CorpusDB {
 		// information about the corpus's current state
 		this.sfOffset = 0;
 		this.cuOffset = 0;
-		this.dTable = Dictionary[0 -> \unitID, 1 -> \sfRelID, 2 -> \sfileID, 3 -> \sfGrpID,
-			4 -> \onset, 5 -> \duration, 6 -> \tRatio, 7 -> \uTag];
+		this.dTable = Dictionary[0 -> \unitID, 1 -> \sfRelID, 2 -> \sfileID, 3 -> \onset, 4 -> \duration, 5 -> \tRatio, 6 -> \uTag];
 		this.soundFileUnitsMapped = false;
 	}
 
 	// pass sfID as nil to let CorpusDB to choose an id for you! (useful in batch mode.)
-	addSoundFile { |filename=nil, sfid=nil, srcFileID=nil, tRatio=1.0, sfGrpID=0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil, verbose=nil|
+	addSoundFile { |filename=nil, sfid=nil, srcFileID=nil, tRatio=1.0, synthdef=nil, params=nil, subdir=nil, reuseFlag=nil, importFlag=nil, uflag=nil, verbose=nil|
 
 		var sfID, rootNode, childNode, joinedPath;
 		Post << "add sound file sfid arg: " << sfid << "\n";
@@ -63,11 +62,11 @@ CorpusDB {
 
 		(srcFileID.isNil).if {
 
-			rootNode = this.sfTree.addRootNode(filename, sfID, tRatio, sfGrpID, uniqueFlag:uflag);
+			rootNode = this.sfTree.addRootNode(filename, sfID, tRatio, uniqueFlag:uflag);
 			(verbose.isNil.not).if {
 				Post << "FILENAME: " << filename << "\n";
 				Post << "addRootNode result: ";
-				Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.group << ", " << rootNode.tRatio << "\n";
+				Post << rootNode.sfPath << ", " << rootNode.sfID << ", " << rootNode.tRatio << "\n";
 			};
 			(importFlag.isNil.not).if { this.importSoundFileToBuffer(rootNode.sfPath, sfID) };
 
@@ -75,10 +74,10 @@ CorpusDB {
 
 		} {
 
-			childNode = this.sfTree.addChildNode(srcFileID, sfID, tRatio, sfGrpID, synthdef, params, uniqueFlag:uflag);
+			childNode = this.sfTree.addChildNode(srcFileID, sfID, tRatio, synthdef, params, uniqueFlag:uflag);
 			(verbose.isNil.not).if {
 				Post << "\n" << [srcFileID, sfID] << "\n";
-				Post << "addChildNode result: " << childNode.parentID << ", " << childNode.sfID << ", " << childNode.group << ", " << childNode.tRatio << "\n";
+				Post << "addChildNode result: " << childNode.parentID << ", " << childNode.sfID << ", " << childNode.tRatio << "\n";
 			};
 			^childNode
 
@@ -89,7 +88,7 @@ CorpusDB {
 
 	importSoundFileToBuffer { |path, sfid| ^nil }
 
-	analyzeSoundFile { |sfID, group=0, tRatio=1.0, subdir=nil, verbose=nil|
+	analyzeSoundFile { |sfID, tRatio=1.0, subdir=nil, verbose=nil|
 
 		var filepath, parentid, fullpath, dir, mdpath, file, pBuf, aBuf, sFile, oscList, srows, prows;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
@@ -207,27 +206,13 @@ CorpusDB {
 
 				ary = array.clump(25).flop;
 				ary[0] = ary[0].ampdb.replace( -inf, -120.0);
-				//ary[0].postln;
 				(0..24).do({ |d|
 					ary[d] = ary[d].collect({ |n| n.asStringPrec(4).asFloat });
 				});
-
-
 				// Post << "MDPATH: " << mdpath << "\n";
 				this.powers.add(sfID -> ary[0]);
 				this.mfccs.add(sfID -> ary[1..].flop);
-				// this.activationLayers.add(sfID -> Array.fill(ary[0].size, { 1.0 }));
-				// this.powers[sfID].postln;
-				// this.mfccs[sfID].collect({|row| row.sum }).postln;
-				// this.powers[sfID].size.postln;
-				// this.mfccs[sfID].size.postln;
 
-				// this.activationLayers.add(sfID -> this.powers[sfID].collect({ |pwr| (pwr <= -120).if { 0 } { 1 } }));
-				// this.activationLayers[sfID].postln;
-				// (this.activationLayers[sfID].sum.asFloat / this.activationLayers[sfID].size.asFloat).postln;
-
-				// this.cookedLayers.add(sfID -> this.mfccs[sfID].collect({ |row, i| row * this.activationLayers[sfID][i] }) );
-				// this.cookedLayers[sfID].size.postln;
 				done = 1;
 			});
 		});
@@ -246,19 +231,19 @@ CorpusDB {
 		// this.cookedLayers.add(sfID -> nil);
 	}
 
-	mapIDToSF { |sfID, path=nil, sfGroup=0|
-
-		// var id;
-		// (sfID.notNil).if {
-		// 	id = sfID;
-		// } {
-		// 	this.sfOffset = this.sfOffset + 1;
-		// 	id = this.sfOffset;
-		// };
-
-		^this.sfTree.mapSoundFileToGroup(sfID, sfGroup);
-
-	}
+	// mapIDToSF { |sfID, path=nil, sfGroup=0|
+	//
+	// 	// var id;
+	// 	// (sfID.notNil).if {
+	// 	// 	id = sfID;
+	// 	// } {
+	// 	// 	this.sfOffset = this.sfOffset + 1;
+	// 	// 	id = this.sfOffset;
+	// 	// };
+	//
+	// 	^this.sfTree.mapSoundFileToGroup(sfID, sfGroup);
+	//
+	// }
 
 	addSoundFileUnit { |sfID, onset=0, duration=0, tag=0, verbose=nil|
 
@@ -435,12 +420,11 @@ CorpusDB {
 		// sfnodes.keys.postln;
 
 		sfnodes.keys.asArray.sort.do({ |nid|
-			var sfID, sfgrp, sftratio, sfunitsegs, relid, ampSeg, mfccsSeg, index, row, node;
+			var sfID, sftratio, sfunitsegs, relid, ampSeg, mfccsSeg, index, row, node;
 			// nid.postln;
 			node = sfnodes[nid];
 			// node.postln;
 			sfID = node.sfID;
-			sfgrp = node.group;
 			sftratio = node.tRatio;
 			sfunitsegs = node.unitSegments;
 
@@ -450,7 +434,7 @@ CorpusDB {
 				mfccsSeg = node.unitMFCCs[k];
 				index = this.cuOffset;
 
-				row = [index, relid, sfID, sfgrp, sfunitsegs[relid].onset, sfunitsegs[relid].duration, sftratio, sfunitsegs[relid].tag];
+				row = [index, relid, sfID, sfunitsegs[relid].onset, sfunitsegs[relid].duration, sftratio, sfunitsegs[relid].tag];
 				// Post << "INDEX: " << index << "\n";
 				this.addCorpusUnit(index, (row ++ ampSeg ++ mfccsSeg).flat);
 				this.cuOffset = this.cuOffset + 1;
@@ -566,7 +550,6 @@ CorpusDB {
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:(pid.asInteger + this.sfOffset),
 					tRatio:sf["tRatio"].asFloat,
-					sfGrpID:sf["group"].asInteger,
 					synthdef:sf["synth"].asString,
 					params:sf["params"],
 					uflag:sf["uniqueID"].asInteger
@@ -576,13 +559,12 @@ CorpusDB {
 				fullpath = PathName.new(sf["path"].asString);
 				filename = fullpath.fullPath.asString;
 
-				Post << key << " | " << sf["sfID"] << " | " << sf["group"] << " | " << sf["uniqueID"] << "\n";
+				Post << key << " | " << sf["sfID"] << " | " << sf["uniqueID"] << "\n";
 				"-------------".postln;
 				sfid = this.addSoundFile(filename:filename,
 					sfid:(key.asInteger + this.sfOffset), //sf["sfid"].asInteger + this.sfOffset
 					srcFileID:nil,
 					tRatio:sf["tRatio"].asFloat,
-					sfGrpID:sf["group"].asInteger,
 					importFlag:importFlag,
 					uflag:sf["uniqueID"].asInteger
 				);

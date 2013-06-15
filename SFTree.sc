@@ -12,7 +12,7 @@
 // Copyright (C) 2013, Thomas Stoll
 
 SFTree {
-	var <>corpus, <>anchorPath, <>nodes, <>sfMap, <>sfgMap;
+	var <>corpus, <>anchorPath, <>nodes, <>sfMap;
 
 	*new { |corpus, anchorpath, verbose=nil|
 		^super.new.initSFTree(corpus, anchorpath, verbose)
@@ -23,21 +23,10 @@ SFTree {
 		this.anchorPath = anchorpath;
 		this.nodes = Dictionary[];
 		this.sfMap = Dictionary[];
-		this.sfgMap = Dictionary[];
 		^this
 	}
 
-	mapSoundFileToGroup { |sfID, sfGroup|
-		(this.sfgMap[sfGroup].isNil).if {
-			this.sfgMap.add(sfGroup -> Set[sfID]);
-			^this.sfgMap[sfGroup]
-		} {
-			this.sfgMap[sfGroup].add(sfID);
-			^this.sfgMap[sfGroup]
-		}
-	}
-
-	addRootNode { |filename, sfID, tRatio, sfg=0, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
+	addRootNode { |filename, sfID, tRatio, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
 
 		var relPath, joinedPath, uniqueflag, sndFile, duration, chnls, synthdef;
 
@@ -52,23 +41,19 @@ SFTree {
 
 		sndFile = SoundFile.new; sndFile.openRead(joinedPath); sndFile.close;
 
-// 		sndFile.numFrames.asFloat.postln;
-// 		sndFile.sampleRate.asFloat.postln;
-
-		duration = sndFile.duration; //(sndFile.numFrames.asFloat / sndFile.sampleRate.asFloat);
+		duration = sndFile.duration;
 		Post << "dur: " << duration << "\n";
 		chnls = sndFile.numChannels;
 
 		synthdef = (chnls == 1).if { "monoSamplerNRT" } { "stereoSamplerNRT" };
 		Post << "sfID: " << sfID << "\n";
-		this.nodes.add(sfID -> SamplerNode.new(relPath, synthdef, duration, uniqueflag, chnls, sfg, tRatio, sfID));
+		this.nodes.add(sfID -> SamplerNode.new(relPath, synthdef, duration, uniqueflag, chnls, tRatio, sfID));
 		this.nodes[sfID].postln;
-		this.corpus.mapIDToSF(sfID, relPath, sfg);
 		this.sfMap.add(sfID -> [relPath, duration, tRatio, synthdef]);
 		^this.nodes[sfID]
 	}
 
-	addChildNode { |parentID, childID, tRatio, sfg, synthdef, params, uniqueFlag=nil|
+	addChildNode { |parentID, childID, tRatio, synthdef, params, uniqueFlag=nil|
 
 		var uniqueflag, parentNode;
 
@@ -80,9 +65,8 @@ SFTree {
 			parentNode = this.nodes[parentID];
 		};
 
-		this.nodes.add(childID -> EfxNode.new(synthdef, params, parentNode.duration, uniqueflag, parentNode.channels, sfg, parentNode.tRatio, childID, parentID));
+		this.nodes.add(childID -> EfxNode.new(synthdef, params, parentNode.duration, uniqueflag, parentNode.channels, parentNode.tRatio, childID, parentID));
 		this.nodes[parentID].postln;
-		this.corpus.mapIDToSF(childID, this.nodes[parentID].sfPath, sfg);
 		this.sfMap.add(childID -> [synthdef, params]);
 		^this.nodes[this.nodes[childID].sfID]
 	}
@@ -90,20 +74,19 @@ SFTree {
 
 
 SFNode {
-	var <>synth, <>params, <>duration, <>uniqueID, <>channels, <>group, <>tRatio, <>sfID, <>unitSegments, <>unitAmps, <>unitMFCCs;
+	var <>synth, <>params, <>duration, <>uniqueID, <>channels, <>tRatio, <>sfID, <>unitSegments, <>unitAmps, <>unitMFCCs;
 
-	*new { |synthname, params=nil, duration= -1, uniqueID= -1, channels=1, group=0, tRatio=1.0, sfID= -1, verbose=nil|
-		^super.new.initSFNode(synthname, params, duration, uniqueID, channels, group, tRatio, sfID, verbose)
+	*new { |synthname, params=nil, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, sfID= -1, verbose=nil|
+		^super.new.initSFNode(synthname, params, duration, uniqueID, channels, tRatio, sfID, verbose)
 	}
 
-	initSFNode { |synthname, params, duration, uniqueID, channels, group, tRatio, sfID, verbose|
+	initSFNode { |synthname, params, duration, uniqueID, channels, tRatio, sfID, verbose|
 
 		this.synth = synthname;
 		this.params = params;
 		this.duration = duration;
 		this.uniqueID = uniqueID;
 		this.channels = channels;
-		this.group = group;
 		this.tRatio = tRatio;
 		this.sfID = sfID;
 		this.unitSegments = List[]; // create an empty container for unit bounds and tags
@@ -155,8 +138,8 @@ SFNode {
 SamplerNode : SFNode {
 	var <>sfPath, <>buffer;
 
-	*new { |sfpath, synthname, duration= -1, uniqueID= -1, channels=1, group=0, tRatio=1.0, sfID= -1, verbose=nil|
-		^super.new.initSFNode(synthname, nil, duration, uniqueID, channels, group, tRatio, sfID).initSamplerNode(sfpath)
+	*new { |sfpath, synthname, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, sfID= -1, verbose=nil|
+		^super.new.initSFNode(synthname, nil, duration, uniqueID, channels, tRatio, sfID).initSamplerNode(sfpath)
 	}
 
 	initSamplerNode { |sfpath|
@@ -180,7 +163,6 @@ SamplerNode : SFNode {
 			"duration" -> this.duration,
 			"uniqueID" -> this.uniqueID,
 			"channels" -> this.channels,
-			"group" -> this.group,
 			"tRatio" -> this.tRatio,
 			"sfID" -> this.sfID]
 	}
@@ -190,8 +172,8 @@ SamplerNode : SFNode {
 EfxNode : SFNode {
 	var <>parentID;
 
-	*new { |synthname, params, duration= -1, uniqueID= -1, channels=1, group=0, tRatio=1.0, childID= -1, parentID= -1, verbose=nil|
-		^super.new.initSFNode(synthname, params, duration, uniqueID, channels, group, tRatio, childID).initEfxNode(parentID)
+	*new { |synthname, params, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, childID= -1, parentID= -1, verbose=nil|
+		^super.new.initSFNode(synthname, params, duration, uniqueID, channels, tRatio, childID).initEfxNode(parentID)
 	}
 
 	initEfxNode { |parentID|
@@ -206,7 +188,6 @@ EfxNode : SFNode {
 			"duration" -> this.duration,
 			"uniqueID" -> this.uniqueID,
 			"channels" -> this.channels,
-			"group" -> this.group,
 			"tRatio" -> this.tRatio,
 			"sfID" -> this.sfID]
 	}
