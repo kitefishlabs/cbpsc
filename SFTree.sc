@@ -23,12 +23,25 @@ SFTree {
 		this.anchorPath = anchorpath;
 		this.nodes = Dictionary[];
 		this.sfMap = Dictionary[];
+		this.procMap = Dictionary[];
+		this.procMapOffset = 0;
 		^this
+	}
+
+	checkProcMap { |hashstring|
+		(this.procMap[hashstring].isNil).if {
+			this.procMap.add(hashstring -> this.procMapOffset);
+			this.procMap.add(this.procMapOffset -> hashstring);
+			this.procMapOffset = this.procMapOffset + 1;
+			^this.procMap[hashstring]
+		} {
+			^this.procMap[hashstring]
+		};
 	}
 
 	addRootNode { |filename, sfID, tRatio, sndSubdir=nil, uniqueFlag=nil, verbose=nil|
 
-		var relPath, joinedPath, uniqueflag, sndFile, duration, chnls, synthdef;
+		var relPath, joinedPath, uniqueflag, sndFile, duration, chnls, synthdef, procID;
 
 		(sndSubdir.isNil).if {
 			relPath = filename;
@@ -46,16 +59,17 @@ SFTree {
 		chnls = sndFile.numChannels;
 
 		synthdef = (chnls == 1).if { "monoSamplerNRT" } { "stereoSamplerNRT" };
-		Post << "sfID: " << sfID << "\n";
 		this.nodes.add(sfID -> SamplerNode.new(relPath, synthdef, duration, uniqueflag, chnls, tRatio, sfID));
+		Post << "sfID: " << sfID << "hashstring: " << this.nodes[sfID].hashstring << "\n";
+		procID = this.checkProcMap(this.nodes[sfID].hashstring);
 		this.nodes[sfID].postln;
-		this.sfMap.add(sfID -> [relPath, duration, tRatio, synthdef]);
+		this.sfMap.add(sfID -> [relPath, duration, tRatio, synthdef, procID]);
 		^this.nodes[sfID]
 	}
 
 	addChildNode { |parentID, childID, tRatio, synthdef, params, uniqueFlag=nil|
 
-		var uniqueflag, parentNode;
+		var uniqueflag, parentNode, procID;
 
 		uniqueflag = uniqueFlag ? 1000000.rand;
 		(this.nodes[parentID].isNil).if {
@@ -67,7 +81,8 @@ SFTree {
 
 		this.nodes.add(childID -> EfxNode.new(synthdef, params, parentNode.duration, uniqueflag, parentNode.channels, parentNode.tRatio, childID, parentID));
 		this.nodes[parentID].postln;
-		this.sfMap.add(childID -> [synthdef, params]);
+		procID = this.checkProcMap(this.nodes[parentID].hashstring);
+		this.sfMap.add(childID -> [synthdef, params, procID]);
 		^this.nodes[this.nodes[childID].sfID]
 	}
 }
@@ -89,6 +104,7 @@ SFNode {
 		this.channels = channels;
 		this.tRatio = tRatio;
 		this.sfID = sfID;
+		this.hashstring = "";
 		this.unitSegments = List[]; // create an empty container for unit bounds and tags
 		this.unitAmps = Dictionary[];
 		this.unitMFCCs = Dictionary[];
@@ -136,7 +152,7 @@ SFNode {
 
 
 SamplerNode : SFNode {
-	var <>sfPath, <>buffer;
+	var <>sfPath, <>buffer, <>hashstring;
 
 	*new { |sfpath, synthname, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, sfID= -1, verbose=nil|
 		^super.new.initSFNode(synthname, nil, duration, uniqueID, channels, tRatio, sfID).initSamplerNode(sfpath)
@@ -146,6 +162,7 @@ SamplerNode : SFNode {
 		"Assigning sfPath to SamplerNode!".postln;
 		this.sfPath = sfpath;
 		this.buffer = nil;
+		this.hashstring = "SN";
 		^this
 	}
 
@@ -164,7 +181,8 @@ SamplerNode : SFNode {
 			"uniqueID" -> this.uniqueID,
 			"channels" -> this.channels,
 			"tRatio" -> this.tRatio,
-			"sfID" -> this.sfID]
+			"sfID" -> this.sfID,
+			"hash" -> this.hashstring]
 	}
 }
 
@@ -178,6 +196,7 @@ EfxNode : SFNode {
 
 	initEfxNode { |parentID|
 		this.parentID = parentID;
+		this.hashstring = "Efx";
 		^this
 	}
 
@@ -189,7 +208,8 @@ EfxNode : SFNode {
 			"uniqueID" -> this.uniqueID,
 			"channels" -> this.channels,
 			"tRatio" -> this.tRatio,
-			"sfID" -> this.sfID]
+			"sfID" -> this.sfID,
+			"hash" -> this.hashstring]
 	}
 }
 
