@@ -12,7 +12,7 @@
 // Copyright (C) 2013, Thomas Stoll
 
 SFTree {
-	var <>corpus, <>anchorPath, <>nodes, <>sfMap;
+	var <>corpus, <>anchorPath, <>nodes, <>sfMap, <>procMap, <>procMapOffset;
 
 	*new { |corpus, anchorpath, verbose=nil|
 		^super.new.initSFTree(corpus, anchorpath, verbose)
@@ -89,7 +89,7 @@ SFTree {
 
 
 SFNode {
-	var <>synth, <>params, <>duration, <>uniqueID, <>channels, <>tRatio, <>sfID, <>unitSegments, <>unitAmps, <>unitMFCCs;
+	var <>synth, <>params, <>duration, <>uniqueID, <>channels, <>tRatio, <>sfID, <>hashstring, <>unitSegments, <>unitAmps, <>unitMFCCs;
 
 	*new { |synthname, params=nil, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, sfID= -1, verbose=nil|
 		^super.new.initSFNode(synthname, params, duration, uniqueID, channels, tRatio, sfID, verbose)
@@ -152,7 +152,7 @@ SFNode {
 
 
 SamplerNode : SFNode {
-	var <>sfPath, <>buffer, <>hashstring;
+	var <>sfPath, <>buffer;
 
 	*new { |sfpath, synthname, duration= -1, uniqueID= -1, channels=1, tRatio=1.0, sfID= -1, verbose=nil|
 		^super.new.initSFNode(synthname, nil, duration, uniqueID, channels, tRatio, sfID).initSamplerNode(sfpath)
