@@ -503,7 +503,7 @@ CorpusDB {
 
 		var f, toplevel, sf, d;
 		f = File.open(jsonPath, "w");
-		toplevel = Dictionary["descriptors" -> this.dTable ];
+		toplevel = Dictionary["descriptors" -> this.dTable, "procmap" -> this.sfTree.procMap ];
 		sf = Dictionary[];
 		this.sfTree.nodes.keys.do({ |sfid|
 			// "-------------------------------------".postln;
