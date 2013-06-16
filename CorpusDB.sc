@@ -455,6 +455,21 @@ CorpusDB {
 		});
 	}
 
+	convertSFTreeNodesToArray { |type=0|
+		var nodes = List[];
+		this.sfTree.nodes.keys().sort.do({ |k|
+			((type == 1) && this.sfTree.nodes[k].respondsTo('sfPath')).if {
+				nodes = nodes ++ this.sfTree.nodes[k];
+			};
+			((type == 2) && this.sfTree.nodes[k].respondsTo('parentID')).if {
+				nodes = nodes ++ this.sfTree.nodes[k];
+			};
+			(type == 0).if {
+				nodes = nodes ++ this.sfTree.nodes[k];
+			};
+		});
+		^nodes
+	}
 
 
 	//####*****
