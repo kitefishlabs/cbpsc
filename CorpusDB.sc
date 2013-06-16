@@ -429,7 +429,6 @@ CorpusDB {
 
 			Post << node.sfID << "\n" << this.sfTree.nodes[node.sfID].hashstring << "\n";
 
-
 			sfprocid = this.sfTree.procMap[ this.sfTree.nodes[node.sfID].hashstring ];
 			Post << sfprocid << "\n";
 			// ~pnoDB.sfTree.procMap

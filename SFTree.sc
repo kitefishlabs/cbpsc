@@ -162,7 +162,7 @@ SamplerNode : SFNode {
 		"Assigning sfPath to SamplerNode!".postln;
 		this.sfPath = sfpath;
 		this.buffer = nil;
-		this.hashstring = "SN";
+		this.hashstring = this.synth ++ this.tRatio.asFloat.asStringPrec(5);
 		^this
 	}
 
@@ -196,7 +196,13 @@ EfxNode : SFNode {
 
 	initEfxNode { |parentID|
 		this.parentID = parentID;
-		this.hashstring = "Efx";
+		this.hashstring = "";
+		this.params.pairsDo({ |a,b|
+			((Set['inbus', 'outbus', 'dur', 'envDur', 'transp'] & [a].asSet).size == 0).if {
+				this.hashstring = this.hashstring ++ a.asString ++ b.asString;
+			};
+		});
+
 		^this
 	}
 
