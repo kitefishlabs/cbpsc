@@ -43,7 +43,7 @@ CorpusDB {
 		// information about the corpus's current state
 		this.sfOffset = 0;
 		this.cuOffset = 0;
-		this.dTable = Dictionary[0 -> \unitID, 1 -> \sfRelID, 2 -> \sfileID, 3 -> \onset, 4 -> \duration, 5 -> \tRatio, 6 -> \uTag];
+		this.dTable = Dictionary[0 -> \unitID, 1 -> \parentID, 2 -> \sfileID, 3 -> \sfRelID, 4 -> \procID, 5 -> \tag, 6 -> \onset, 7 -> \duration, 8 -> \tRatio];
 		this.soundFileUnitsMapped = false;
 	}
 
@@ -414,27 +414,40 @@ CorpusDB {
 
 	mapSoundFileUnitsToCorpusUnits {
 
-		var sfnodes = this.sfTree.nodes;
+		var sfprocID, sfnodes = this.sfTree.nodes;
 		"map sound file units to corpus units".postln;
 		this.clearCorpusUnits;
 		// sfnodes.keys.postln;
 
 		sfnodes.keys.asArray.sort.do({ |nid|
-			var sfID, sftratio, sfunitsegs, relid, ampSeg, mfccsSeg, index, row, node;
+			var sfID, sftratio, sfprocid, pid, sfunitsegs, relid, ampSeg, mfccsSeg, index, row, node;
 			// nid.postln;
 			node = sfnodes[nid];
 			// node.postln;
 			sfID = node.sfID;
 			sftratio = node.tRatio;
-			sfunitsegs = node.unitSegments;
 
+			Post << node.sfID << "\n" << this.sfTree.nodes[node.sfID].hashstring << "\n";
+
+
+			sfprocid = this.sfTree.procMap[ this.sfTree.nodes[node.sfID].hashstring ];
+			Post << sfprocid << "\n";
+			// ~pnoDB.sfTree.procMap
+			// ~pnoDB.sfTree.nodes[0]
+			(this.sfTree.nodes[node.sfID].respondsTo('parentID')).if {
+				pid = this.sfTree.nodes[node.sfID].parentID;
+			} {
+				pid = sfID;
+			};
+
+			sfunitsegs = node.unitSegments;
 			node.unitAmps.keys.asArray.sort.do({ |k, relid|
 				// k.postln;
 				ampSeg = node.unitAmps[k];
 				mfccsSeg = node.unitMFCCs[k];
 				index = this.cuOffset;
 
-				row = [index, relid, sfID, sfunitsegs[relid].onset, sfunitsegs[relid].duration, sftratio, sfunitsegs[relid].tag];
+				row = [index, pid, sfID, relid, sfprocid, sfunitsegs[relid].tag, sfunitsegs[relid].onset, sfunitsegs[relid].duration, sftratio];
 				// Post << "INDEX: " << index << "\n";
 				this.addCorpusUnit(index, (row ++ ampSeg ++ mfccsSeg).flat);
 				this.cuOffset = this.cuOffset + 1;
@@ -450,8 +463,8 @@ CorpusDB {
 	//# CORPUS RAW ARRAY ACCESS
 	//#
 	//
-	//#	 index (8)         amp (5)        mfccs (24)
-	//#	[0 1 2 3 4 5 6 7] [8 9 10 11 12] [13 14 15 16 17 ... 36]
+	//#	 index (8)           amp (5)         mfccs (24)
+	//#	[0 1 2 3 4 5 6 7 8] [9 10 11 12 13] [14 15 16 17 ... 37]
 	//#
 
 	convertCorpusToArray { |type="all", mapFlag=false|
@@ -467,9 +480,9 @@ CorpusDB {
 		});
 		// Post << "X's size: " << xlist.size << "\n";
 
-		(type == "I").if { ^xlist.flop[..7].flop } {};
-		(type == "A").if { ^xlist.flop[8..12].flop } {};
-		(type == "M").if { ^xlist.flop[13..].flop } {};
+		(type == "I").if { ^xlist.flop[..8].flop } {};
+		(type == "A").if { ^xlist.flop[9..13].flop } {};
+		(type == "M").if { ^xlist.flop[14..].flop } {};
 		(type == "all").if { ^xlist } {};
 	}
 
@@ -480,7 +493,7 @@ CorpusDB {
 		info = this.convertCorpusToArray("I", mapFlag);
 
 		fullCUTable = this.convertCorpusToArray("all");
-		sliced = fullCUTable.collect({|unit| (unit[7] == tag).if {unit} {nil} });
+		sliced = fullCUTable.collect({|unit| (unit[5] == tag).if {unit} {nil} });
 		^sliced.removeAllSuchThat({|item| item.isNil.not })
 
 	}

@@ -81,7 +81,7 @@ SFTree {
 
 		this.nodes.add(childID -> EfxNode.new(synthdef, params, parentNode.duration, uniqueflag, parentNode.channels, parentNode.tRatio, childID, parentID));
 		this.nodes[parentID].postln;
-		procID = this.checkProcMap(this.nodes[parentID].hashstring);
+		procID = this.checkProcMap(this.nodes[childID].hashstring);
 		this.sfMap.add(childID -> [synthdef, params, procID]);
 		^this.nodes[this.nodes[childID].sfID]
 	}
