@@ -174,7 +174,7 @@ SamplerNode : SFNode {
 	}
 
 	jsonRepr {
-		^Dictionary["path" -> this.sfPath,
+		^Dictionary["relpath" -> this.sfPath,
 			"synth" -> this.synth,
 			"params" -> this.params,
 			"duration" -> this.duration,
