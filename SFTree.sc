@@ -30,12 +30,13 @@ SFTree {
 
 	checkProcMap { |hashstring|
 		(this.procMap[hashstring].isNil).if {
-			this.procMap.add(hashstring -> this.procMapOffset);
+			// this.procMap.add(hashstring -> this.procMapOffset);
 			this.procMap.add(this.procMapOffset -> hashstring);
 			this.procMapOffset = this.procMapOffset + 1;
 			^this.procMap[hashstring]
 		} {
-			^this.procMap[hashstring]
+			// ^this.procMap[hashstring]
+			^this.procMap[(this.procMapOffset - 1)]
 		};
 	}
 

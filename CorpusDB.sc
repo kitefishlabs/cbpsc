@@ -429,8 +429,10 @@ CorpusDB {
 
 			Post << node.sfID << "\n" << this.sfTree.nodes[node.sfID].hashstring << "\n";
 
-			sfprocid = this.sfTree.procMap[ this.sfTree.nodes[node.sfID].hashstring ];
-			Post << sfprocid << "\n";
+			sfprocid = this.sfTree.procMap.findKeyForValue(this.sfTree.nodes[node.sfID].hashstring);
+
+				// sfprocid = this.sfTree.procMap[ this.sfTree.nodes[node.sfID].hashstring ];
+			Post << "sf proc id: " << sfprocid << "\n";
 			// ~pnoDB.sfTree.procMap
 			// ~pnoDB.sfTree.nodes[0]
 			(this.sfTree.nodes[node.sfID].respondsTo('parentID')).if {
@@ -520,7 +522,7 @@ CorpusDB {
 		f = File.open(jsonPath, "w");
 		toplevel = Dictionary["descriptors" -> this.dTable, "procmap" -> this.sfTree.procMap ];
 		sf = Dictionary[];
-		this.sfTree.nodes.keys.do({ |sfid|
+		this.sfTree.nodes.keys.asArray.sort.do({ |sfid|
 			// "-------------------------------------".postln;
 			// sfid.post; " --->".postln;
 			// this.sfTree.nodes[sfid].jsonRepr.postln;
@@ -532,8 +534,8 @@ CorpusDB {
 		d = Dictionary[];
 		// Post << "keys: " << this.cuTable.keys.asArray.sort;
 		this.cuTable.keys.asArray.sort.do({ |cid|
-			// Post << "cutable entry: " << this.cuTable[cid].class << "\n";
-			d.add(cid.asString -> this.cuTable[cid].asString);
+			Post << "cutable entry: " << this.cuTable[cid] << "\n";
+			d.add(cid.asString -> this.cuTable[cid].asCompileString);
 		});
 		toplevel.add("corpusunits" -> d);
 		// toplevel.postln;
@@ -600,6 +602,7 @@ CorpusDB {
 
 
 		corpusunits = jsonString["corpusunits"];
+		Post << "proc map offset: " <<
 		corpusunits.keys.asArray.do({ |key|
 			var cunit;
 			//"=================".postln;
@@ -610,6 +613,7 @@ CorpusDB {
 			// cunit.postcs;
 			// "\n".post;
 			cunit[0] = cunit[0].asInteger + this.cuOffset;
+			cunit[1] = cunit[1].asInteger + this.sfTree.procMapOffset;
 			cunit[2] = cunit[2].asInteger + this.sfOffset;
 			Post << cunit[0] << " | " << cunit[2] << "\n";
 			this.addCorpusUnit((key.asInteger + this.cuOffset), cunit);
@@ -620,7 +624,8 @@ CorpusDB {
 		Post << "UPDATE max sfid --> sf_offset: " << this.sfOffset << "\n";
 		this.cuOffset = this.cuTable.keys.maxItem + 1;
 		Post << "UPDATE max cutable key --> cu_offset: " << this.cuOffset << "\n";
-
+		this.sfTree.procMapOffset = this.sfTree.procMap.keys.maxItem + 1;
+		Post << "UPDATE max sfTree procMap key --> sfTree.procMapOffset: " << this.sfTree.procMapOffset << "\n";
 	}
 }
 
