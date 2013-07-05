@@ -62,7 +62,7 @@ CorpusDB {
 
 		(srcFileID.isNil).if {
 
-			rootNode = this.sfTree.addRootNode(filename, sfID, tRatio, uniqueFlag:uflag);
+			rootNode = this.sfTree.addRootNode(filename, sfID, tRatio, sndSubdir:subdir, uniqueFlag:uflag);
 			(verbose.isNil.not).if {
 				Post << "FILENAME: " << filename << "\n";
 				Post << "addRootNode result: ";
@@ -74,7 +74,7 @@ CorpusDB {
 
 		} {
 
-			childNode = this.sfTree.addChildNode(srcFileID, sfID, tRatio, synthdef, params, uniqueFlag:uflag);
+			childNode = this.sfTree.addChildNode(srcFileID, sfID, tRatio, synthdef, params, sndSubdir:subdir, uniqueFlag:uflag);
 			(verbose.isNil.not).if {
 				Post << "\n" << [srcFileID, sfID] << "\n";
 				Post << "addChildNode result: " << childNode.parentID << ", " << childNode.sfID << ", " << childNode.tRatio << "\n";
@@ -92,7 +92,7 @@ CorpusDB {
 
 		var filepath, parentid, fullpath, dir, mdpath, file, pBuf, aBuf, sFile, oscList, srows, prows;
 		var timeout = 999, res = 0, thebuffer, ary, timeoffset = 0;
-		var currBus = 20, tbDur, tbTRatio, tbSynthdefs, tbParams, parentID;
+		var currBus = 20, tbDur, tbTRatio, tbSynthdefs, tbParams;
 		var done = 0;
 
 		(this.sfTree.nodes[sfID].class == SamplerNode).if {
@@ -136,10 +136,10 @@ CorpusDB {
 			tbSynthdefs = [this.sfTree.sfMap[sfID][3].asSymbol];
 		} {
 
-			parentID = this.sfTree.nodes[sfID].parentID;
-			tbDur = this.sfTree.sfMap[parentID][1];
-			tbTRatio = this.sfTree.sfMap[parentID][2];
-			tbSynthdefs = [this.sfTree.sfMap[parentID][3].asSymbol, this.sfTree.sfMap[sfID][0].asSymbol];
+			parentid = this.sfTree.nodes[sfID].parentID;
+			tbDur = this.sfTree.sfMap[parentid][1];
+			tbTRatio = this.sfTree.sfMap[parentid][2];
+			tbSynthdefs = [this.sfTree.sfMap[parentid][3].asSymbol, this.sfTree.sfMap[sfID][0].asSymbol];
 			// tbSynthdefs.postln;
 			tbParams = this.sfTree.sfMap[sfID][1];
 		};
@@ -409,7 +409,7 @@ CorpusDB {
 	// }
 
 	getSoundFileUnitMetadata { |sfID|
-		^this.cuTable.detect({ |item, i| (item[2] == sfID) }); // is this enough?
+		^this.cuTable.select({ |item, i| (item[2] == sfID) }); // is this enough?
 	}
 
 	mapSoundFileUnitsToCorpusUnits {
@@ -490,15 +490,15 @@ CorpusDB {
 		(mapFlag).if { this.mapSoundFileUnitsToCorpusUnits; } { };
 		numDescriptors = this.cuTable[0].size;
 
-		xlist = List[];
+		xlist = [];
 		this.cuTable.keys.asArray.sort.do({ |cuid|
 			xlist = xlist ++ [this.cuTable[cuid]];
 		});
 		// Post << "X's size: " << xlist.size << "\n";
 
-		(type == "I").if { ^xlist.flop[..8].flop } {};
-		(type == "A").if { ^xlist.flop[9..13].flop } {};
-		(type == "M").if { ^xlist.flop[14..].flop } {};
+		(type == "I").if { ^([xlist.flop[0]] ++ xlist.flop[..8]).flop } {};
+		(type == "A").if { ^([xlist.flop[0]] ++ xlist.flop[9..13]).flop } {};
+		(type == "M").if { ^([xlist.flop[0]] ++ xlist.flop[14..]).flop } {};
 		(type == "all").if { ^xlist } {};
 	}
 
